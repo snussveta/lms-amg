@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import secrets
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -164,10 +164,15 @@ async def get_active_guest_attempt(
 async def submit_guest_attempt(
     attempt_id: int,
     submission: AttemptSubmitRequest,
-    session_token: str = Query(..., description="Гостевой токен сессии"),
+    session_token: Optional[str] = Query(None, description="Гостевой токен сессии"),
+    x_guest_token: Optional[str] = Header(None, alias="X-Guest-Token"),
     db: AsyncSession = Depends(get_db),
 ):
     """Submit guest answers and perform scoring."""
+    token = session_token or x_guest_token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Гостевой токен сессии не предоставлен")
+
     att_stmt = (
         select(Attempt)
         .where(Attempt.id == attempt_id, Attempt.is_guest.is_(True))
@@ -179,7 +184,7 @@ async def submit_guest_attempt(
     res = await db.execute(att_stmt)
     attempt = res.scalar_one_or_none()
 
-    if not attempt or attempt.guest_session_token != session_token:
+    if not attempt or attempt.guest_session_token != token:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Попытка не найдена")
 
     if attempt.status != "in_progress":
@@ -325,10 +330,15 @@ async def submit_guest_attempt(
 @router.get("/attempts/{attempt_id}/result", response_model=AttemptResultResponse)
 async def get_guest_attempt_result(
     attempt_id: int,
-    session_token: str = Query(..., description="Гостевой токен сессии"),
+    session_token: Optional[str] = Query(None, description="Гостевой токен сессии"),
+    x_guest_token: Optional[str] = Header(None, alias="X-Guest-Token"),
     db: AsyncSession = Depends(get_db),
 ):
     """Fetch result details for a guest attempt."""
+    token = session_token or x_guest_token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Гостевой токен сессии не предоставлен")
+
     stmt = (
         select(Attempt)
         .where(Attempt.id == attempt_id, Attempt.is_guest.is_(True))
@@ -340,7 +350,7 @@ async def get_guest_attempt_result(
     res = await db.execute(stmt)
     attempt = res.scalar_one_or_none()
 
-    if not attempt or attempt.guest_session_token != session_token:
+    if not attempt or attempt.guest_session_token != token:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Попытка не найдена")
 
     test = attempt.test

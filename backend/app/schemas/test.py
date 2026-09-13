@@ -83,6 +83,7 @@ class TestBase(BaseModel):
     description: Optional[str] = ""
     time_limit_minutes: Optional[int] = Field(None, ge=1, le=1440)  # None = unlimited
     passing_score: int = Field(default=70, ge=0)
+    max_attempts: Optional[int] = Field(default=1, ge=1)
     is_published: bool = True
     allow_guest: bool = False
     public_token: Optional[str] = None
@@ -97,6 +98,7 @@ class TestUpdate(BaseModel):
     description: Optional[str] = None
     time_limit_minutes: Optional[int] = Field(None, ge=1, le=1440)
     passing_score: Optional[int] = Field(None, ge=0)
+    max_attempts: Optional[int] = Field(None, ge=1)
     is_published: Optional[bool] = None
     allow_guest: Optional[bool] = None
     public_token: Optional[str] = None
@@ -109,6 +111,7 @@ class TestListItemResponse(BaseModel):
     description: Optional[str] = ""
     time_limit_minutes: Optional[int] = None
     passing_score: int
+    max_attempts: Optional[int] = 1
     is_published: bool
     allow_guest: bool = False
     public_token: Optional[str] = None
@@ -119,6 +122,8 @@ class TestListItemResponse(BaseModel):
     # Extra fields for employee catalog
     user_attempt_status: Optional[str] = None  # None, passed, failed, in_progress, needs_review
     user_best_score: Optional[int] = None
+    can_attempt: bool = True
+    user_attempt_id: Optional[int] = None
     # Assignment fields
     is_assigned: bool = False
     assignment_due_date: Optional[datetime] = None

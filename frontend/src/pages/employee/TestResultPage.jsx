@@ -13,7 +13,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const TestResultPage = () => {
   const { attemptId } = useParams();
@@ -34,7 +34,7 @@ export const TestResultPage = () => {
       setResult(res.data);
 
       // Запуск конфетти только если тест успешно сдан и не ожидает проверки
-      if (res.data.is_passed && res.data.status === 'passed') {
+      if (res.data.is_passed && res.data.status !== 'needs_review') {
         confetti({
           particleCount: 70,
           spread: 60,
@@ -44,7 +44,7 @@ export const TestResultPage = () => {
       }
     } catch (err) {
       console.error('Не удалось загрузить результат:', err);
-      setError(err.response?.data?.detail || 'Не удалось загрузить результаты тестирования.');
+      setError(getErrorMessage(err, 'Не удалось загрузить результаты тестирования.'));
     } finally {
       setLoading(false);
     }
@@ -202,7 +202,7 @@ export const TestResultPage = () => {
           <div className="bg-slate-950/60 rounded-xl p-3 text-center border border-slate-800">
             <div className="text-xs text-slate-400">Статус попытки</div>
             <div className="text-sm font-bold text-slate-200 mt-1">
-              {isNeedsReview ? 'На проверке' : isPassed ? 'Сдано' : 'Не сдано'}
+              {isNeedsReview ? 'На проверке администратором' : isPassed ? 'Сдано' : 'Не сдано'}
             </div>
           </div>
         </div>
@@ -312,21 +312,35 @@ export const TestResultPage = () => {
                   )}
                 </div>
 
-                {/* Рецензия и комментарий проверяющего для ручных вопросов */}
-                {isManual && ans.is_reviewed && (
-                  <div className="pt-2 border-t border-slate-800">
-                    <span className="font-semibold text-slate-400 flex items-center gap-1.5 mb-1">
-                      <MessageSquare className="w-3.5 h-3.5 text-slate-300" />
-                      Оценка и комментарий экзаменатора:
+                {/* Рецензия и комментарий проверяющего для открытых или проверенных вопросов */}
+                {(isManual || ans.question_type === 'text' || ans.reviewer_comment || !ans.is_reviewed) && (
+                  <div className="pt-3 border-t border-slate-800">
+                    <span className="font-semibold text-slate-300 flex items-center gap-1.5 mb-2 text-xs">
+                      <MessageSquare className="w-4 h-4 text-amber-400" />
+                      Проверка и оценка администратора AMG:
                     </span>
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200">
-                      <div className="font-semibold text-white mb-1">
-                        Выставлено баллов: {ans.points_awarded} из {ans.points_max}
+                    <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-200">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-semibold text-white">
+                          Выставлено баллов: <span className="text-emerald-400 font-bold">{ans.points_awarded}</span> из {ans.points_max}
+                        </span>
+                        <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
+                          ans.is_reviewed
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        }`}>
+                          {ans.is_reviewed ? 'Проверено' : 'Ожидает проверки администратором'}
+                        </span>
                       </div>
                       {ans.reviewer_comment ? (
-                        <p className="text-slate-300 italic">{ans.reviewer_comment}</p>
+                        <div className="mt-2 text-slate-300 bg-slate-950/50 p-2.5 rounded border border-slate-800/80">
+                          <div className="text-[11px] text-slate-400 mb-1 font-medium">Комментарий экзаменатора:</div>
+                          <p className="italic text-slate-100">{ans.reviewer_comment}</p>
+                        </div>
+                      ) : ans.is_reviewed ? (
+                        <p className="text-slate-500 italic text-xs mt-1">Баллы выставлены без текстового комментария.</p>
                       ) : (
-                        <p className="text-slate-500 italic">Комментарий не оставлен.</p>
+                        <p className="text-amber-400/80 italic text-xs mt-1">Ответ отправлен на проверку. Администратор оценит его в ближайшее время.</p>
                       )}
                     </div>
                   </div>

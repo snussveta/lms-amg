@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
+  BookOpen,
   FileQuestion,
   GraduationCap,
   History,
@@ -100,6 +101,18 @@ export const Navbar = () => {
                     >
                       <PlusCircle className="w-4 h-4 text-slate-300" />
                       Конструктор
+                    </Link>
+
+                    <Link
+                      to="/admin/question-bank"
+                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        isActive('/admin/question-bank')
+                          ? 'bg-slate-800 text-white'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4 text-sky-400" />
+                      Банк вопросов
                     </Link>
 
                     <Link
@@ -212,6 +225,13 @@ export const Navbar = () => {
                     className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
                   >
                     Конструктор тестов
+                  </Link>
+                  <Link
+                    to="/admin/question-bank"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
+                  >
+                    Банк вопросов
                   </Link>
                   <Link
                     to="/admin/users"

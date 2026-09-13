@@ -20,7 +20,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const GuestTakeTestPage = () => {
   const { token, testId } = useParams();
@@ -80,8 +80,10 @@ export const GuestTakeTestPage = () => {
     } catch (err) {
       console.error('Ошибка получения информации о тесте:', err);
       setInfoError(
-        err.response?.data?.detail ||
+        getErrorMessage(
+          err,
           'Тестирование по данной ссылке недоступно или было отозвано администратором.'
+        )
       );
     } finally {
       setLoadingInfo(false);
@@ -115,7 +117,7 @@ export const GuestTakeTestPage = () => {
       setStage('testing');
     } catch (err) {
       console.error('Ошибка старта гостевого тестирования:', err);
-      setFormError(err.response?.data?.detail || 'Не удалось начать тестирование. Попробуйте еще раз.');
+      setFormError(getErrorMessage(err, 'Не удалось начать тестирование. Попробуйте еще раз.'));
     } finally {
       setStarting(false);
     }
@@ -137,7 +139,7 @@ export const GuestTakeTestPage = () => {
       }));
 
       await api.post(
-        `/public/attempts/${curAttemptId}/submit`,
+        `/public/attempts/${curAttemptId}/submit?session_token=${encodeURIComponent(curToken)}`,
         { answers: formattedAnswers },
         { headers: { 'X-Guest-Token': curToken } }
       );
@@ -146,12 +148,15 @@ export const GuestTakeTestPage = () => {
       setLoadingResult(true);
       setStage('result');
 
-      const resultRes = await api.get(`/public/attempts/${curAttemptId}/result`, {
-        headers: { 'X-Guest-Token': curToken },
-      });
+      const resultRes = await api.get(
+        `/public/attempts/${curAttemptId}/result?session_token=${encodeURIComponent(curToken)}`,
+        {
+          headers: { 'X-Guest-Token': curToken },
+        }
+      );
       setResultData(resultRes.data);
 
-      if (resultRes.data.is_passed && resultRes.data.status === 'passed') {
+      if (resultRes.data.is_passed && resultRes.data.status !== 'needs_review') {
         confetti({
           particleCount: 70,
           spread: 60,
@@ -161,7 +166,7 @@ export const GuestTakeTestPage = () => {
       }
     } catch (err) {
       console.error('Ошибка отправки результатов гостя:', err);
-      alert(err.response?.data?.detail || 'Не удалось отправить результаты. Проверьте соединение.');
+      alert(getErrorMessage(err, 'Не удалось отправить результаты. Проверьте соединение.'));
       setSubmitting(false);
     } finally {
       setLoadingResult(false);

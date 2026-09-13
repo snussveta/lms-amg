@@ -15,7 +15,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
 
 export const AdminTestsPage = () => {
@@ -51,7 +51,7 @@ export const AdminTestsPage = () => {
       );
     } catch (err) {
       console.error('Ошибка переключения статуса публикации:', err);
-      alert('Не удалось обновить статус публикации.');
+      alert(getErrorMessage(err, 'Не удалось обновить статус публикации.'));
     }
   };
 
@@ -70,7 +70,7 @@ export const AdminTestsPage = () => {
       setTests((prev) => prev.filter((t) => t.id !== testId));
     } catch (err) {
       console.error('Ошибка удаления теста:', err);
-      alert('Не удалось удалить тест.');
+      alert(getErrorMessage(err, 'Не удалось удалить тест.'));
     } finally {
       setDeletingId(null);
     }

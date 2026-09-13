@@ -67,12 +67,19 @@ async def get_tests(
 
     # Попытки сотрудника
     user_attempts_map = {}
+    completed_attempts_count_map = {}
+    latest_completed_attempt_id_map = {}
     if current_user.role == "employee":
         attempts_res = await db.execute(
             select(Attempt).where(Attempt.user_id == current_user.id).order_by(Attempt.started_at.desc())
         )
         attempts = attempts_res.scalars().all()
         for att in attempts:
+            if att.status in ["submitted", "needs_review", "timed_out"]:
+                completed_attempts_count_map[att.test_id] = completed_attempts_count_map.get(att.test_id, 0) + 1
+                if att.test_id not in latest_completed_attempt_id_map:
+                    latest_completed_attempt_id_map[att.test_id] = att.id
+
             if att.test_id not in user_attempts_map:
                 user_attempts_map[att.test_id] = att
             else:
@@ -98,6 +105,13 @@ async def get_tests(
                 user_status = "failed"
             user_best = attempt.score
 
+        completed_count = completed_attempts_count_map.get(t.id, 0)
+        can_attempt = True
+        if t.max_attempts is not None and t.max_attempts > 0:
+            if completed_count >= t.max_attempts:
+                can_attempt = False
+        user_attempt_id = latest_completed_attempt_id_map.get(t.id) or (attempt.id if attempt else None)
+
         assignment = assigned_map.get(t.id)
         is_assigned = assignment is not None
         due_date = assignment.due_date if assignment else None
@@ -110,6 +124,7 @@ async def get_tests(
                 description=t.description or "",
                 time_limit_minutes=t.time_limit_minutes,
                 passing_score=t.passing_score,
+                max_attempts=t.max_attempts,
                 is_published=t.is_published,
                 allow_guest=t.allow_guest,
                 public_token=t.public_token,
@@ -119,6 +134,8 @@ async def get_tests(
                 updated_at=t.updated_at,
                 user_attempt_status=user_status,
                 user_best_score=user_best,
+                can_attempt=can_attempt,
+                user_attempt_id=user_attempt_id,
                 is_assigned=is_assigned,
                 assignment_due_date=due_date,
                 assignment_status=assignment_status,
@@ -144,6 +161,7 @@ async def create_test(
         description=test_in.description or "",
         time_limit_minutes=test_in.time_limit_minutes,
         passing_score=test_in.passing_score,
+        max_attempts=test_in.max_attempts,
         is_published=test_in.is_published,
         allow_guest=test_in.allow_guest,
         public_token=public_token,
@@ -258,6 +276,8 @@ async def update_test(
         test.time_limit_minutes = test_in.time_limit_minutes
     if test_in.passing_score is not None:
         test.passing_score = test_in.passing_score
+    if test_in.max_attempts is not None:
+        test.max_attempts = test_in.max_attempts
     if test_in.is_published is not None:
         test.is_published = test_in.is_published
 

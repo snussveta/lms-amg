@@ -9,6 +9,7 @@ from app.core.security import get_password_hash
 from app.models.question import Question, QuestionOption
 from app.models.test import Test
 from app.models.user import User
+from app.models.bank_question import BankQuestion, BankQuestionOption
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("seed")
@@ -135,6 +136,137 @@ async def seed_data() -> None:
             ])
 
             logger.info("Демонстрационный тест и вопросы успешно инициализированы.")
+
+        # 5. Seed Bank Questions across departments
+        res_bq = await db.execute(select(BankQuestion))
+        if not res_bq.scalars().first():
+            logger.info("Инициализация банка вопросов по отделам...")
+            bank_data = [
+                {
+                    "text": "Какой стандарт бухгалтерской отчетности является обязательным для применения в РФ?",
+                    "type": "single_choice",
+                    "department": "Бухгалтерия",
+                    "points": 10,
+                    "options": [
+                        {"text": "РСБУ (Российские стандарты бухгалтерского учета)", "is_correct": True},
+                        {"text": "US GAAP", "is_correct": False},
+                        {"text": "Только управленческие регламенты", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "В каких случаях составляется акт сверки взаимных расчетов с контрагентом?",
+                    "type": "multiple_choice",
+                    "department": "Бухгалтерия",
+                    "points": 15,
+                    "options": [
+                        {"text": "Перед составлением годовой бухгалтерской отчетности", "is_correct": True},
+                        {"text": "При возникновении разногласий по суммам оплат и поставок", "is_correct": True},
+                        {"text": "При завершении действия долгосрочного договора", "is_correct": True},
+                        {"text": "Перед каждым телефонным звонком клиенту", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Что представляет собой воронка продаж (Sales Funnel)?",
+                    "type": "single_choice",
+                    "department": "Продажи",
+                    "points": 10,
+                    "options": [
+                        {"text": "Модель процесса продажи от первого контакта до заключения сделки", "is_correct": True},
+                        {"text": "График выплаты премий менеджерам", "is_correct": False},
+                        {"text": "Список всех действующих договоров за прошлый год", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Опишите ключевые этапы отработки возражения клиента «У вас слишком дорого» в B2B-переговорах.",
+                    "type": "manual_review",
+                    "department": "Продажи",
+                    "points": 25,
+                    "options": [],
+                },
+                {
+                    "text": "Какой протокол обеспечивает безопасную передачу зашифрованных гипертекстовых данных в веб?",
+                    "type": "single_choice",
+                    "department": "IT",
+                    "points": 10,
+                    "options": [
+                        {"text": "HTTPS", "is_correct": True},
+                        {"text": "HTTP", "is_correct": False},
+                        {"text": "FTP", "is_correct": False},
+                        {"text": "Telnet", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Какие принципы лежат в основе концепции Zero Trust в сетевой безопасности?",
+                    "type": "multiple_choice",
+                    "department": "IT",
+                    "points": 20,
+                    "options": [
+                        {"text": "Постоянная верификация любого субъекта и устройства", "is_correct": True},
+                        {"text": "Предоставление минимально необходимых привилегий (Least Privilege)", "is_correct": True},
+                        {"text": "Предположение об уже произошедшей компрометации (Assume Breach)", "is_correct": True},
+                        {"text": "Полное доверие всему трафику внутри локальной корпоративной сети", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Что такое инкотермс (Incoterms) в логистике и внешнеэкономической деятельности?",
+                    "type": "single_choice",
+                    "department": "Логистика",
+                    "points": 10,
+                    "options": [
+                        {"text": "Международные правила толкования торговых терминов поставки товаров", "is_correct": True},
+                        {"text": "Таможенная декларация на опасные грузы", "is_correct": False},
+                        {"text": "Стандарт крепления контейнеров на судах", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Какие документы необходимы водителю-экспедитору при перевозке груза по территории РФ?",
+                    "type": "multiple_choice",
+                    "department": "Логистика",
+                    "points": 15,
+                    "options": [
+                        {"text": "Товарно-транспортная накладная (ТТН / Транспортная накладная)", "is_correct": True},
+                        {"text": "Путевой лист с отметками медосмотра и техосмотра", "is_correct": True},
+                        {"text": "Водительское удостоверение соответствующей категории", "is_correct": True},
+                        {"text": "Договор купли-продажи жилой недвижимости", "is_correct": False},
+                    ],
+                },
+                {
+                    "text": "Какой номер экстренной службы спасения действует на всей территории РФ с мобильных телефонов?",
+                    "type": "text",
+                    "department": "Общий",
+                    "points": 10,
+                    "options": [
+                        {"text": "112", "is_correct": True},
+                    ],
+                },
+                {
+                    "text": "Какие ценности лежат в основе корпоративной культуры AMG?",
+                    "type": "manual_review",
+                    "department": "Общий",
+                    "points": 20,
+                    "options": [],
+                },
+            ]
+
+            for item in bank_data:
+                bq = BankQuestion(
+                    text=item["text"],
+                    question_type=item["type"],
+                    department=item["department"],
+                    points=item["points"],
+                )
+                db.add(bq)
+                await db.flush()
+
+                for opt in item["options"]:
+                    bopt = BankQuestionOption(
+                        bank_question_id=bq.id,
+                        text=opt["text"],
+                        is_correct=opt["is_correct"],
+                    )
+                    db.add(bopt)
+
+            logger.info("Банк вопросов успешно наполнен стартовыми вопросами по отделам.")
 
         await db.commit()
         logger.info("Сид данных успешно завершен.")

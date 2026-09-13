@@ -4,6 +4,7 @@ from app.models.test import Test
 from app.models.question import Question, QuestionOption
 from app.models.attempt import Attempt, AttemptAnswer
 from app.models.assignment import TestAssignment
+from app.models.bank_question import BankQuestion, BankQuestionOption
 
 __all__ = [
     "Base",
@@ -14,4 +15,7 @@ __all__ = [
     "Attempt",
     "AttemptAnswer",
     "TestAssignment",
+    "BankQuestion",
+    "BankQuestionOption",
 ]
+

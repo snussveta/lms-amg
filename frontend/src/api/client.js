@@ -42,4 +42,35 @@ api.interceptors.response.use(
   }
 );
 
+export const getErrorMessage = (error, defaultMessage = 'Произошла ошибка при отправке') => {
+  if (!error) return defaultMessage;
+  const detail = error.response?.data?.detail;
+  if (typeof detail === 'string' && detail.trim().length > 0) {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    // FastAPI / Pydantic validation errors format: [{ loc, msg, type }]
+    const messages = detail
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item?.msg) {
+          const loc = Array.isArray(item.loc)
+            ? item.loc.filter((l) => l !== 'body').join('.')
+            : '';
+          return loc ? `${loc}: ${item.msg}` : item.msg;
+        }
+        return JSON.stringify(item);
+      })
+      .filter(Boolean);
+    if (messages.length > 0) {
+      return messages.join('; ');
+    }
+  }
+  if (detail && typeof detail === 'object') {
+    return detail.msg || detail.message || JSON.stringify(detail);
+  }
+  return error.response?.data?.message || error.message || defaultMessage;
+};
+
 export default api;
+

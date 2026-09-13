@@ -15,7 +15,7 @@ import {
   Eye,
   CheckSquare,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
 export const TestCatalogPage = () => {
@@ -52,7 +52,7 @@ export const TestCatalogPage = () => {
       navigate(`/test/${res.data.attempt_id}`);
     } catch (err) {
       console.error('Ошибка запуска тестирования:', err);
-      alert(err.response?.data?.detail || 'Не удалось запустить тестирование. Попробуйте еще раз.');
+      alert(getErrorMessage(err, 'Не удалось запустить тестирование. Попробуйте еще раз.'));
     } finally {
       setStarting(false);
     }
@@ -241,6 +241,8 @@ export const TestCatalogPage = () => {
             const hasFailed = test.user_attempt_status === 'failed';
             const needsReview = test.user_attempt_status === 'needs_review';
             const isInProgress = test.user_attempt_status === 'in_progress';
+            const hasCompleted = hasPassed || hasFailed || needsReview;
+            const isRetakeForbidden = test.can_attempt === false || (hasCompleted && test.max_attempts && test.max_attempts <= 1);
 
             return (
               <div
@@ -281,9 +283,16 @@ export const TestCatalogPage = () => {
                       </span>
                     )}
 
-                    <span className="text-xs text-slate-400 font-medium">
-                      Порог: {test.passing_score}%
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {test.max_attempts === 1 && (
+                        <span className="text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+                          1 попытка
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400 font-medium">
+                        Порог: {test.passing_score}%
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="text-base font-semibold text-white line-clamp-2">
@@ -321,38 +330,49 @@ export const TestCatalogPage = () => {
                   </div>
 
                   {/* Кнопка действия */}
-                  <button
-                    onClick={() => setSelectedTestModal(test)}
-                    className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors ${
-                      hasPassed
-                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                        : needsReview
-                        ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700'
-                        : 'bg-slate-100 text-slate-900 hover:bg-white'
-                    }`}
-                  >
-                    {hasPassed ? (
-                      <>
-                        <RotateCcw className="w-4 h-4" />
-                        Пройти повторно
-                      </>
-                    ) : needsReview ? (
-                      <>
-                        <RotateCcw className="w-4 h-4" />
-                        Пройти повторно
-                      </>
-                    ) : isInProgress ? (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Продолжить попытку
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Начать тест
-                      </>
-                    )}
-                  </button>
+                  {isRetakeForbidden ? (
+                    <button
+                      onClick={() => {
+                        if (test.user_attempt_id) {
+                          navigate(`/test/${test.user_attempt_id}/result`);
+                        } else {
+                          navigate('/my-attempts');
+                        }
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors bg-slate-800/80 hover:bg-slate-750 text-slate-300 border border-slate-700"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Тест уже пройден</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedTestModal(test)}
+                      className={`w-full py-2.5 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors ${
+                        hasPassed
+                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                          : needsReview
+                          ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700'
+                          : 'bg-slate-100 text-slate-900 hover:bg-white'
+                      }`}
+                    >
+                      {hasPassed || needsReview ? (
+                        <>
+                          <RotateCcw className="w-4 h-4" />
+                          Пройти повторно
+                        </>
+                      ) : isInProgress ? (
+                        <>
+                          <Play className="w-4 h-4" />
+                          Продолжить попытку
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4" />
+                          Начать тест
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             );

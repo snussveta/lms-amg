@@ -11,7 +11,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
   const [attempt, setAttempt] = useState(null);
@@ -95,7 +95,7 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
       }, 1000);
     } catch (err) {
       console.error('Ошибка сохранения проверки:', err);
-      setError(err.response?.data?.detail || 'Не удалось сохранить оценку.');
+      setError(getErrorMessage(err, 'Не удалось сохранить оценку.'));
     } finally {
       setSubmitting(false);
     }

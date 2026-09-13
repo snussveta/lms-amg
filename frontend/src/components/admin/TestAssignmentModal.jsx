@@ -13,7 +13,7 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const TestAssignmentModal = ({ test, onClose }) => {
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
@@ -108,7 +108,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
       }, 1200);
     } catch (err) {
       console.error('Ошибка назначения теста:', err);
-      setError(err.response?.data?.detail || 'Не удалось сохранить назначения.');
+      setError(getErrorMessage(err, 'Не удалось сохранить назначения.'));
     } finally {
       setSubmitting(false);
     }
@@ -122,7 +122,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
       setAssignments((prev) => prev.filter((a) => a.user_id !== userId));
     } catch (err) {
       console.error('Ошибка отзыва назначения:', err);
-      alert('Не удалось отозвать назначение.');
+      alert(getErrorMessage(err, 'Не удалось отозвать назначение.'));
     }
   };
 

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -32,8 +32,10 @@ async def start_attempt(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Старт попытки прохождения теста сотрудником.
-    Возвращает безопасные вопросы без подсказок и время истечения теста при ограничении.
+    Запуск или продолжение тестирования сотрудником:
+    - Если есть активная попытка (in_progress) и время не истекло, возвращает её
+    - Проверяет лимит попыток (max_attempts) перед созданием новой
+    - Проверяет статус публикации и персональные назначения
     """
     stmt = (
         select(Test)
@@ -82,6 +84,24 @@ async def start_attempt(
                 active_attempt = None
 
     if not active_attempt:
+        # Строгая проверка лимита попыток (max_attempts)
+        if test.max_attempts is not None and test.max_attempts > 0:
+            count_stmt = (
+                select(func.count(Attempt.id))
+                .where(
+                    Attempt.test_id == test.id,
+                    Attempt.user_id == current_user.id,
+                    Attempt.status.in_(["submitted", "needs_review", "timed_out"]),
+                )
+            )
+            count_res = await db.execute(count_stmt)
+            completed_count = count_res.scalar() or 0
+            if completed_count >= test.max_attempts:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Вы уже исчерпали лимит попыток для этого теста",
+                )
+
         tot_points = sum(q.points for q in test.questions)
         new_attempt = Attempt(
             test_id=test.id,
@@ -121,6 +141,46 @@ async def start_attempt(
         started_at=active_attempt.started_at,
         expires_at=expires_at,
     )
+
+
+@router.get("/my", response_model=List[AttemptListItemResponse])
+async def get_my_attempts(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    История всех попыток текущего пользователя.
+    Маршрут объявлен ДО /{attempt_id}, чтобы избежать конфликта совпадения путей в FastAPI.
+    """
+    stmt = (
+        select(Attempt)
+        .where(Attempt.user_id == current_user.id)
+        .options(selectinload(Attempt.test))
+        .order_by(Attempt.started_at.desc())
+    )
+    result = await db.execute(stmt)
+    attempts = result.scalars().all()
+
+    items = []
+    for a in attempts:
+        pct = round((a.score / a.max_score * 100), 1) if a.max_score > 0 else 0.0
+        items.append(
+            AttemptListItemResponse(
+                id=a.id,
+                test_id=a.test_id,
+                test_title=a.test.title if a.test else "Неизвестный тест",
+                score=a.score,
+                max_score=a.max_score,
+                percentage=pct,
+                is_passed=a.is_passed,
+                status=a.status,
+                is_guest=a.is_guest,
+                guest_name=a.guest_name,
+                started_at=a.started_at,
+                submitted_at=a.submitted_at,
+            )
+        )
+    return items
 
 
 @router.get("/{attempt_id}", response_model=AttemptStartResponse)
@@ -490,43 +550,6 @@ async def review_attempt_answers(
         time_spent_seconds=time_spent,
         answers=answer_details,
     )
-
-
-@router.get("/my", response_model=List[AttemptListItemResponse])
-async def get_my_attempts(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """История всех попыток текущего пользователя."""
-    stmt = (
-        select(Attempt)
-        .where(Attempt.user_id == current_user.id)
-        .options(selectinload(Attempt.test))
-        .order_by(Attempt.started_at.desc())
-    )
-    result = await db.execute(stmt)
-    attempts = result.scalars().all()
-
-    items = []
-    for a in attempts:
-        pct = round((a.score / a.max_score * 100), 1) if a.max_score > 0 else 0.0
-        items.append(
-            AttemptListItemResponse(
-                id=a.id,
-                test_id=a.test_id,
-                test_title=a.test.title if a.test else "Неизвестный тест",
-                score=a.score,
-                max_score=a.max_score,
-                percentage=pct,
-                is_passed=a.is_passed,
-                status=a.status,
-                is_guest=a.is_guest,
-                guest_name=a.guest_name,
-                started_at=a.started_at,
-                submitted_at=a.submitted_at,
-            )
-        )
-    return items
 
 
 @router.get("/{attempt_id}/result", response_model=AttemptResultResponse)

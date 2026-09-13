@@ -19,6 +19,7 @@ class Test(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, default="", nullable=True)
     time_limit_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # None means unlimited
     passing_score: Mapped[int] = mapped_column(Integer, default=70, nullable=False)
+    max_attempts: Mapped[Optional[int]] = mapped_column(Integer, default=1, nullable=True)  # 1 = retakes disallowed, None = unlimited
     is_published: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allow_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     public_token: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True, nullable=True)

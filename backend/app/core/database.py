@@ -78,6 +78,8 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE attempt_answers ADD COLUMN IF NOT EXISTS reviewer_comment TEXT;",
                     "ALTER TABLE attempt_answers ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP WITH TIME ZONE;",
                     "ALTER TABLE attempt_answers ADD COLUMN IF NOT EXISTS reviewed_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1;",
+                    "ALTER TABLE bank_questions ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Общий';",
                 ]
                 for stmt in migration_sqls:
                     try:

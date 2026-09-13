@@ -12,7 +12,7 @@ import {
   Send,
   ShieldCheck,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const TakeTestPage = () => {
   const { attemptId } = useParams();
@@ -59,7 +59,7 @@ export const TakeTestPage = () => {
         navigate(`/test/${attemptId}/result`, { replace: true });
         return;
       }
-      setError(err.response?.data?.detail || 'Не удалось загрузить сессию тестирования. Вернитесь в каталог.');
+      setError(getErrorMessage(err, 'Не удалось загрузить сессию тестирования. Вернитесь в каталог.'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export const TakeTestPage = () => {
       navigate(`/test/${attemptId}/result`, { replace: true });
     } catch (err) {
       console.error('Ошибка отправки ответов:', err);
-      alert(err.response?.data?.detail || 'Не удалось отправить результаты. Проверьте сеть и повторите попытку.');
+      alert(getErrorMessage(err, 'Не удалось отправить результаты. Проверьте сеть и повторите попытку.'));
       setSubmitting(false);
     }
   }, [attemptId, navigate, submitting]);

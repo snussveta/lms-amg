@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
   Clock,
@@ -8,12 +8,15 @@ import {
   History,
   XCircle,
   Play,
+  AlertCircle,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const MyAttemptsPage = () => {
+  const navigate = useNavigate();
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchAttempts();
@@ -22,10 +25,12 @@ export const MyAttemptsPage = () => {
   const fetchAttempts = async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await api.get('/attempts/my');
       setAttempts(res.data);
     } catch (err) {
       console.error('Ошибка загрузки истории попыток:', err);
+      setError(getErrorMessage(err, 'Не удалось загрузить историю попыток.'));
     } finally {
       setLoading(false);
     }
@@ -47,6 +52,15 @@ export const MyAttemptsPage = () => {
     }
   };
 
+  const handleRowClick = (att) => {
+    const isCompleted = att.status === 'submitted' || att.status === 'needs_review' || att.status === 'timed_out';
+    if (isCompleted) {
+      navigate(`/test/${att.id}/result`);
+    } else {
+      navigate(`/test/${att.id}`);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Шапка */}
@@ -65,6 +79,13 @@ export const MyAttemptsPage = () => {
           Каталог тестов
         </Link>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Список попыток */}
       {loading ? (
@@ -103,24 +124,31 @@ export const MyAttemptsPage = () => {
                   const isNeedsReview = att.status === 'needs_review';
                   const isPassed = att.is_passed && !isNeedsReview;
                   const isInProgress = att.status === 'in_progress';
-                  const isCompleted = att.status === 'submitted' || isNeedsReview;
+                  const isCompleted = att.status === 'submitted' || isNeedsReview || att.status === 'timed_out';
 
                   return (
-                    <tr key={att.id} className="hover:bg-slate-850/50 transition-colors">
-                      <td className="py-4 px-5 font-medium text-white">
-                        {att.test_title}
+                    <tr
+                      key={att.id}
+                      onClick={() => handleRowClick(att)}
+                      className="hover:bg-slate-850/60 transition-colors cursor-pointer group"
+                    >
+                      <td className="py-4 px-5 font-medium text-white group-hover:text-sky-300 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span>{att.test_title}</span>
+                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+                        </div>
                       </td>
 
                       <td className="py-4 px-5">
                         {isNeedsReview ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
                             <Clock className="w-3.5 h-3.5" />
-                            На проверке
+                            На проверке администратором
                           </span>
                         ) : isPassed ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            Сдан
+                            Сдано
                           </span>
                         ) : isInProgress ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -130,7 +158,7 @@ export const MyAttemptsPage = () => {
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
                             <XCircle className="w-3.5 h-3.5" />
-                            Не сдан
+                            Не сдано
                           </span>
                         )}
                       </td>
@@ -157,8 +185,8 @@ export const MyAttemptsPage = () => {
                         {formatDate(att.submitted_at || att.started_at)}
                       </td>
 
-                      <td className="py-4 px-5 text-right">
-                        {isCompleted || att.status === 'timed_out' ? (
+                      <td className="py-4 px-5 text-right" onClick={(e) => e.stopPropagation()}>
+                        {isCompleted ? (
                           <Link
                             to={`/test/${att.id}/result`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"

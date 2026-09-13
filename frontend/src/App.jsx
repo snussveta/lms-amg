@@ -19,6 +19,7 @@ import { AdminTestsPage } from './pages/admin/AdminTestsPage';
 import { TestConstructorPage } from './pages/admin/TestConstructorPage';
 import { TestAnalyticsPage } from './pages/admin/TestAnalyticsPage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { QuestionBankPage } from './pages/admin/QuestionBankPage';
 
 // Public Guest Test Page
 import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
@@ -103,6 +104,14 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin>
                     <TestAnalyticsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/question-bank"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <QuestionBankPage />
                   </ProtectedRoute>
                 }
               />

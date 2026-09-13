@@ -3,7 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
+  BookOpen,
   Check,
+  CheckSquare,
   Copy,
   Globe,
   HelpCircle,
@@ -11,9 +13,12 @@ import {
   MoveUp,
   Plus,
   Save,
+  Search,
+  ShieldCheck,
   Trash2,
+  X,
 } from 'lucide-react';
-import api from '../../api/client';
+import api, { getErrorMessage } from '../../api/client';
 
 export const TestConstructorPage = () => {
   const { testId } = useParams();
@@ -28,6 +33,8 @@ export const TestConstructorPage = () => {
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
   const [isPublished, setIsPublished] = useState(true);
   const [allowGuest, setAllowGuest] = useState(false);
+  const [disallowRetake, setDisallowRetake] = useState(true);
+  const [maxAttempts, setMaxAttempts] = useState(1);
   const [publicToken, setPublicToken] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -36,6 +43,15 @@ export const TestConstructorPage = () => {
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Банк вопросов: модалка импорта
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [bankQuestions, setBankQuestions] = useState([]);
+  const [bankDepartments, setBankDepartments] = useState(['Все', 'Общий', 'Бухгалтерия', 'Продажи', 'IT', 'Логистика']);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankSearch, setBankSearch] = useState('');
+  const [bankDept, setBankDept] = useState('Все');
+  const [selectedBankIds, setSelectedBankIds] = useState([]);
 
   useEffect(() => {
     if (isEditing) {
@@ -70,6 +86,14 @@ export const TestConstructorPage = () => {
       setAllowGuest(Boolean(t.allow_guest));
       setPublicToken(t.public_token || '');
 
+      if (t.max_attempts !== undefined && t.max_attempts !== null) {
+        setDisallowRetake(true);
+        setMaxAttempts(t.max_attempts);
+      } else {
+        setDisallowRetake(false);
+        setMaxAttempts(1);
+      }
+
       if (t.time_limit_minutes) {
         setHasTimeLimit(true);
         setTimeLimitMinutes(t.time_limit_minutes);
@@ -87,7 +111,7 @@ export const TestConstructorPage = () => {
       );
     } catch (err) {
       console.error('Ошибка загрузки теста:', err);
-      setError('Не удалось загрузить параметры теста.');
+      setError(getErrorMessage(err, 'Не удалось загрузить параметры теста.'));
     } finally {
       setLoading(false);
     }
@@ -258,6 +282,7 @@ export const TestConstructorPage = () => {
         description: description.trim(),
         time_limit_minutes: hasTimeLimit ? parseInt(timeLimitMinutes, 10) : null,
         passing_score: parseInt(passingScore, 10),
+        max_attempts: disallowRetake ? (parseInt(maxAttempts, 10) || 1) : null,
         is_published: publishStatus,
         allow_guest: allowGuest,
         public_token: publicToken || null,
@@ -285,9 +310,89 @@ export const TestConstructorPage = () => {
       navigate('/admin/tests');
     } catch (err) {
       console.error('Ошибка сохранения теста:', err);
-      setError(err.response?.data?.detail || 'Не удалось сохранить тест. Проверьте правильность полей.');
+      setError(getErrorMessage(err, 'Не удалось сохранить тест. Проверьте правильность полей.'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openBankModal = async () => {
+    setIsBankModalOpen(true);
+    setSelectedBankIds([]);
+    setBankSearch('');
+    setBankDept('Все');
+    try {
+      setBankLoading(true);
+      const [qRes, dRes] = await Promise.all([
+        api.get('/bank-questions'),
+        api.get('/bank-questions/departments'),
+      ]);
+      setBankQuestions(qRes.data || []);
+      if (Array.isArray(dRes.data)) {
+        setBankDepartments(['Все', ...dRes.data]);
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки банка вопросов:', err);
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
+  const toggleBankQuestionSelect = (id) => {
+    setSelectedBankIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const filteredBankQuestions = bankQuestions.filter((q) => {
+    const matchesDept = bankDept === 'Все' || q.department === bankDept;
+    const matchesSearch =
+      !bankSearch.trim() ||
+      q.text.toLowerCase().includes(bankSearch.toLowerCase()) ||
+      q.department.toLowerCase().includes(bankSearch.toLowerCase());
+    return matchesDept && matchesSearch;
+  });
+
+  const toggleSelectAllBank = () => {
+    const visibleIds = filteredBankQuestions.map((q) => q.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedBankIds.includes(id));
+    if (allSelected) {
+      setSelectedBankIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      setSelectedBankIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleImportFromBank = () => {
+    const toImport = bankQuestions.filter((bq) => selectedBankIds.includes(bq.id));
+    const newItems = toImport.map((bq, idx) => ({
+      id: Date.now() + idx,
+      text: bq.text,
+      question_type: bq.question_type,
+      points: bq.points || 10,
+      order: questions.length + idx,
+      options: (bq.options || []).map((opt) => ({
+        text: opt.text,
+        is_correct: opt.is_correct,
+      })),
+    }));
+    setQuestions((prev) => [...prev, ...newItems]);
+    setIsBankModalOpen(false);
+    setSelectedBankIds([]);
+  };
+
+  const getQuestionTypeLabel = (type) => {
+    switch (type) {
+      case 'single_choice':
+        return 'Один вариант';
+      case 'multiple_choice':
+        return 'Несколько вариантов';
+      case 'manual_review':
+        return 'Ручная проверка';
+      case 'text':
+        return 'Текстовый ответ';
+      default:
+        return type;
     }
   };
 
@@ -497,6 +602,25 @@ export const TestConstructorPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Retake Limit Toggle */}
+            <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800/90 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={disallowRetake}
+                  onChange={(e) => setDisallowRetake(e.target.checked)}
+                  className="rounded bg-slate-900 border-slate-700 text-slate-200 focus:ring-slate-500 w-4 h-4"
+                />
+                <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                  Запретить повторное прохождение
+                </span>
+              </label>
+              <p className="text-[11px] text-slate-400 pl-6">
+                Сотрудник сможет пройти тестирование только 1 раз. При включении тумблера повторные попытки будут строго заблокированы платформой.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -510,7 +634,16 @@ export const TestConstructorPage = () => {
           </h2>
 
           {/* Quick Add Question Buttons */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={openBankModal}
+              className="btn-secondary text-[11px] py-1 px-3 flex items-center gap-1.5 text-sky-400 border-sky-500/30 hover:bg-sky-950/40 font-medium shadow-sm"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Добавить из банка вопросов</span>
+            </button>
+            <div className="w-px h-4 bg-slate-800 mx-1 hidden sm:block" />
             <button
               type="button"
               onClick={() => addQuestion('single_choice')}
@@ -748,6 +881,157 @@ export const TestConstructorPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Модальное окно импорта вопросов из банка вопросов */}
+      {isBankModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative my-8 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-sky-400" />
+                <h3 className="text-base font-bold text-white">
+                  Импорт вопросов из банка вопросов
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBankModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Фильтры банка: Поиск + Отделы */}
+            <div className="space-y-3 pb-3 border-b border-slate-800/80 flex-shrink-0">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Поиск по тексту вопроса или теме..."
+                  value={bankSearch}
+                  onChange={(e) => setBankSearch(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                />
+              </div>
+
+              {/* Табы отделов */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                {bankDepartments.map((dept) => (
+                  <button
+                    key={dept}
+                    type="button"
+                    onClick={() => setBankDept(dept)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                      bankDept === dept
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                        : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
+                  >
+                    {dept}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                <button
+                  type="button"
+                  onClick={toggleSelectAllBank}
+                  className="text-sky-400 hover:text-sky-300 font-medium"
+                >
+                  {filteredBankQuestions.length > 0 &&
+                  filteredBankQuestions.every((q) => selectedBankIds.includes(q.id))
+                    ? 'Снять выбор со всех'
+                    : 'Выбрать все отфильтрованные'}
+                </button>
+                <span>Найдено в банке: {filteredBankQuestions.length}</span>
+              </div>
+            </div>
+
+            {/* Список вопросов */}
+            <div className="flex-1 overflow-y-auto py-3 space-y-2.5 min-h-[220px]">
+              {bankLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 rounded-xl bg-slate-950/70 border border-slate-800 animate-pulse" />
+                  ))}
+                </div>
+              ) : filteredBankQuestions.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  {bankQuestions.length === 0
+                    ? 'Банк вопросов пуст. Создайте вопросы в разделе «Банк вопросов».'
+                    : 'По заданному фильтру и поисковому запросу ничего не найдено.'}
+                </div>
+              ) : (
+                filteredBankQuestions.map((bq) => {
+                  const isSelected = selectedBankIds.includes(bq.id);
+                  return (
+                    <div
+                      key={bq.id}
+                      onClick={() => toggleBankQuestionSelect(bq.id)}
+                      className={`p-3.5 rounded-xl border transition-colors cursor-pointer flex items-start gap-3 ${
+                        isSelected
+                          ? 'bg-sky-950/20 border-sky-500/40 text-slate-100'
+                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'
+                      }`}
+                    >
+                      <div className="pt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}} // handled by parent onClick
+                          className="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-sky-500 w-4 h-4 cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px]">
+                            {bq.department}
+                          </span>
+                          <span className="text-slate-400 text-[11px]">
+                            {getQuestionTypeLabel(bq.question_type)}
+                          </span>
+                          <span className="text-slate-500 font-mono text-[11px]">
+                            {bq.points} б.
+                          </span>
+                        </div>
+                        <p className="text-slate-200 font-medium leading-relaxed">
+                          {bq.text}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Футер модалки */}
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between flex-shrink-0">
+              <div className="text-xs text-slate-300">
+                Выбрано вопросов: <strong className="text-white">{selectedBankIds.length}</strong>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsBankModalOpen(false)}
+                  className="btn-secondary text-xs"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  onClick={handleImportFromBank}
+                  disabled={selectedBankIds.length === 0}
+                  className="btn-primary text-xs flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Импортировать выбранные ({selectedBankIds.length})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky Bottom Save Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-3 shadow-xl">
