@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans min-h-screen antialiased;
+    background-color: #090d16;
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Minimalist Corporate Panels */
+  .glass-panel {
+    @apply bg-slate-900/90 border border-slate-800 shadow-sm rounded-xl;
+  }
+  
+  .glass-card {
+    @apply bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all duration-150 rounded-xl;
+  }
+
+  /* Strict Corporate Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-950 
+           bg-slate-100 hover:bg-white active:bg-slate-200 shadow-sm
+           transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-300 
+           bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:text-white hover:border-slate-700
+           transition-all duration-150 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-white 
+           bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600
+           transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-rose-300 
+           bg-rose-950/40 hover:bg-rose-900/50 border border-rose-900/60 active:scale-[0.99] transition-all duration-150;
+  }
+
+  .input-field {
+    @apply w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 
+           text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 
+           transition-all duration-150;
+  }
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
