@@ -84,6 +84,7 @@ class TestBase(BaseModel):
     time_limit_minutes: Optional[int] = Field(None, ge=1, le=1440)  # None = unlimited
     passing_score: int = Field(default=70, ge=0)
     max_attempts: Optional[int] = Field(default=1, ge=1)
+    is_assigned_only: bool = True
     is_published: bool = True
     allow_guest: bool = False
     public_token: Optional[str] = None
@@ -99,6 +100,7 @@ class TestUpdate(BaseModel):
     time_limit_minutes: Optional[int] = Field(None, ge=1, le=1440)
     passing_score: Optional[int] = Field(None, ge=0)
     max_attempts: Optional[int] = Field(None, ge=1)
+    is_assigned_only: Optional[bool] = None
     is_published: Optional[bool] = None
     allow_guest: Optional[bool] = None
     public_token: Optional[str] = None
@@ -112,6 +114,7 @@ class TestListItemResponse(BaseModel):
     time_limit_minutes: Optional[int] = None
     passing_score: int
     max_attempts: Optional[int] = 1
+    is_assigned_only: bool = True
     is_published: bool
     allow_guest: bool = False
     public_token: Optional[str] = None

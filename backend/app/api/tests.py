@@ -55,12 +55,20 @@ async def get_tests(
     )
 
     if current_user.role == "employee":
-        # Опубликованные или персонально назначенные
-        if assigned_map:
-            assigned_ids = list(assigned_map.keys())
-            stmt = stmt.where((Test.is_published.is_(True)) | (Test.id.in_(assigned_ids)))
+        # Сотруднику доступны только опубликованные тесты, которые:
+        # либо имеют общий доступ (is_assigned_only == False),
+        # либо персонально назначены данному сотруднику через TestAssignment
+        assigned_ids = list(assigned_map.keys())
+        if assigned_ids:
+            stmt = stmt.where(
+                Test.is_published.is_(True),
+                (Test.is_assigned_only.is_(False)) | (Test.id.in_(assigned_ids)),
+            )
         else:
-            stmt = stmt.where(Test.is_published.is_(True))
+            stmt = stmt.where(
+                Test.is_published.is_(True),
+                Test.is_assigned_only.is_(False),
+            )
 
     result = await db.execute(stmt)
     tests = result.scalars().all()
@@ -125,6 +133,7 @@ async def get_tests(
                 time_limit_minutes=t.time_limit_minutes,
                 passing_score=t.passing_score,
                 max_attempts=t.max_attempts,
+                is_assigned_only=t.is_assigned_only,
                 is_published=t.is_published,
                 allow_guest=t.allow_guest,
                 public_token=t.public_token,
@@ -162,6 +171,7 @@ async def create_test(
         time_limit_minutes=test_in.time_limit_minutes,
         passing_score=test_in.passing_score,
         max_attempts=test_in.max_attempts,
+        is_assigned_only=test_in.is_assigned_only,
         is_published=test_in.is_published,
         allow_guest=test_in.allow_guest,
         public_token=public_token,
@@ -226,16 +236,19 @@ async def get_test(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    # Если сотрудник и тест не опубликован, проверяем, назначен ли тест персонально
-    if current_user.role == "employee" and not test.is_published:
-        assign_check = await db.execute(
-            select(TestAssignment).where(
-                TestAssignment.test_id == test_id,
-                TestAssignment.user_id == current_user.id,
+    # Если сотрудник: проверка статуса публикации и персонального назначения
+    if current_user.role == "employee":
+        if not test.is_published:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+        if test.is_assigned_only:
+            assign_check = await db.execute(
+                select(TestAssignment).where(
+                    TestAssignment.test_id == test_id,
+                    TestAssignment.user_id == current_user.id,
+                )
             )
-        )
-        if not assign_check.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не опубликован")
+            if not assign_check.scalar_one_or_none():
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест вам не назначен")
 
     tot_points = sum(q.points for q in test.questions)
 
@@ -278,6 +291,8 @@ async def update_test(
         test.passing_score = test_in.passing_score
     if test_in.max_attempts is not None:
         test.max_attempts = test_in.max_attempts
+    if test_in.is_assigned_only is not None:
+        test.is_assigned_only = test_in.is_assigned_only
     if test_in.is_published is not None:
         test.is_published = test_in.is_published
 

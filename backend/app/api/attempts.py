@@ -48,16 +48,24 @@ async def start_attempt(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    if current_user.role == "employee" and not test.is_published:
-        # Проверяем, назначен ли тест персонально
-        assign_check = await db.execute(
-            select(TestAssignment).where(
-                TestAssignment.test_id == test_id,
-                TestAssignment.user_id == current_user.id,
-            )
-        )
-        if not assign_check.scalar_one_or_none():
+    if current_user.role == "employee":
+        if not test.is_published:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест еще не опубликован")
+
+        # Строгая проверка персонального назначения для тестов с ограниченным доступом
+        if test.is_assigned_only:
+            assign_check = await db.execute(
+                select(TestAssignment).where(
+                    TestAssignment.test_id == test_id,
+                    TestAssignment.user_id == current_user.id,
+                )
+            )
+            assignment = assign_check.scalar_one_or_none()
+            if not assignment:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Этот тест вам не назначен",
+                )
 
     now = datetime.now(timezone.utc)
 

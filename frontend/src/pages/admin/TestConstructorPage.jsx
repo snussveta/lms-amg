@@ -16,6 +16,7 @@ import {
   Search,
   ShieldCheck,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
@@ -33,6 +34,7 @@ export const TestConstructorPage = () => {
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
   const [isPublished, setIsPublished] = useState(true);
   const [allowGuest, setAllowGuest] = useState(false);
+  const [isAssignedOnly, setIsAssignedOnly] = useState(true);
   const [disallowRetake, setDisallowRetake] = useState(true);
   const [maxAttempts, setMaxAttempts] = useState(1);
   const [publicToken, setPublicToken] = useState('');
@@ -83,6 +85,7 @@ export const TestConstructorPage = () => {
       setDescription(t.description || '');
       setPassingScore(t.passing_score);
       setIsPublished(t.is_published);
+      setIsAssignedOnly(t.is_assigned_only !== undefined && t.is_assigned_only !== null ? Boolean(t.is_assigned_only) : true);
       setAllowGuest(Boolean(t.allow_guest));
       setPublicToken(t.public_token || '');
 
@@ -283,6 +286,7 @@ export const TestConstructorPage = () => {
         time_limit_minutes: hasTimeLimit ? parseInt(timeLimitMinutes, 10) : null,
         passing_score: parseInt(passingScore, 10),
         max_attempts: disallowRetake ? (parseInt(maxAttempts, 10) || 1) : null,
+        is_assigned_only: isAssignedOnly,
         is_published: publishStatus,
         allow_guest: allowGuest,
         public_token: publicToken || null,
@@ -620,6 +624,64 @@ export const TestConstructorPage = () => {
               <p className="text-[11px] text-slate-400 pl-6">
                 Сотрудник сможет пройти тестирование только 1 раз. При включении тумблера повторные попытки будут строго заблокированы платформой.
               </p>
+            </div>
+
+            {/* Visibility / Access Mode Selection */}
+            <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800/90 space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+                <Users className="w-3.5 h-3.5 text-slate-400" />
+                <span>Видимость и права доступа к тесту</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <label
+                  className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
+                    isAssignedOnly
+                      ? 'bg-slate-900 border-slate-600 text-white shadow-sm'
+                      : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <input
+                      type="radio"
+                      name="access_mode"
+                      checked={isAssignedOnly}
+                      onChange={() => setIsAssignedOnly(true)}
+                      className="text-slate-100 focus:ring-slate-500 bg-slate-900 border-slate-700 w-3.5 h-3.5"
+                    />
+                    <span className="text-xs font-semibold text-slate-100">
+                      Доступен только назначенным сотрудникам
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 pl-5 leading-relaxed">
+                    По умолчанию. Тест появится в каталоге исключительно у сотрудников, которым назначено персональное прохождение.
+                  </span>
+                </label>
+
+                <label
+                  className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
+                    !isAssignedOnly
+                      ? 'bg-slate-900 border-slate-600 text-white shadow-sm'
+                      : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <input
+                      type="radio"
+                      name="access_mode"
+                      checked={!isAssignedOnly}
+                      onChange={() => setIsAssignedOnly(false)}
+                      className="text-slate-100 focus:ring-slate-500 bg-slate-900 border-slate-700 w-3.5 h-3.5"
+                    />
+                    <span className="text-xs font-semibold text-slate-100">
+                      Общий доступ для всех сотрудников компании
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 pl-5 leading-relaxed">
+                    Тест доступен для прохождения всем авторизованным сотрудникам без необходимости индивидуального назначения.
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>

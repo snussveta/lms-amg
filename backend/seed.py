@@ -1,11 +1,13 @@
 import asyncio
 import logging
+from datetime import datetime, timezone, timedelta
 import secrets
 from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.core.security import get_password_hash
+from app.models.assignment import TestAssignment
 from app.models.question import Question, QuestionOption
 from app.models.test import Test
 from app.models.user import User
@@ -67,6 +69,7 @@ async def seed_data() -> None:
                 description="Обязательное корпоративное тестирование по защите конфиденциальной информации, противодействию фишингу и регламентам информационной безопасности AMG.",
                 time_limit_minutes=15,
                 passing_score=70,
+                is_assigned_only=True,
                 is_published=True,
                 allow_guest=True,
                 public_token=secrets.token_urlsafe(16),
@@ -120,10 +123,10 @@ async def seed_data() -> None:
             db.add(q3)
             await db.flush()
 
-            # Вопрос 4: Текстовый ответ с ключевым словом (text)
+            # Вопрос 4: Текстовый ввод (text)
             q4 = Question(
                 test_id=test.id,
-                text="Назовите общепринятую аббревиатуру технологии двухфакторной или многофакторной аутентификации (3 буквы на латинице):",
+                text="Как называется аббревиатура метода защиты, требующего подтверждения входа в систему вторым фактором (например, кодом из SMS или приложения)?",
                 question_type="text",
                 points=20,
                 order=3,
@@ -137,7 +140,79 @@ async def seed_data() -> None:
 
             logger.info("Демонстрационный тест и вопросы успешно инициализированы.")
 
-        # 5. Seed Bank Questions across departments
+        # 5. Проверка и создание назначения для тестового сотрудника
+        first_test_res = await db.execute(select(Test).order_by(Test.id.asc()))
+        first_test = first_test_res.scalars().first()
+        if first_test and demo_emp:
+            res_assign = await db.execute(
+                select(TestAssignment).where(
+                    TestAssignment.test_id == first_test.id,
+                    TestAssignment.user_id == demo_emp.id,
+                )
+            )
+            if not res_assign.scalar_one_or_none():
+                logger.info(f"Назначение теста '{first_test.title}' сотруднику {demo_emp.email}...")
+                assign = TestAssignment(
+                    test_id=first_test.id,
+                    user_id=demo_emp.id,
+                    assigned_by_id=superadmin.id,
+                    due_date=datetime.now(timezone.utc) + timedelta(days=7),
+                    status="pending",
+                )
+                db.add(assign)
+                await db.flush()
+
+        # 6. Второй демо-тест: Общекорпоративный (общий доступ для всех сотрудников)
+        gen_test_res = await db.execute(
+            select(Test).where(Test.title == "Корпоративный кодекс и ценности AMG")
+        )
+        if not gen_test_res.scalar_one_or_none():
+            logger.info("Создание общекорпоративного теста: 'Корпоративный кодекс и ценности AMG'...")
+            gen_test = Test(
+                title="Корпоративный кодекс и ценности AMG",
+                description="Вводный общекорпоративный тест для всех сотрудников компании со свободным доступом.",
+                time_limit_minutes=20,
+                passing_score=80,
+                is_assigned_only=False,
+                is_published=True,
+                allow_guest=False,
+                author_id=superadmin.id,
+            )
+            db.add(gen_test)
+            await db.flush()
+
+            gq1 = Question(
+                test_id=gen_test.id,
+                text="Какая главная цель является приоритетом компании AMG в работе с клиентами?",
+                question_type="single_choice",
+                points=25,
+                order=0,
+            )
+            db.add(gq1)
+            await db.flush()
+            db.add_all([
+                QuestionOption(question_id=gq1.id, text="Безупречное качество услуг и долгосрочное доверие", is_correct=True),
+                QuestionOption(question_id=gq1.id, text="Максимальная сиюминутная прибыль любой ценой", is_correct=False),
+                QuestionOption(question_id=gq1.id, text="Отказ от внедрения современных технологий", is_correct=False),
+            ])
+
+            gq2 = Question(
+                test_id=gen_test.id,
+                text="Какие принципы определяют стандарты деловой коммуникации внутри AMG?",
+                question_type="multiple_choice",
+                points=25,
+                order=1,
+            )
+            db.add(gq2)
+            await db.flush()
+            db.add_all([
+                QuestionOption(question_id=gq2.id, text="Взаимное уважение и конструктивный диалог", is_correct=True),
+                QuestionOption(question_id=gq2.id, text="Прозрачность решений и ответственность за результат", is_correct=True),
+                QuestionOption(question_id=gq2.id, text="Игнорирование обратной связи от коллег", is_correct=False),
+            ])
+            await db.flush()
+
+        # 7. Seed Bank Questions across departments
         res_bq = await db.execute(select(BankQuestion))
         if not res_bq.scalars().first():
             logger.info("Инициализация банка вопросов по отделам...")

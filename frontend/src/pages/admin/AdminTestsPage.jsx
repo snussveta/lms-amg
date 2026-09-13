@@ -149,27 +149,39 @@ export const AdminTestsPage = () => {
                     </td>
 
                     <td className="py-3.5 px-5">
-                      <button
-                        onClick={() => handleTogglePublish(t)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
-                          t.is_published
-                            ? 'bg-emerald-950/40 text-emerald-300 border-emerald-900/60 hover:bg-emerald-900/50'
-                            : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-800'
-                        }`}
-                        title="Нажмите для переключения статуса"
-                      >
-                        {t.is_published ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3" />
-                            Опубликован
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3" />
-                            Черновик
-                          </>
-                        )}
-                      </button>
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <button
+                          onClick={() => handleTogglePublish(t)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                            t.is_published
+                              ? 'bg-emerald-950/40 text-emerald-300 border-emerald-900/60 hover:bg-emerald-900/50'
+                              : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-800'
+                          }`}
+                          title="Нажмите для переключения статуса"
+                        >
+                          {t.is_published ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              Опубликован
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-3 h-3" />
+                              Черновик
+                            </>
+                          )}
+                        </button>
+
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
+                            t.is_assigned_only
+                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                              : 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                          }`}
+                        >
+                          {t.is_assigned_only ? 'Только назначенные' : 'Общий доступ'}
+                        </span>
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-5">
