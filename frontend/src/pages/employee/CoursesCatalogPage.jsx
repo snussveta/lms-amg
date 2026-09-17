@@ -32,7 +32,12 @@ export const CoursesCatalogPage = () => {
       setError('');
       const params = {};
       if (selectedDept !== 'Все') params.department = selectedDept;
-      const res = await api.get('/courses', { params });
+      let res;
+      try {
+        res = await api.get('/courses/my', { params });
+      } catch {
+        res = await api.get('/courses', { params });
+      }
       setCourses(res.data || []);
     } catch (err) {
       console.error('Ошибка загрузки курсов:', err);
@@ -145,10 +150,15 @@ export const CoursesCatalogPage = () => {
                     </div>
                   )}
 
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900/90 backdrop-blur border border-slate-700 text-slate-200 uppercase tracking-wider">
                       {course.department_tag}
                     </span>
+                    {course.is_assigned && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-950/90 backdrop-blur border border-sky-700 text-sky-300">
+                        Назначен
+                      </span>
+                    )}
                   </div>
 
                   {isCompleted && (
@@ -170,6 +180,13 @@ export const CoursesCatalogPage = () => {
                     <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                       {course.description || 'Описание курса...'}
                     </p>
+
+                    {course.assignment_deadline && !isCompleted && (
+                      <div className="text-[11px] text-amber-400 font-medium flex items-center gap-1.5 pt-1">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>Срок сдачи: {new Date(course.assignment_deadline).toLocaleDateString('ru-RU')}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2 pt-2 border-t border-slate-800/80">

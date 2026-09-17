@@ -42,21 +42,60 @@ async def seed_data() -> None:
         else:
             logger.info(f"Суперадминистратор {superadmin_email} уже существует.")
 
-        # 3. Seed Demo Employee
-        demo_emp_email = "employee@company.com"
-        res_emp = await db.execute(select(User).where(User.email == demo_emp_email))
-        demo_emp = res_emp.scalar_one_or_none()
-        if not demo_emp:
-            logger.info(f"Создание тестового сотрудника: {demo_emp_email}")
-            demo_emp = User(
-                email=demo_emp_email,
-                full_name="Алексей Смирнов (Сотрудник)",
-                hashed_password=get_password_hash("employee123"),
-                role="employee",
-                is_active=True,
-            )
-            db.add(demo_emp)
-            await db.flush()
+        # 3. Seed Demo Employees across AutoMall branches
+        demo_employees_data = [
+            {
+                "email": "employee@company.com",
+                "full_name": "Алексей Смирнов (Сотрудник)",
+                "role": "employee",
+                "branch": "AutoMall Центральный",
+                "department": "СТО",
+            },
+            {
+                "email": "mechanic.north@automall.ru",
+                "full_name": "Иван Кузнецов (Механик СТО)",
+                "role": "employee",
+                "branch": "AutoMall Север",
+                "department": "СТО",
+            },
+            {
+                "email": "advisor.south@automall.ru",
+                "full_name": "Дмитрий Новиков (Мастер-приемщик)",
+                "role": "employee",
+                "branch": "AutoMall Юг",
+                "department": "Продажи",
+            },
+            {
+                "email": "warehouse.east@automall.ru",
+                "full_name": "Елена Морозова (Кладовщик)",
+                "role": "employee",
+                "branch": "AutoMall Восток",
+                "department": "Склад",
+            },
+        ]
+
+        demo_emp = None
+        for emp_info in demo_employees_data:
+            res_emp = await db.execute(select(User).where(User.email == emp_info["email"]))
+            emp_obj = res_emp.scalar_one_or_none()
+            if not emp_obj:
+                logger.info(f"Создание сотрудника {emp_info['email']} ({emp_info['branch']})")
+                emp_obj = User(
+                    email=emp_info["email"],
+                    full_name=emp_info["full_name"],
+                    hashed_password=get_password_hash("employee123"),
+                    role=emp_info["role"],
+                    branch=emp_info["branch"],
+                    department=emp_info["department"],
+                    is_active=True,
+                )
+                db.add(emp_obj)
+                await db.flush()
+            else:
+                emp_obj.branch = emp_info["branch"]
+                emp_obj.department = emp_info["department"]
+            if emp_info["email"] == "employee@company.com":
+                demo_emp = emp_obj
 
         # 4. Seed Demo Corporate Test
         res_test = await db.execute(select(Test))
@@ -454,6 +493,27 @@ async def seed_data() -> None:
             db.add(lesson4)
 
             logger.info("Демо-курс с модулями и уроками успешно создан.")
+
+        # Ensure demo employee is assigned to the course
+        from app.models.course import CourseAssignment
+        res_any_course = await db.execute(select(Course).order_by(Course.id.asc()))
+        first_course = res_any_course.scalars().first()
+        if first_course and demo_emp:
+            res_as = await db.execute(
+                select(CourseAssignment).where(
+                    CourseAssignment.course_id == first_course.id,
+                    CourseAssignment.user_id == demo_emp.id,
+                )
+            )
+            if not res_as.scalar_one_or_none():
+                db.add(CourseAssignment(
+                    course_id=first_course.id,
+                    user_id=demo_emp.id,
+                    assigned_by_id=superadmin.id,
+                    deadline=datetime.now(timezone.utc) + timedelta(days=7),
+                    is_completed=False,
+                ))
+                logger.info("Демо-курс успешно назначен сотруднику Алексей Смирнов.")
 
         await db.commit()
         logger.info("Сид данных успешно завершен.")

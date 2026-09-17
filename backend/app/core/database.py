@@ -84,11 +84,28 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1;",
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_assigned_only BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE bank_questions ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Общий';",
+                    # Users branch & department
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(100) DEFAULT 'AutoMall Центральный';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'СТО';",
                     # Courses schema checks
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS cover_image_url VARCHAR(500);",
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS department_tag VARCHAR(100) DEFAULT 'СТО';",
+                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE course_lessons ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT;",
                     "ALTER TABLE user_lesson_progress ADD COLUMN IF NOT EXISTS last_timestamp_seconds DOUBLE PRECISION DEFAULT 0.0;",
+                    # Course Assignments table
+                    """CREATE TABLE IF NOT EXISTS course_assignments (
+                        id SERIAL PRIMARY KEY,
+                        course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+                        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        assigned_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                        assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        deadline TIMESTAMP WITH TIME ZONE,
+                        is_completed BOOLEAN DEFAULT FALSE NOT NULL,
+                        CONSTRAINT uq_course_user_assignment UNIQUE (course_id, user_id)
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_course_assignments_course_id ON course_assignments(course_id);",
+                    "CREATE INDEX IF NOT EXISTS ix_course_assignments_user_id ON course_assignments(user_id);",
                 ]
                 for stmt in migration_sqls:
                     try:

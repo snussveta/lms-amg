@@ -6,6 +6,8 @@ from pydantic import BaseModel, EmailStr, Field
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
+    branch: Optional[str] = "AutoMall Центральный"
+    department: Optional[str] = "СТО"
 
 
 class UserCreate(UserBase):

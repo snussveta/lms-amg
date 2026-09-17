@@ -16,6 +16,7 @@ import {
   FileText,
   GraduationCap,
   HelpCircle,
+  Info,
   Lock,
   Menu,
   Play,
@@ -23,6 +24,7 @@ import {
   RotateCcw,
   Send,
   Sparkles,
+  Trophy,
   Video,
   X,
 } from 'lucide-react';
@@ -41,7 +43,6 @@ export const CoursePlayerPage = () => {
 
   // Video playback & syncing state
   const videoRef = useRef(null);
-  const [videoProgressSaved, setVideoProgressSaved] = useState(false);
 
   // Embedded Quiz state
   const [quizAttempt, setQuizAttempt] = useState(null);
@@ -50,7 +51,7 @@ export const CoursePlayerPage = () => {
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
 
-  // Load course state on initial mount
+  // Load course state on initial mount or when ID changes
   useEffect(() => {
     fetchCourseLearnState();
   }, [id]);
@@ -59,21 +60,28 @@ export const CoursePlayerPage = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await api.get(`/courses/${id}/learn`);
+
+      let res;
+      try {
+        res = await api.get(`/v1/courses/${id}/learn`);
+      } catch {
+        res = await api.get(`/courses/${id}/learn`);
+      }
+
       const data = res.data;
       setCourseData(data);
 
-      // Find active lesson: either preserved, or current_lesson_id, or first unlocked
+      // Find active lesson: preserved, or current_lesson_id, or first unlocked
       let targetLesson = null;
       const allLessons = [];
-      (data.modules || []).forEach((m) => {
-        (m.lessons || []).forEach((l) => allLessons.push(l));
+      (data?.modules || []).forEach((m) => {
+        (m?.lessons || []).forEach((l) => allLessons.push(l));
       });
 
       if (preserveLessonId) {
         targetLesson = allLessons.find((l) => l.id === preserveLessonId);
       }
-      if (!targetLesson && data.current_lesson_id) {
+      if (!targetLesson && data?.current_lesson_id) {
         targetLesson = allLessons.find((l) => l.id === data.current_lesson_id);
       }
       if (!targetLesson && allLessons.length > 0) {
@@ -83,7 +91,7 @@ export const CoursePlayerPage = () => {
       setActiveLesson(targetLesson);
     } catch (err) {
       console.error('Ошибка загрузки плеера курса:', err);
-      setError(getErrorMessage(err, 'Не удалось загрузить курс.'));
+      setError(getErrorMessage(err, 'Не удалось загрузить материалы курса.'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +107,11 @@ export const CoursePlayerPage = () => {
 
     // Restore last timestamp offset
     if (activeLesson.last_timestamp_seconds && activeLesson.last_timestamp_seconds > 0) {
-      videoElement.currentTime = activeLesson.last_timestamp_seconds;
+      try {
+        videoElement.currentTime = activeLesson.last_timestamp_seconds;
+      } catch (e) {
+        console.warn('Не удалось восстановить позицию видео:', e);
+      }
     }
 
     // Interval to sync playback position to backend every 10 seconds
@@ -133,7 +145,7 @@ export const CoursePlayerPage = () => {
     if (!video || !video.duration) return;
 
     // If 90%+ watched and not yet completed
-    if (video.currentTime / video.duration >= 0.9 && activeLesson.status !== 'completed') {
+    if (video.currentTime / video.duration >= 0.9 && activeLesson?.status !== 'completed') {
       syncVideoProgress(video.currentTime, true);
     }
   };
@@ -146,36 +158,52 @@ export const CoursePlayerPage = () => {
   };
 
   // ----------------------------------------------------
-  // Mark Longread / Presentation as Completed
+  // Mark Step as Completed & Advance to Next
   // ----------------------------------------------------
   const handleMarkStepCompleted = async () => {
     if (!activeLesson) return;
     try {
-      await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
-        status: 'completed',
-        last_timestamp_seconds: 0,
-      });
+      // 1. Send complete signal to dedicated complete endpoint
+      try {
+        await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/complete`);
+      } catch {
+        try {
+          await api.post(`/courses/${id}/lessons/${activeLesson.id}/complete`);
+        } catch {
+          await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
+            status: 'completed',
+            last_timestamp_seconds: 0,
+          });
+        }
+      }
 
-      confetti({ particleCount: 70, spread: 50, origin: { y: 0.7 } });
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
 
-      // Refresh state and advance to next lesson
-      const res = await api.get(`/courses/${id}/learn`);
-      setCourseData(res.data);
+      // 2. Refresh state and advance to next lesson
+      let res;
+      try {
+        res = await api.get(`/v1/courses/${id}/learn`);
+      } catch {
+        res = await api.get(`/courses/${id}/learn`);
+      }
+      const updatedData = res.data;
+      setCourseData(updatedData);
 
       const allLessons = [];
-      (res.data.modules || []).forEach((m) => {
-        (m.lessons || []).forEach((l) => allLessons.push(l));
+      (updatedData?.modules || []).forEach((m) => {
+        (m?.lessons || []).forEach((l) => allLessons.push(l));
       });
 
       const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
       if (currentIdx !== -1 && currentIdx + 1 < allLessons.length) {
         const nextLesson = allLessons[currentIdx + 1];
-        if (!nextLesson.is_locked) {
-          setActiveLesson(nextLesson);
-        }
+        setActiveLesson(nextLesson);
+      } else if (currentIdx === allLessons.length - 1) {
+        // Entire course finished!
+        confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
       }
     } catch (err) {
-      alert(getErrorMessage(err, 'Ошибка при сохранении шага.'));
+      alert(getErrorMessage(err, 'Ошибка при фиксации шага.'));
     }
   };
 
@@ -197,7 +225,6 @@ export const CoursePlayerPage = () => {
       setQuizResult(null);
       setQuizAnswers({});
 
-      // Start attempt for this test
       const res = await api.post(`/attempts/start/${testId}`);
       setQuizAttempt(res.data);
     } catch (err) {
@@ -213,7 +240,7 @@ export const CoursePlayerPage = () => {
       let nextOptions = [];
       if (isMultiple) {
         nextOptions = current.includes(optionId)
-          ? current.filter((id) => id !== optionId)
+          ? current.filter((opt) => opt !== optionId)
           : [...current, optionId];
       } else {
         nextOptions = [optionId];
@@ -248,9 +275,13 @@ export const CoursePlayerPage = () => {
       if (result.is_passed) {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         // Mark lesson progress completed
-        await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
-          status: 'completed',
-        });
+        try {
+          await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/complete`);
+        } catch {
+          await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
+            status: 'completed',
+          });
+        }
         fetchCourseLearnState(activeLesson.id);
       }
     } catch (err) {
@@ -271,43 +302,210 @@ export const CoursePlayerPage = () => {
     setActiveLesson(lesson);
   };
 
-  // Helper to parse longread blocks
-  const parseBlocks = (jsonStr) => {
-    if (!jsonStr) return [];
-    try {
-      if (Array.isArray(jsonStr)) return jsonStr;
-      return JSON.parse(jsonStr);
-    } catch {
-      return [{ type: 'paragraph', text: jsonStr }];
+  // Safe parsing helper for longread blocks
+  const parseBlocks = (content) => {
+    if (!content) return [];
+    let parsed = content;
+    if (typeof content === 'string') {
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        return [{ type: 'paragraph', text: content }];
+      }
     }
+    if (!Array.isArray(parsed)) {
+      if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.blocks)) {
+          parsed = parsed.blocks;
+        } else {
+          parsed = [parsed];
+        }
+      } else {
+        parsed = [{ type: 'paragraph', text: String(parsed || '') }];
+      }
+    }
+    return parsed.map((block) => {
+      if (typeof block === 'string') {
+        return { type: 'paragraph', text: block };
+      }
+      if (!block || typeof block !== 'object') {
+        return { type: 'paragraph', text: String(block || '') };
+      }
+      return block;
+    });
   };
 
+  // Video streaming URL builder
+  const getVideoUrl = (lesson) => {
+    if (!lesson || !lesson.file_url) return '';
+    let url = lesson.file_url.trim();
+    if (!url) return '';
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    if (url.startsWith('/api/v1/media/stream/')) {
+      // standard v1 format
+    } else if (url.startsWith('/api/media/stream/')) {
+      url = url.replace('/api/media/stream/', '/api/v1/media/stream/');
+    } else if (url.startsWith('/')) {
+      // other local path
+    } else {
+      url = `/api/v1/media/stream/${url}`;
+    }
+
+    const token = localStorage.getItem('token');
+    if (token && !url.includes('token=')) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}token=${encodeURIComponent(token)}`;
+    }
+    return url;
+  };
+
+  // ====================================================
+  // 1. LOADING SKELETON STATE
+  // ====================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-slate-400">Подготовка интерактивного курса...</span>
+      <div className="min-h-[calc(100vh-56px)] flex flex-col bg-slate-950 text-slate-100 animate-fade-in">
+        {/* Skeleton Top Bar */}
+        <div className="sticky top-14 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+            <div className="space-y-1.5 min-w-0">
+              <div className="w-44 sm:w-64 h-4 rounded bg-slate-800 animate-pulse" />
+              <div className="w-24 h-3 rounded bg-slate-800/60 animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-28 h-3 rounded bg-slate-800 animate-pulse hidden sm:block" />
+            <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Skeleton Main Workspace */}
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-80 border-r border-slate-800 bg-slate-900/60 p-4 space-y-4 hidden md:block shrink-0">
+            <div className="w-32 h-3.5 rounded bg-slate-800 animate-pulse" />
+            <div className="space-y-2 pt-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-10 rounded-lg bg-slate-800/40 animate-pulse" />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-1 p-6 sm:p-10 max-w-4xl mx-auto w-full space-y-6">
+            <div className="w-28 h-5 rounded bg-slate-800 animate-pulse" />
+            <div className="w-3/4 h-8 rounded bg-slate-800 animate-pulse" />
+            <div className="space-y-3 pt-4">
+              <div className="w-full h-4 rounded bg-slate-800/60 animate-pulse" />
+              <div className="w-full h-4 rounded bg-slate-800/60 animate-pulse" />
+              <div className="w-5/6 h-4 rounded bg-slate-800/60 animate-pulse" />
+            </div>
+            <div className="h-64 rounded-2xl bg-slate-800/30 animate-pulse mt-8 border border-slate-800/60" />
+          </div>
         </div>
       </div>
     );
   }
 
+  // ====================================================
+  // 2. ERROR STATE
+  // ====================================================
   if (error || !courseData) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="glass-panel max-w-md w-full p-6 text-center space-y-4">
-          <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
-          <h2 className="text-lg font-bold text-slate-100">Ошибка курса</h2>
-          <p className="text-xs text-slate-400">{error || 'Курс не найден'}</p>
-          <Link to="/" className="btn-primary text-xs inline-flex">
-            Вернуться в каталог
-          </Link>
+      <div className="min-h-[calc(100vh-56px)] bg-slate-950 flex items-center justify-center p-4">
+        <div className="glass-panel max-w-md w-full p-8 text-center space-y-5 border border-slate-800 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-rose-950/60 border border-rose-800/50 flex items-center justify-center mx-auto text-rose-400">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-100">Ошибка загрузки курса</h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              {error || 'Курс не найден или у вас нет доступа к его прохождению.'}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => fetchCourseLearnState()}
+              className="btn-secondary text-xs w-full sm:w-auto py-2.5 px-4 flex items-center justify-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Попробовать снова
+            </button>
+            <Link
+              to="/courses"
+              className="btn-primary text-xs w-full sm:w-auto py-2.5 px-5 flex items-center justify-center gap-1.5"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Каталог курсов
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Calculate lessons flat list
+  const allLessons = [];
+  (courseData.modules || []).forEach((m) => {
+    (m.lessons || []).forEach((l) => allLessons.push(l));
+  });
+
+  // ====================================================
+  // 3. EMPTY STATE (No modules or no lessons yet)
+  // ====================================================
+  if (!courseData.modules || courseData.modules.length === 0 || allLessons.length === 0) {
+    return (
+      <div className="min-h-[calc(100vh-56px)] bg-slate-950 flex flex-col text-slate-100">
+        <div className="sticky top-14 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              to="/courses"
+              className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              title="Вернуться к курсам"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-sm font-bold text-slate-100 truncate">
+                {courseData.title}
+              </h1>
+              <span className="text-[10px] text-slate-400 font-semibold">
+                {courseData.department_tag}
+              </span>
+            </div>
+          </div>
+          <Link to="/courses" className="btn-secondary text-xs py-1.5 px-3">
+            В каталог
+          </Link>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="glass-panel max-w-md w-full p-8 text-center space-y-4 border border-slate-800 shadow-xl">
+            <div className="w-14 h-14 rounded-2xl bg-amber-950/50 border border-amber-800/40 flex items-center justify-center mx-auto text-amber-400">
+              <BookOpen className="w-7 h-7" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-100">В курсе пока нет уроков</h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Методисты и авторы программы еще наполняют этот курс учебными материалами. Загляните сюда чуть позже или выберите другой курс.
+            </p>
+            <div className="pt-2">
+              <Link to="/courses" className="btn-primary text-xs py-2 px-5 inline-flex items-center gap-1.5">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Вернуться к каталогу курсов
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ====================================================
+  // 4. MAIN INTERACTIVE PLAYER INTERFACE
+  // ====================================================
   return (
     <div className="min-h-[calc(100vh-56px)] flex flex-col bg-slate-950 text-slate-100">
       {/* Top Header: iSpring Style Bar */}
@@ -329,7 +527,7 @@ export const CoursePlayerPage = () => {
               <span className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] font-bold text-slate-300">
                 {courseData.department_tag}
               </span>
-              <span>{activeLesson?.title || 'Загрузка...'}</span>
+              <span>{activeLesson?.title || 'Выберите шаг'}</span>
             </div>
           </div>
         </div>
@@ -338,21 +536,21 @@ export const CoursePlayerPage = () => {
         <div className="flex items-center gap-4 shrink-0">
           <div className="hidden sm:flex flex-col items-end">
             <div className="text-xs font-bold text-slate-200">
-              {courseData.progress_percent}% пройдено
+              {courseData.progress_percent || 0}% пройдено
             </div>
             <div className="text-[10px] text-slate-400">
-              {courseData.completed_lessons} из {courseData.total_lessons} уроков
+              {courseData.completed_lessons || 0} из {courseData.total_lessons || allLessons.length} уроков
             </div>
           </div>
           <div className="w-24 sm:w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 transition-all duration-300"
-              style={{ width: `${courseData.progress_percent}%` }}
+              style={{ width: `${courseData.progress_percent || 0}%` }}
             />
           </div>
 
           <Link
-            to="/"
+            to="/courses"
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             title="Выйти в каталог"
           >
@@ -380,7 +578,7 @@ export const CoursePlayerPage = () => {
 
               {/* Modules & Lessons List */}
               <div className="space-y-3">
-                {(courseData.modules || []).map((mod, modIdx) => (
+                {(courseData.modules || []).map((mod) => (
                   <div key={mod.id} className="space-y-1.5">
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
                       {mod.title}
@@ -405,7 +603,7 @@ export const CoursePlayerPage = () => {
                             onClick={() => handleSelectLesson(les)}
                             className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all ${
                               isCurrent
-                                ? 'bg-sky-950/70 border border-sky-800/80 text-white font-medium'
+                                ? 'bg-sky-950/70 border border-sky-800/80 text-white font-medium shadow-sm'
                                 : isLocked
                                 ? 'opacity-40 text-slate-500 hover:bg-slate-900 cursor-not-allowed'
                                 : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
@@ -427,7 +625,7 @@ export const CoursePlayerPage = () => {
                             </div>
 
                             <div className="text-slate-500 shrink-0">
-                              {iconMap[les.lesson_type]}
+                              {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
                             </div>
                           </div>
                         );
@@ -445,7 +643,10 @@ export const CoursePlayerPage = () => {
         {/* ==================================================== */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col justify-between">
           {!activeLesson ? (
-            <div className="text-center py-20 text-slate-500 text-sm">Выберите урок в меню слева.</div>
+            <div className="text-center py-20 text-slate-500 text-sm space-y-2">
+              <BookOpen className="w-8 h-8 mx-auto text-slate-600" />
+              <div>Выберите урок в меню слева для начала изучения.</div>
+            </div>
           ) : (
             <div className="max-w-4xl mx-auto w-full space-y-6">
               {/* Active Lesson Header Badge */}
@@ -483,21 +684,21 @@ export const CoursePlayerPage = () => {
                       if (block.type === 'h1') {
                         return (
                           <h3 key={idx} className="text-xl sm:text-2xl font-black text-slate-100 mt-6 pb-2 border-b border-slate-800">
-                            {block.text}
+                            {block.text || ''}
                           </h3>
                         );
                       }
                       if (block.type === 'h2') {
                         return (
                           <h4 key={idx} className="text-lg font-bold text-slate-200 mt-6">
-                            {block.text}
+                            {block.text || ''}
                           </h4>
                         );
                       }
                       if (block.type === 'paragraph') {
                         return (
                           <p key={idx} className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                            {block.text}
+                            {block.text || ''}
                           </p>
                         );
                       }
@@ -508,6 +709,7 @@ export const CoursePlayerPage = () => {
                           info: 'bg-sky-950/40 border-sky-800/80 text-sky-200',
                           success: 'bg-emerald-950/40 border-emerald-800/80 text-emerald-200',
                         };
+                        const variant = block.variant || 'info';
                         const calloutIcons = {
                           danger: <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />,
                           warning: <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />,
@@ -518,16 +720,16 @@ export const CoursePlayerPage = () => {
                           <div
                             key={idx}
                             className={`p-4 rounded-xl border flex items-start gap-3.5 my-4 ${
-                              calloutColors[block.variant] || calloutColors.info
+                              calloutColors[variant] || calloutColors.info
                             }`}
                           >
-                            {calloutIcons[block.variant] || calloutIcons.info}
+                            {calloutIcons[variant] || calloutIcons.info}
                             <div className="space-y-1">
                               <div className="text-xs font-bold uppercase tracking-wider">
                                 {block.title || 'Регламент'}
                               </div>
                               <div className="text-xs sm:text-sm leading-relaxed opacity-90">
-                                {block.text}
+                                {block.text || ''}
                               </div>
                             </div>
                           </div>
@@ -550,7 +752,7 @@ export const CoursePlayerPage = () => {
                           <div key={idx} className="my-6 space-y-2 text-center">
                             <img
                               src={block.url}
-                              alt={block.caption}
+                              alt={block.caption || 'Иллюстрация'}
                               className="rounded-xl max-h-[500px] mx-auto border border-slate-800 shadow-lg object-contain"
                             />
                             {block.caption && (
@@ -559,7 +761,12 @@ export const CoursePlayerPage = () => {
                           </div>
                         );
                       }
-                      return null;
+                      // Fallback for any unknown block structure
+                      return (
+                        <p key={idx} className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                          {block.text || (typeof block === 'string' ? block : '')}
+                        </p>
+                      );
                     })}
                   </div>
 
@@ -567,7 +774,7 @@ export const CoursePlayerPage = () => {
                   <div className="pt-8 border-t border-slate-800 flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
-                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
+                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
                     >
                       <Check className="w-4 h-4" />
                       Материал изучен → Следующий шаг
@@ -586,8 +793,9 @@ export const CoursePlayerPage = () => {
                       <video
                         ref={videoRef}
                         controls
+                        crossOrigin="use-credentials"
                         className="w-full h-full object-contain"
-                        src={activeLesson.file_url}
+                        src={getVideoUrl(activeLesson)}
                         onTimeUpdate={handleVideoTimeUpdate}
                         onEnded={handleVideoEnded}
                         preload="metadata"
@@ -618,7 +826,7 @@ export const CoursePlayerPage = () => {
                   <div className="pt-4 border-t border-slate-800 flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
-                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
+                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
                     >
                       <Check className="w-4 h-4" />
                       Урок просмотрен → Следующий шаг
@@ -642,7 +850,7 @@ export const CoursePlayerPage = () => {
                     ) : (
                       <div className="p-16 text-center text-slate-500 space-y-2">
                         <FileCode className="w-10 h-10 mx-auto text-slate-700" />
-                        <div className="text-sm">Файл презентации PDF еще не загружен</div>
+                        <div className="text-sm font-semibold">Файл презентации PDF еще не загружен</div>
                       </div>
                     )}
                   </div>
@@ -673,7 +881,7 @@ export const CoursePlayerPage = () => {
                         <div className="space-y-3">
                           <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
                           <h3 className="text-xl font-bold text-slate-100">Тестирование успешно сдано!</h3>
-                          <div className="text-sm text-emerald-300">
+                          <div className="text-sm text-emerald-300 font-semibold">
                             Результат: {quizResult.score_percent}% (Проходной балл: {quizResult.test?.passing_score || 70}%)
                           </div>
                           <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -682,9 +890,9 @@ export const CoursePlayerPage = () => {
                           <div className="pt-4">
                             <button
                               onClick={handleMarkStepCompleted}
-                              className="btn-primary text-xs py-2 px-6"
+                              className="btn-primary text-xs py-2.5 px-6 inline-flex items-center gap-2"
                             >
-                              Перейти к следующему разделу →
+                              Перейти к следующему шагу →
                             </button>
                           </div>
                         </div>
@@ -692,7 +900,7 @@ export const CoursePlayerPage = () => {
                         <div className="space-y-3">
                           <AlertTriangle className="w-14 h-14 text-rose-400 mx-auto" />
                           <h3 className="text-xl font-bold text-slate-100">Тест не сдан</h3>
-                          <div className="text-sm text-rose-300">
+                          <div className="text-sm text-rose-300 font-semibold">
                             Ваш результат: {quizResult.score_percent}% (требуется {quizResult.test?.passing_score || 70}%)
                           </div>
                           <p className="text-xs text-slate-400 max-w-sm mx-auto">

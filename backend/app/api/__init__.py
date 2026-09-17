@@ -18,5 +18,6 @@ api_router.include_router(attempts_router)
 api_router.include_router(public_router)
 api_router.include_router(bank_questions_router)
 api_router.include_router(courses_router)
+api_router.include_router(courses_router, prefix="/v1")
 api_router.include_router(media_router)
 

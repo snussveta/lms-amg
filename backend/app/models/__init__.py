@@ -12,6 +12,7 @@ from app.models.course import (
     CourseLesson,
     UserCourseEnrollment,
     UserLessonProgress,
+    CourseAssignment,
 )
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "CourseLesson",
     "UserCourseEnrollment",
     "UserLessonProgress",
+    "CourseAssignment",
 ]
 

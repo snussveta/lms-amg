@@ -18,6 +18,7 @@ class Course(Base):
     department_tag: Mapped[str] = mapped_column(String(100), default="СТО", index=True, nullable=False)
     cover_image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
     author_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(
@@ -42,6 +43,11 @@ class Course(Base):
     )
     enrollments: Mapped[List["UserCourseEnrollment"]] = relationship(
         "UserCourseEnrollment",
+        back_populates="course",
+        cascade="all, delete-orphan",
+    )
+    assignments: Mapped[List["CourseAssignment"]] = relationship(
+        "CourseAssignment",
         back_populates="course",
         cascade="all, delete-orphan",
     )
@@ -166,3 +172,40 @@ class UserLessonProgress(Base):
 
     def __repr__(self) -> str:
         return f"<UserLessonProgress user_id={self.user_id} lesson_id={self.lesson_id} status={self.status} timestamp={self.last_timestamp_seconds}>"
+
+
+class CourseAssignment(Base):
+    __tablename__ = "course_assignments"
+    __table_args__ = (
+        UniqueConstraint("course_id", "user_id", name="uq_course_user_assignment"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    course_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    assigned_by_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+    deadline: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="assignments")
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id], back_populates="assigned_courses")
+    assigned_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_by_id])
+
+    def __repr__(self) -> str:
+        return f"<CourseAssignment id={self.id} course_id={self.course_id} user_id={self.user_id} is_completed={self.is_completed}>"
+

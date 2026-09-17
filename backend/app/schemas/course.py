@@ -69,6 +69,7 @@ class CourseBase(BaseModel):
     department_tag: str = Field(default="СТО")
     cover_image_url: Optional[str] = None
     is_published: bool = False
+    is_public: bool = True
 
 
 class CourseCreate(CourseBase):
@@ -81,6 +82,7 @@ class CourseUpdate(BaseModel):
     department_tag: Optional[str] = None
     cover_image_url: Optional[str] = None
     is_published: Optional[bool] = None
+    is_public: Optional[bool] = None
 
 
 class CourseListItemResponse(CourseBase):
@@ -94,6 +96,8 @@ class CourseListItemResponse(CourseBase):
     # Employee-specific enrollment fields
     user_status: Optional[str] = None  # not_started, in_progress, completed
     user_progress_percent: Optional[int] = 0
+    is_assigned: Optional[bool] = False
+    assignment_deadline: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -109,6 +113,31 @@ class CourseDetailResponse(CourseBase):
 
     class Config:
         from_attributes = True
+
+
+# --- Course Assignment Schemas ---
+class CourseAssignRequest(BaseModel):
+    user_ids: List[int]
+    deadline: Optional[datetime] = None
+
+
+class CourseAssignedUserItem(BaseModel):
+    id: int
+    user_id: int
+    full_name: str
+    email: str
+    branch: Optional[str] = None
+    department: Optional[str] = None
+    assigned_at: datetime
+    deadline: Optional[datetime] = None
+    is_completed: bool = False
+    progress_percent: int = 0
+    status: str = "not_started"
+
+
+class CourseAssignedUsersResponse(BaseModel):
+    course_id: int
+    assigned_users: List[CourseAssignedUserItem]
 
 
 # --- Progress & Learn Player Schemas ---

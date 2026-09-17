@@ -7,7 +7,14 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
-from app.models.course import Course, CourseModule, CourseLesson, UserCourseEnrollment, UserLessonProgress
+from app.models.course import (
+    Course,
+    CourseModule,
+    CourseLesson,
+    UserCourseEnrollment,
+    UserLessonProgress,
+    CourseAssignment,
+)
 from app.models.test import Test
 from app.models.attempt import Attempt
 from app.models.user import User
@@ -27,6 +34,9 @@ from app.schemas.course import (
     CourseLearnModuleItem,
     CourseLearnLessonItem,
     LessonProgressUpdate,
+    CourseAssignRequest,
+    CourseAssignedUserItem,
+    CourseAssignedUsersResponse,
 )
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
@@ -69,13 +79,19 @@ async def get_courses(
     result = await db.execute(stmt)
     courses = result.scalars().all()
 
-    # If employee, fetch enrollments for progress indicator
+    # If employee, fetch enrollments and personal assignments
     enrollments_map = {}
+    assignments_map = {}
     if current_user.role == "employee":
         enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
         enr_res = await db.execute(enr_stmt)
         for enr in enr_res.scalars().all():
             enrollments_map[enr.course_id] = enr
+
+        assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
+        assign_res = await db.execute(assign_stmt)
+        for a in assign_res.scalars().all():
+            assignments_map[a.course_id] = a
 
     response_items = []
     for c in courses:
@@ -88,6 +104,10 @@ async def get_courses(
             user_status = enrollments_map[c.id].status
             user_progress_percent = enrollments_map[c.id].progress_percent
 
+        assignment = assignments_map.get(c.id)
+        is_assigned = assignment is not None
+        deadline = assignment.deadline if assignment else None
+
         response_items.append(
             CourseListItemResponse(
                 id=c.id,
@@ -96,6 +116,7 @@ async def get_courses(
                 department_tag=c.department_tag,
                 cover_image_url=c.cover_image_url,
                 is_published=c.is_published,
+                is_public=c.is_public,
                 author_id=c.author_id,
                 author_name=c.author.full_name if c.author else None,
                 modules_count=modules_cnt,
@@ -104,8 +125,99 @@ async def get_courses(
                 updated_at=c.updated_at,
                 user_status=user_status,
                 user_progress_percent=user_progress_percent,
+                is_assigned=is_assigned,
+                assignment_deadline=deadline,
             )
         )
+
+    return response_items
+
+
+@router.get("/my", response_model=List[CourseListItemResponse])
+async def get_my_courses(
+    department: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Returns courses available to the employee:
+    Only published courses that are either:
+    1. Assigned personally to this employee in course_assignments, OR
+    2. Open/public courses where is_public == True.
+    """
+    # 1. Fetch personal assignments
+    assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
+    assign_res = await db.execute(assign_stmt)
+    assignments = assign_res.scalars().all()
+    assignments_map = {a.course_id: a for a in assignments}
+    assigned_course_ids = list(assignments_map.keys())
+
+    # 2. Build course filter: must be published and (is_public OR id in assigned_course_ids)
+    stmt = (
+        select(Course)
+        .options(
+            selectinload(Course.modules).selectinload(CourseModule.lessons),
+            selectinload(Course.author),
+        )
+        .where(Course.is_published == True)
+    )
+
+    if assigned_course_ids:
+        stmt = stmt.where((Course.is_public == True) | (Course.id.in_(assigned_course_ids)))
+    else:
+        stmt = stmt.where(Course.is_public == True)
+
+    if department and department != "Все":
+        stmt = stmt.where((Course.department_tag == department) | (Course.department_tag == "Общий"))
+
+    stmt = stmt.order_by(Course.created_at.desc())
+    result = await db.execute(stmt)
+    courses = result.scalars().all()
+
+    # 3. Load enrollments for progress
+    enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
+    enr_res = await db.execute(enr_stmt)
+    enrollments_map = {e.course_id: e for e in enr_res.scalars().all()}
+
+    response_items = []
+    for c in courses:
+        modules_cnt = len(c.modules)
+        lessons_cnt = sum(len(m.lessons) for m in c.modules)
+        
+        user_status = "not_started"
+        user_progress_percent = 0
+        if c.id in enrollments_map:
+            user_status = enrollments_map[c.id].status
+            user_progress_percent = enrollments_map[c.id].progress_percent
+
+        assignment = assignments_map.get(c.id)
+        is_assigned = assignment is not None
+        deadline = assignment.deadline if assignment else None
+
+        response_items.append(
+            CourseListItemResponse(
+                id=c.id,
+                title=c.title,
+                description=c.description or "",
+                department_tag=c.department_tag,
+                cover_image_url=c.cover_image_url,
+                is_published=c.is_published,
+                is_public=c.is_public,
+                author_id=c.author_id,
+                author_name=c.author.full_name if c.author else None,
+                modules_count=modules_cnt,
+                lessons_count=lessons_cnt,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+                user_status=user_status,
+                user_progress_percent=user_progress_percent,
+                is_assigned=is_assigned,
+                assignment_deadline=deadline,
+            )
+        )
+
+    # Sort: assigned first, then by deadline
+    response_items.sort(key=lambda x: (not x.is_assigned, x.assignment_deadline or datetime.max.replace(tzinfo=timezone.utc)))
 
     return response_items
 
@@ -123,6 +235,7 @@ async def create_course(
         department_tag=payload.department_tag,
         cover_image_url=payload.cover_image_url,
         is_published=payload.is_published,
+        is_public=payload.is_public if payload.is_public is not None else True,
         author_id=current_user.id,
     )
     db.add(new_course)
@@ -211,6 +324,7 @@ async def get_course_detail(
         department_tag=course.department_tag,
         cover_image_url=course.cover_image_url,
         is_published=course.is_published,
+        is_public=course.is_public,
         author_id=course.author_id,
         author_name=course.author.full_name if course.author else None,
         created_at=course.created_at,
@@ -226,7 +340,7 @@ async def update_course(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):
-    """Update course basic properties (title, description, department, published)."""
+    """Update course basic properties (title, description, department, published, is_public)."""
     stmt = select(Course).where(Course.id == course_id)
     res = await db.execute(stmt)
     course = res.scalar_one_or_none()
@@ -243,6 +357,8 @@ async def update_course(
         course.cover_image_url = payload.cover_image_url
     if payload.is_published is not None:
         course.is_published = payload.is_published
+    if payload.is_public is not None:
+        course.is_public = payload.is_public
 
     course.updated_at = datetime.now(timezone.utc)
     await db.commit()
@@ -720,3 +836,273 @@ async def update_lesson_progress(
 
     # Recalculate total course completion
     return {"status": "saved", "lesson_id": lesson_id, "lesson_status": prog.status, "timestamp": prog.last_timestamp_seconds}
+
+
+@router.post("/{course_id}/lessons/{lesson_id}/complete")
+async def mark_lesson_complete(
+    course_id: int,
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Marks a lesson as 'completed' for current employee.
+    Recalculates total course completion percent and updates enrollment & assignment.
+    """
+    # 1. Update or create lesson progress
+    prog_stmt = select(UserLessonProgress).where(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.lesson_id == lesson_id,
+    )
+    prog_res = await db.execute(prog_stmt)
+    prog = prog_res.scalar_one_or_none()
+
+    if not prog:
+        prog = UserLessonProgress(
+            user_id=current_user.id,
+            lesson_id=lesson_id,
+            status="completed",
+            last_timestamp_seconds=0.0,
+            completed_at=datetime.now(timezone.utc),
+        )
+        db.add(prog)
+    else:
+        prog.status = "completed"
+        prog.completed_at = datetime.now(timezone.utc)
+        prog.updated_at = datetime.now(timezone.utc)
+
+    await db.flush()
+
+    # 2. Count total lessons in course and completed lessons for user
+    total_lessons_stmt = (
+        select(func.count(CourseLesson.id))
+        .join(CourseModule, CourseLesson.module_id == CourseModule.id)
+        .where(CourseModule.course_id == course_id)
+    )
+    total_res = await db.execute(total_lessons_stmt)
+    total_lessons = total_res.scalar_one() or 0
+
+    completed_stmt = (
+        select(func.count(UserLessonProgress.id))
+        .join(CourseLesson, UserLessonProgress.lesson_id == CourseLesson.id)
+        .join(CourseModule, CourseLesson.module_id == CourseModule.id)
+        .where(
+            UserLessonProgress.user_id == current_user.id,
+            CourseModule.course_id == course_id,
+            UserLessonProgress.status == "completed",
+        )
+    )
+    comp_res = await db.execute(completed_stmt)
+    completed_lessons = comp_res.scalar_one() or 0
+
+    progress_percent = int(completed_lessons / total_lessons * 100) if total_lessons > 0 else 100
+    is_course_completed = progress_percent >= 100
+
+    # 3. Update enrollment
+    enr_stmt = select(UserCourseEnrollment).where(
+        UserCourseEnrollment.user_id == current_user.id,
+        UserCourseEnrollment.course_id == course_id,
+    )
+    enr_res = await db.execute(enr_stmt)
+    enrollment = enr_res.scalar_one_or_none()
+    if not enrollment:
+        enrollment = UserCourseEnrollment(
+            user_id=current_user.id,
+            course_id=course_id,
+            status="completed" if is_course_completed else "in_progress",
+            progress_percent=progress_percent,
+            completed_at=datetime.now(timezone.utc) if is_course_completed else None,
+        )
+        db.add(enrollment)
+    else:
+        enrollment.progress_percent = progress_percent
+        if is_course_completed:
+            enrollment.status = "completed"
+            enrollment.completed_at = datetime.now(timezone.utc)
+        elif progress_percent > 0:
+            enrollment.status = "in_progress"
+
+    # 4. If assignment exists, mark completed if 100%
+    assign_stmt = select(CourseAssignment).where(
+        CourseAssignment.course_id == course_id,
+        CourseAssignment.user_id == current_user.id,
+    )
+    assign_res = await db.execute(assign_stmt)
+    assignment = assign_res.scalar_one_or_none()
+    if assignment and is_course_completed:
+        assignment.is_completed = True
+
+    await db.commit()
+
+    return {
+        "status": "completed",
+        "lesson_id": lesson_id,
+        "course_id": course_id,
+        "progress_percent": progress_percent,
+        "completed_lessons": completed_lessons,
+        "total_lessons": total_lessons,
+        "is_course_completed": is_course_completed,
+    }
+
+
+# ==========================================
+# 5. COURSE ASSIGNMENT MANAGEMENT
+# ==========================================
+
+@router.post("/{course_id}/assign")
+async def assign_course_to_users(
+    course_id: int,
+    payload: CourseAssignRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """
+    Assign a course to a list of employees.
+    If already assigned, updates deadline.
+    Also ensures user enrollment is initialized.
+    """
+    course_res = await db.execute(select(Course).where(Course.id == course_id))
+    course = course_res.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if not payload.user_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Список сотрудников не может быть пустым")
+
+    # Fetch existing assignments for this course and users
+    existing_stmt = select(CourseAssignment).where(
+        CourseAssignment.course_id == course_id,
+        CourseAssignment.user_id.in_(payload.user_ids),
+    )
+    existing_res = await db.execute(existing_stmt)
+    existing_map = {a.user_id: a for a in existing_res.scalars().all()}
+
+    # Fetch existing enrollments
+    enr_stmt = select(UserCourseEnrollment).where(
+        UserCourseEnrollment.course_id == course_id,
+        UserCourseEnrollment.user_id.in_(payload.user_ids),
+    )
+    enr_res = await db.execute(enr_stmt)
+    enr_map = {e.user_id: e for e in enr_res.scalars().all()}
+
+    for uid in payload.user_ids:
+        if uid in existing_map:
+            existing_map[uid].deadline = payload.deadline
+            existing_map[uid].assigned_at = datetime.now(timezone.utc)
+        else:
+            new_assign = CourseAssignment(
+                course_id=course_id,
+                user_id=uid,
+                assigned_by_id=current_user.id,
+                assigned_at=datetime.now(timezone.utc),
+                deadline=payload.deadline,
+                is_completed=False,
+            )
+            db.add(new_assign)
+
+        if uid not in enr_map:
+            new_enr = UserCourseEnrollment(
+                user_id=uid,
+                course_id=course_id,
+                status="not_started",
+                progress_percent=0,
+            )
+            db.add(new_enr)
+
+    await db.commit()
+    return {
+        "status": "assigned",
+        "course_id": course_id,
+        "assigned_count": len(payload.user_ids),
+    }
+
+
+@router.delete("/{course_id}/assign/{user_id}")
+async def revoke_course_assignment(
+    course_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """Revoke course assignment from an employee."""
+    stmt = select(CourseAssignment).where(
+        CourseAssignment.course_id == course_id,
+        CourseAssignment.user_id == user_id,
+    )
+    res = await db.execute(stmt)
+    assignment = res.scalar_one_or_none()
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Назначение для данного сотрудника не найдено",
+        )
+
+    await db.delete(assignment)
+    await db.commit()
+    return {"status": "revoked", "course_id": course_id, "user_id": user_id}
+
+
+@router.get("/{course_id}/assigned-users", response_model=CourseAssignedUsersResponse)
+async def get_course_assigned_users(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """
+    Get all employees assigned to this course, including their progress status,
+    completion percent, branch/department, and deadline.
+    """
+    course_res = await db.execute(select(Course).where(Course.id == course_id))
+    course = course_res.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    stmt = (
+        select(CourseAssignment)
+        .options(selectinload(CourseAssignment.user))
+        .where(CourseAssignment.course_id == course_id)
+        .order_by(CourseAssignment.assigned_at.desc())
+    )
+    res = await db.execute(stmt)
+    assignments = res.scalars().all()
+
+    user_ids = [a.user_id for a in assignments]
+    enr_map = {}
+    if user_ids:
+        enr_stmt = select(UserCourseEnrollment).where(
+            UserCourseEnrollment.course_id == course_id,
+            UserCourseEnrollment.user_id.in_(user_ids),
+        )
+        enr_res = await db.execute(enr_stmt)
+        for e in enr_res.scalars().all():
+            enr_map[e.user_id] = e
+
+    items = []
+    for a in assignments:
+        u = a.user
+        enr = enr_map.get(a.user_id)
+        prog_pct = enr.progress_percent if enr else 0
+        enr_status = enr.status if enr else "not_started"
+        if a.is_completed:
+            enr_status = "completed"
+
+        items.append(
+            CourseAssignedUserItem(
+                id=a.id,
+                user_id=a.user_id,
+                full_name=u.full_name if u else f"User #{a.user_id}",
+                email=u.email if u else "",
+                branch=getattr(u, "branch", "AutoMall Центральный") if u else None,
+                department=getattr(u, "department", "СТО") if u else None,
+                assigned_at=a.assigned_at,
+                deadline=a.deadline,
+                is_completed=a.is_completed or (prog_pct >= 100),
+                progress_percent=prog_pct,
+                status=enr_status,
+            )
+        )
+
+    return CourseAssignedUsersResponse(
+        course_id=course_id,
+        assigned_users=items,
+    )

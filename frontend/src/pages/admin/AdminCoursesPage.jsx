@@ -14,9 +14,11 @@ import {
   Plus,
   Search,
   Trash2,
+  Users,
   Video,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
 
 export const AdminCoursesPage = () => {
   const [courses, setCourses] = useState([]);
@@ -24,6 +26,7 @@ export const AdminCoursesPage = () => {
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
+  const [assigningCourse, setAssigningCourse] = useState(null);
 
   const departments = ['Все', 'СТО', 'Склад', 'Продажи', 'Общий'];
 
@@ -216,6 +219,15 @@ export const AdminCoursesPage = () => {
                 </Link>
 
                 <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setAssigningCourse(course)}
+                    className="btn-secondary text-xs py-1 px-2.5 flex items-center gap-1 hover:border-sky-500 hover:text-sky-400"
+                    title="Назначить курс сотрудникам"
+                  >
+                    <Users className="w-3 h-3 text-sky-400" />
+                    Назначить
+                  </button>
+
                   <Link
                     to={`/admin/courses/${course.id}/edit`}
                     className="btn-secondary text-xs py-1 px-2.5 flex items-center gap-1"
@@ -236,6 +248,15 @@ export const AdminCoursesPage = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Assignment Modal */}
+      {assigningCourse && (
+        <AssignCourseModal
+          course={assigningCourse}
+          onClose={() => setAssigningCourse(null)}
+          onAssigned={fetchCourses}
+        />
       )}
     </div>
   );

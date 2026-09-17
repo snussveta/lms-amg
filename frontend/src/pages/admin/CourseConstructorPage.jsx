@@ -26,10 +26,12 @@ import {
   Save,
   Trash2,
   Upload,
+  Users,
   Video,
   X,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
 
 export const CourseConstructorPage = () => {
   const { id } = useParams();
@@ -43,6 +45,7 @@ export const CourseConstructorPage = () => {
   const [departmentTag, setDepartmentTag] = useState('СТО');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isPublished, setIsPublished] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   // Modules and Lessons Tree
   const [modules, setModules] = useState([]);
@@ -585,15 +588,27 @@ export const CourseConstructorPage = () => {
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {isEditing && (
-            <Link
-              to={`/courses/${courseId}/learn`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-secondary text-xs flex items-center gap-1.5"
-            >
-              <Eye className="w-3.5 h-3.5 text-sky-400" />
-              Плеер сотрудника
-            </Link>
+            <>
+              <button
+                type="button"
+                onClick={() => setShowAssignModal(true)}
+                className="btn-secondary text-xs flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-400"
+                title="Назначить курс сотрудникам"
+              >
+                <Users className="w-3.5 h-3.5 text-sky-400" />
+                Назначить курс
+              </button>
+
+              <Link
+                to={`/courses/${courseId}/learn`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary text-xs flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5 text-sky-400" />
+                Плеер сотрудника
+              </Link>
+            </>
           )}
 
           <button
@@ -1363,6 +1378,14 @@ export const CourseConstructorPage = () => {
           )}
         </div>
       </div>
+
+      {/* Assignment Modal */}
+      {showAssignModal && courseId && (
+        <AssignCourseModal
+          course={{ id: courseId, title, department_tag: departmentTag }}
+          onClose={() => setShowAssignModal(false)}
+        />
+      )}
     </div>
   );
 };
