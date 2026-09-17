@@ -143,12 +143,15 @@ async def upload_media_chunk(
         
         if category == "presentation" or ext in [".pdf", ".ppt", ".pptx"]:
             target_dir = PRESENTATIONS_DIR
+            cat_subdir = "presentations"
             ext = ext if ext else ".pdf"
         elif category == "image" or ext in [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"]:
             target_dir = IMAGES_DIR
+            cat_subdir = "images"
             ext = ext if ext else ".png"
         else:
             target_dir = VIDEOS_DIR
+            cat_subdir = "videos"
             ext = ext if ext else ".mp4"
 
         final_filename = f"{final_file_id}{ext}"
@@ -178,7 +181,8 @@ async def upload_media_chunk(
             "filename": final_filename,
             "original_name": original_filename,
             "file_size_bytes": total_size,
-            "file_url": f"/api/v1/media/stream/{final_file_id}",
+            "file_url": f"/media/courses/{cat_subdir}/{final_filename}",
+            "stream_url": f"/api/v1/media/stream/{final_file_id}",
         }
 
     return {
@@ -187,6 +191,116 @@ async def upload_media_chunk(
         "chunk_index": chunk_index,
         "total_chunks": total_chunks,
         "received_chunks": len(existing_chunks),
+    }
+
+
+@router.post("/media/upload/complete")
+@router.post("/v1/media/upload/complete")
+async def complete_media_upload(
+    request: Request,
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """
+    Finalize chunk upload or confirm upload complete.
+    Returns file_url formatted as /media/courses/... and file_id.
+    """
+    upload_id = None
+    original_filename = "file.mp4"
+    category = "video"
+    file_id = None
+
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            upload_id = body.get("upload_id")
+            original_filename = body.get("original_filename", "file.mp4")
+            category = body.get("category", "video")
+            file_id = body.get("file_id")
+        except Exception:
+            pass
+    else:
+        try:
+            form = await request.form()
+            upload_id = form.get("upload_id")
+            original_filename = form.get("original_filename", "file.mp4")
+            category = form.get("category", "video")
+            file_id = form.get("file_id")
+        except Exception:
+            pass
+
+    # If file_id is given, find existing file
+    if file_id:
+        found_file = get_file_path_by_id(file_id)
+        if found_file and found_file.is_file():
+            rel_path = found_file.relative_to(MEDIA_BASE)
+            return {
+                "status": "completed",
+                "file_id": file_id,
+                "filename": found_file.name,
+                "file_size_bytes": found_file.stat().st_size,
+                "file_url": f"/media/{rel_path.as_posix()}",
+                "stream_url": f"/api/v1/media/stream/{file_id}",
+            }
+
+    # If upload_id is given, check temp chunks directory
+    if upload_id:
+        safe_upload_id = re.sub(r"[^a-zA-Z0-9_\-]", "", upload_id)
+        temp_session_dir = TEMP_DIR / safe_upload_id
+        if temp_session_dir.is_dir():
+            existing_chunks = list(temp_session_dir.glob("chunk_*.part"))
+            if existing_chunks:
+                existing_chunks.sort(key=lambda p: p.name)
+                ext = Path(original_filename).suffix.lower() or ".mp4"
+                final_file_id = f"{uuid.uuid4().hex}"
+
+                if category == "presentation" or ext in [".pdf", ".ppt", ".pptx"]:
+                    target_dir = PRESENTATIONS_DIR
+                    cat_subdir = "presentations"
+                    ext = ext if ext else ".pdf"
+                elif category == "image" or ext in [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"]:
+                    target_dir = IMAGES_DIR
+                    cat_subdir = "images"
+                    ext = ext if ext else ".png"
+                else:
+                    target_dir = VIDEOS_DIR
+                    cat_subdir = "videos"
+                    ext = ext if ext else ".mp4"
+
+                final_filename = f"{final_file_id}{ext}"
+                final_path = target_dir / final_filename
+
+                total_size = 0
+                with open(final_path, "wb") as f_out:
+                    for chunk_p in existing_chunks:
+                        with open(chunk_p, "rb") as f_in:
+                            while True:
+                                block = f_in.read(256 * 1024)
+                                if not block:
+                                    break
+                                f_out.write(block)
+                                total_size += len(block)
+
+                shutil.rmtree(temp_session_dir, ignore_errors=True)
+
+                return {
+                    "status": "completed",
+                    "upload_id": safe_upload_id,
+                    "file_id": final_file_id,
+                    "filename": final_filename,
+                    "original_name": original_filename,
+                    "file_size_bytes": total_size,
+                    "file_url": f"/media/courses/{cat_subdir}/{final_filename}",
+                    "stream_url": f"/api/v1/media/stream/{final_file_id}",
+                }
+
+    # Fallback if already finished or unknown
+    return {
+        "status": "completed",
+        "upload_id": upload_id,
+        "file_id": file_id or "default",
+        "file_url": f"/media/courses/videos/{original_filename}",
+        "stream_url": f"/api/v1/media/stream/{file_id or 'default'}",
     }
 
 

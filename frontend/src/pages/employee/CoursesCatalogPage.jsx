@@ -108,14 +108,18 @@ export const CoursesCatalogPage = () => {
 
       {/* Courses Grid */}
       {loading ? (
-        <div className="min-h-[50vh] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-7 h-7 text-sky-400 animate-spin" />
-            <span className="text-xs text-slate-400">Загрузка каталога курсов...</span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="glass-panel h-80 rounded-xl bg-slate-900/60 p-4 space-y-4 border border-slate-800">
+              <div className="h-36 bg-slate-800 rounded-lg" />
+              <div className="h-4 bg-slate-800 rounded w-3/4" />
+              <div className="h-3 bg-slate-800/60 rounded w-full" />
+              <div className="h-3 bg-slate-800/60 rounded w-1/2" />
+            </div>
+          ))}
         </div>
       ) : filteredCourses.length === 0 ? (
-        <div className="glass-panel p-12 text-center text-slate-500 space-y-3">
+        <div className="glass-panel p-12 text-center text-slate-500 space-y-3 animate-fade-in">
           <Layers className="w-10 h-10 mx-auto text-slate-600" />
           <div className="text-sm font-semibold text-slate-400">Нет доступных курсов</div>
           <p className="text-xs max-w-sm mx-auto">
@@ -125,7 +129,7 @@ export const CoursesCatalogPage = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
           {filteredCourses.map((course) => {
             const isCompleted = course.user_status === 'completed';
             const isInProgress = course.user_status === 'in_progress';

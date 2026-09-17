@@ -13,42 +13,57 @@
 @layer components {
   /* Minimalist Corporate Panels */
   .glass-panel {
-    @apply bg-slate-900/90 border border-slate-800 shadow-sm rounded-xl;
+    @apply bg-slate-900/90 border border-slate-800 shadow-sm rounded-xl transition-all duration-200;
   }
   
   .glass-card {
-    @apply bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all duration-150 rounded-xl;
+    @apply bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-lg rounded-xl;
   }
 
   /* Strict Corporate Buttons */
   .btn-primary {
     @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-950 
            bg-slate-100 hover:bg-white active:bg-slate-200 shadow-sm
-           transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-300 
            bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:text-white hover:border-slate-700
-           transition-all duration-150 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-accent {
     @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-white 
            bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600
-           transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-danger {
     @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-rose-300 
-           bg-rose-950/40 hover:bg-rose-900/50 border border-rose-900/60 active:scale-[0.99] transition-all duration-150;
+           bg-rose-950/40 hover:bg-rose-900/50 border border-rose-900/60 active:scale-[0.99] transition-all duration-200 ease-in-out hover:scale-[1.01];
   }
 
   .input-field {
     @apply w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 
            text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 
-           transition-all duration-150;
+           transition-all duration-200;
   }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Custom minimal scrollbar */

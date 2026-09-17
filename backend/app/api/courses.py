@@ -520,10 +520,13 @@ async def create_lesson(
 
 
 @router.put("/{course_id}/lessons/{lesson_id}", response_model=CourseLessonResponse)
+@router.patch("/{course_id}/lessons/{lesson_id}", response_model=CourseLessonResponse)
+@router.put("/lessons/{lesson_id}", response_model=CourseLessonResponse)
+@router.patch("/lessons/{lesson_id}", response_model=CourseLessonResponse)
 async def update_lesson(
-    course_id: int,
     lesson_id: int,
     payload: CourseLessonUpdate,
+    course_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):

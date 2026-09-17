@@ -22,12 +22,16 @@ from app.schemas.attempt import (
 )
 from app.schemas.test import TestEmployeeResponse
 
+from app.models.course import Course, CourseModule, CourseLesson
+
 router = APIRouter(prefix="/attempts", tags=["Test Attempts"])
 
 
 @router.post("/start", response_model=AttemptStartResponse)
+@router.post("/start/{test_id}", response_model=AttemptStartResponse)
 async def start_attempt(
-    test_id: int = Query(..., description="ID теста для прохождения"),
+    test_id: Optional[int] = None,
+    test_id_query: Optional[int] = Query(None, alias="test_id", description="ID теста для прохождения"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -37,9 +41,13 @@ async def start_attempt(
     - Проверяет лимит попыток (max_attempts) перед созданием новой
     - Проверяет статус публикации и персональные назначения
     """
+    actual_test_id = test_id if test_id is not None else test_id_query
+    if not actual_test_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Не указан ID теста")
+
     stmt = (
         select(Test)
-        .where(Test.id == test_id)
+        .where(Test.id == actual_test_id)
         .options(selectinload(Test.questions).selectinload(Question.options))
     )
     res = await db.execute(stmt)
@@ -49,14 +57,26 @@ async def start_attempt(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
     if current_user.role == "employee":
-        if not test.is_published:
+        # Check if test is linked to a published course lesson
+        course_check_stmt = (
+            select(CourseLesson)
+            .join(CourseModule, CourseLesson.module_id == CourseModule.id)
+            .join(Course, CourseModule.course_id == Course.id)
+            .where(
+                CourseLesson.quiz_id == actual_test_id,
+                Course.is_published == True,
+            )
+        )
+        is_in_course = (await db.execute(course_check_stmt)).scalar_one_or_none() is not None
+
+        if not test.is_published and not is_in_course:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест еще не опубликован")
 
         # Строгая проверка персонального назначения для тестов с ограниченным доступом
-        if test.is_assigned_only:
+        if test.is_assigned_only and not is_in_course:
             assign_check = await db.execute(
                 select(TestAssignment).where(
-                    TestAssignment.test_id == test_id,
+                    TestAssignment.test_id == actual_test_id,
                     TestAssignment.user_id == current_user.id,
                 )
             )
@@ -73,7 +93,7 @@ async def start_attempt(
     active_stmt = (
         select(Attempt)
         .where(
-            Attempt.test_id == test_id,
+            Attempt.test_id == test.id,
             Attempt.user_id == current_user.id,
             Attempt.status == "in_progress",
         )
@@ -125,7 +145,7 @@ async def start_attempt(
         # Обновляем статус назначения, если тест был назначен
         assign_res = await db.execute(
             select(TestAssignment).where(
-                TestAssignment.test_id == test_id,
+                TestAssignment.test_id == test.id,
                 TestAssignment.user_id == current_user.id,
             )
         )

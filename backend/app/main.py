@@ -51,6 +51,14 @@ app.add_middleware(
 # Mount API Routers
 app.include_router(api_router)
 
+# Mount media directory statically for local development / range fallback
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+media_dir = Path(settings.MEDIA_DIR).resolve()
+media_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(media_dir)), name="media")
+
 
 @app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])

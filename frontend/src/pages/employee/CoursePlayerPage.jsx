@@ -44,12 +44,30 @@ export const CoursePlayerPage = () => {
   // Video playback & syncing state
   const videoRef = useRef(null);
 
+  // Sidebar module collapse states
+  const [collapsedModules, setCollapsedModules] = useState({});
+
   // Embedded Quiz state
   const [quizAttempt, setQuizAttempt] = useState(null);
   const [quizLoading, setQuizLoading] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
+  const [quizTimeLeft, setQuizTimeLeft] = useState(null);
+
+  const toggleModuleCollapse = (moduleId) => {
+    setCollapsedModules((prev) => ({
+      ...prev,
+      [moduleId]: !prev[moduleId],
+    }));
+  };
+
+  const formatTime = (seconds) => {
+    if (seconds === null || seconds === undefined) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   // Load course state on initial mount or when ID changes
   useEffect(() => {
@@ -216,6 +234,7 @@ export const CoursePlayerPage = () => {
     } else {
       setQuizAttempt(null);
       setQuizResult(null);
+      setQuizTimeLeft(null);
     }
   }, [activeLesson?.id]);
 
@@ -224,15 +243,48 @@ export const CoursePlayerPage = () => {
       setQuizLoading(true);
       setQuizResult(null);
       setQuizAnswers({});
+      setQuizTimeLeft(null);
 
-      const res = await api.post(`/attempts/start/${testId}`);
-      setQuizAttempt(res.data);
+      let res;
+      try {
+        res = await api.post(`/attempts/start/${testId}`);
+      } catch {
+        res = await api.post(`/attempts/start?test_id=${testId}`);
+      }
+
+      const attemptData = res.data;
+      setQuizAttempt(attemptData);
+
+      if (attemptData?.expires_at) {
+        const expires = new Date(attemptData.expires_at).getTime();
+        const diff = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+        setQuizTimeLeft(diff);
+      }
     } catch (err) {
       console.error('Ошибка инициализации теста:', err);
     } finally {
       setQuizLoading(false);
     }
   };
+
+  // Live countdown timer for active quiz attempt
+  useEffect(() => {
+    if (!quizAttempt?.expires_at || quizResult) return;
+
+    const expires = new Date(quizAttempt.expires_at).getTime();
+    const updateCountdown = () => {
+      const diff = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+      setQuizTimeLeft(diff);
+      if (diff <= 0) {
+        clearInterval(interval);
+        handleSubmitQuiz();
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [quizAttempt?.expires_at, quizResult]);
 
   const handleSelectQuizOption = (questionId, optionId, isMultiple) => {
     setQuizAnswers((prev) => {
@@ -257,6 +309,9 @@ export const CoursePlayerPage = () => {
 
   const handleSubmitQuiz = async () => {
     if (!quizAttempt) return;
+    const attemptId = quizAttempt.attempt_id || quizAttempt.id;
+    if (!attemptId) return;
+
     try {
       setQuizSubmitting(true);
       const answersPayload = Object.entries(quizAnswers).map(([qId, ans]) => ({
@@ -265,7 +320,7 @@ export const CoursePlayerPage = () => {
         text_answer: ans.text_answer || '',
       }));
 
-      const res = await api.post(`/attempts/${quizAttempt.id}/submit`, {
+      const res = await api.post(`/attempts/${attemptId}/submit`, {
         answers: answersPayload,
       });
 
@@ -578,61 +633,74 @@ export const CoursePlayerPage = () => {
 
               {/* Modules & Lessons List */}
               <div className="space-y-3">
-                {(courseData.modules || []).map((mod) => (
-                  <div key={mod.id} className="space-y-1.5">
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
-                      {mod.title}
-                    </div>
+                {(courseData.modules || []).map((mod) => {
+                  const isCollapsed = Boolean(collapsedModules[mod.id]);
+                  return (
+                    <div key={mod.id} className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleModuleCollapse(mod.id)}
+                        className="w-full flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1.5 rounded hover:bg-slate-800/60 transition-colors text-left group"
+                        title={isCollapsed ? 'Развернуть модуль' : 'Свернуть модуль'}
+                      >
+                        <span className="truncate group-hover:text-slate-200 transition-colors">{mod.title}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-300 shrink-0 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
+                      </button>
 
-                    <div className="space-y-1">
-                      {(mod.lessons || []).map((les) => {
-                        const isCurrent = activeLesson?.id === les.id;
-                        const isCompleted = les.status === 'completed';
-                        const isLocked = les.is_locked;
+                      <div
+                        className={`space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
+                          isCollapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[1000px] opacity-100'
+                        }`}
+                      >
+                        {(mod.lessons || []).map((les) => {
+                          const isCurrent = activeLesson?.id === les.id;
+                          const isCompleted = les.status === 'completed';
+                          const isLocked = les.is_locked;
 
-                        const iconMap = {
-                          article: <FileText className="w-3.5 h-3.5" />,
-                          video: <Video className="w-3.5 h-3.5" />,
-                          presentation: <FileCode className="w-3.5 h-3.5" />,
-                          quiz: <HelpCircle className="w-3.5 h-3.5" />,
-                        };
+                          const iconMap = {
+                            article: <FileText className="w-3.5 h-3.5" />,
+                            video: <Video className="w-3.5 h-3.5" />,
+                            presentation: <FileCode className="w-3.5 h-3.5" />,
+                            quiz: <HelpCircle className="w-3.5 h-3.5" />,
+                          };
 
-                        return (
-                          <div
-                            key={les.id}
-                            onClick={() => handleSelectLesson(les)}
-                            className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all ${
-                              isCurrent
-                                ? 'bg-sky-950/70 border border-sky-800/80 text-white font-medium shadow-sm'
-                                : isLocked
-                                ? 'opacity-40 text-slate-500 hover:bg-slate-900 cursor-not-allowed'
-                                : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0 pr-2">
-                              {/* Status Icon */}
-                              {isCompleted ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                              ) : isLocked ? (
-                                <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                              ) : isCurrent ? (
-                                <PlayCircle className="w-4 h-4 text-sky-400 shrink-0" />
-                              ) : (
-                                <div className="w-3.5 h-3.5 rounded-full border border-slate-600 shrink-0" />
-                              )}
+                          return (
+                            <div
+                              key={les.id}
+                              onClick={() => handleSelectLesson(les)}
+                              className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md ${
+                                isCurrent
+                                  ? 'bg-sky-950/70 border border-sky-800/80 text-white font-medium shadow-sm'
+                                  : isLocked
+                                  ? 'opacity-40 text-slate-500 hover:bg-slate-900 cursor-not-allowed'
+                                  : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0 pr-2">
+                                {/* Status Icon */}
+                                {isCompleted ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                ) : isLocked ? (
+                                  <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                ) : isCurrent ? (
+                                  <PlayCircle className="w-4 h-4 text-sky-400 shrink-0" />
+                                ) : (
+                                  <div className="w-3.5 h-3.5 rounded-full border border-slate-600 shrink-0" />
+                                )}
 
-                              <span className="truncate">{les.title}</span>
+                                <span className="truncate">{les.title}</span>
+                              </div>
+
+                              <div className="text-slate-500 shrink-0">
+                                {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
+                              </div>
                             </div>
-
-                            <div className="text-slate-500 shrink-0">
-                              {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -787,18 +855,18 @@ export const CoursePlayerPage = () => {
               {/* 2. VIDEO STREAMING PLAYER (Range HTTP 206)     */}
               {/* ============================================== */}
               {activeLesson.lesson_type === 'video' && (
-                <div className="space-y-6 pt-2">
+                <div className="space-y-6 pt-2 animate-fade-in">
                   <div className="rounded-2xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[540px] shadow-2xl relative">
                     {activeLesson.file_url ? (
                       <video
                         ref={videoRef}
                         controls
-                        crossOrigin="use-credentials"
-                        className="w-full h-full object-contain"
-                        src={getVideoUrl(activeLesson)}
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-full object-contain rounded-xl"
+                        src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
                         onTimeUpdate={handleVideoTimeUpdate}
                         onEnded={handleVideoEnded}
-                        preload="metadata"
                       >
                         Ваш браузер не поддерживает встроенное видео.
                       </video>
@@ -839,7 +907,7 @@ export const CoursePlayerPage = () => {
               {/* 3. PRESENTATION (PDF) VIEWER                   */}
               {/* ============================================== */}
               {activeLesson.lesson_type === 'presentation' && (
-                <div className="space-y-6 pt-2">
+                <div className="space-y-6 pt-2 animate-fade-in">
                   <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-900 min-h-[500px]">
                     {activeLesson.file_url ? (
                       <iframe
@@ -871,12 +939,15 @@ export const CoursePlayerPage = () => {
               {/* 4. QUIZ / TEST EMBEDDED TAKING                 */}
               {/* ============================================== */}
               {activeLesson.lesson_type === 'quiz' && (
-                <div className="space-y-6 pt-2">
+                <div className="space-y-6 pt-2 animate-fade-in">
                   {quizLoading ? (
-                    <div className="py-16 text-center text-slate-400 text-xs">Загрузка вопросов теста...</div>
+                    <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-full border-2 border-sky-400 border-t-transparent animate-spin" />
+                      <span>Загрузка вопросов тестирования...</span>
+                    </div>
                   ) : quizResult ? (
                     /* Quiz Results Card */
-                    <div className="p-8 rounded-2xl glass-panel text-center space-y-4">
+                    <div className="p-8 rounded-2xl glass-panel text-center space-y-4 animate-fade-in">
                       {quizResult.is_passed ? (
                         <div className="space-y-3">
                           <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
@@ -890,7 +961,7 @@ export const CoursePlayerPage = () => {
                           <div className="pt-4">
                             <button
                               onClick={handleMarkStepCompleted}
-                              className="btn-primary text-xs py-2.5 px-6 inline-flex items-center gap-2"
+                              className="btn-primary text-xs py-2.5 px-6 inline-flex items-center gap-2 shadow-lg"
                             >
                               Перейти к следующему шагу →
                             </button>
@@ -918,14 +989,25 @@ export const CoursePlayerPage = () => {
                     </div>
                   ) : quizAttempt ? (
                     /* Active Quiz Form */
-                    <div className="space-y-6">
-                      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
+                    <div className="space-y-6 animate-fade-in">
+                      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs gap-3">
                         <div className="space-y-0.5">
                           <div className="font-bold text-slate-200">{quizAttempt.test?.title}</div>
                           <div className="text-slate-400">
                             Проходной порог: {quizAttempt.test?.passing_score}% • Вопросов: {quizAttempt.test?.questions?.length || 0}
                           </div>
                         </div>
+
+                        {quizTimeLeft !== null && (
+                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs shrink-0 ${
+                            quizTimeLeft < 180
+                              ? 'bg-rose-950/60 border-rose-800 text-rose-300 animate-pulse'
+                              : 'bg-slate-800 border-slate-700 text-sky-400'
+                          }`}>
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{formatTime(quizTimeLeft)}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Questions List */}
@@ -951,9 +1033,9 @@ export const CoursePlayerPage = () => {
                                     <div
                                       key={opt.id}
                                       onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
-                                      className={`p-3 rounded-lg border text-xs cursor-pointer transition-all flex items-center gap-3 ${
+                                      className={`p-3 rounded-lg border text-xs cursor-pointer transition-all duration-150 flex items-center gap-3 ${
                                         isChecked
-                                          ? 'bg-sky-950/60 border-sky-700 text-white font-medium'
+                                          ? 'bg-sky-950/60 border-sky-700 text-white font-medium shadow-sm'
                                           : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-900'
                                       }`}
                                     >
@@ -981,16 +1063,27 @@ export const CoursePlayerPage = () => {
                         <button
                           onClick={handleSubmitQuiz}
                           disabled={quizSubmitting}
-                          className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
+                          className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
                         >
                           <Send className="w-4 h-4" />
                           {quizSubmitting ? 'Проверка...' : 'Завершить тест и проверить ответы'}
                         </button>
                       </div>
                     </div>
-                  ) : (
+                  ) : !activeLesson.quiz_id ? (
                     <div className="p-8 text-center text-slate-500 text-xs">
                       К этому уроку еще не привязан тест.
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-full border-2 border-sky-400 border-t-transparent animate-spin" />
+                      <span>Подготовка вопросов тестирования...</span>
+                      <button
+                        onClick={() => initQuizAttempt(activeLesson.quiz_id)}
+                        className="btn-secondary text-xs py-1.5 px-4 mt-1"
+                      >
+                        Запустить тест
+                      </button>
                     </div>
                   )}
                 </div>

@@ -534,10 +534,65 @@ export const CourseConstructorPage = () => {
         });
 
         if (res.data.status === 'completed') {
+          const compData = res.data;
           setUploadStatus('completed');
-          updateActiveLessonField('file_url', res.data.file_url);
-          updateActiveLessonField('file_size_bytes', res.data.file_size_bytes);
+          updateActiveLessonField('file_url', compData.file_url);
+          updateActiveLessonField('file_size_bytes', compData.file_size_bytes || totalSize);
+
+          // Immediately autosave lesson via PUT /courses/lessons/{id}
+          if (activeLesson && typeof activeLesson.id === 'number') {
+            try {
+              await api.put(`/courses/lessons/${activeLesson.id}`, {
+                file_url: compData.file_url,
+                file_size_bytes: compData.file_size_bytes || totalSize,
+              });
+            } catch {
+              if (courseId) {
+                try {
+                  await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+                    file_url: compData.file_url,
+                    file_size_bytes: compData.file_size_bytes || totalSize,
+                  });
+                } catch (e2) {
+                  console.warn('Autosave file_url failed:', e2);
+                }
+              }
+            }
+          }
           break;
+        }
+
+        // Explicit complete fallback on final chunk
+        if (chunkIndex === totalChunks - 1 && res.data.status !== 'completed') {
+          try {
+            const compRes = await api.post('/v1/media/upload/complete', {
+              upload_id: uploadId,
+              original_filename: file.name,
+              category: activeLesson?.lesson_type === 'presentation' ? 'presentation' : 'video',
+            });
+            if (compRes.data && compRes.data.file_url) {
+              setUploadStatus('completed');
+              updateActiveLessonField('file_url', compRes.data.file_url);
+              updateActiveLessonField('file_size_bytes', compRes.data.file_size_bytes || totalSize);
+              if (activeLesson && typeof activeLesson.id === 'number') {
+                try {
+                  await api.put(`/courses/lessons/${activeLesson.id}`, {
+                    file_url: compRes.data.file_url,
+                    file_size_bytes: compRes.data.file_size_bytes || totalSize,
+                  });
+                } catch {
+                  if (courseId) {
+                    await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+                      file_url: compRes.data.file_url,
+                      file_size_bytes: compRes.data.file_size_bytes || totalSize,
+                    });
+                  }
+                }
+              }
+            }
+          } catch (compErr) {
+            console.warn('Complete call fallback:', compErr);
+          }
         }
       } catch (err) {
         console.error('Ошибка отправки чанка:', err);
@@ -546,6 +601,39 @@ export const CourseConstructorPage = () => {
         return;
       }
     }
+  };
+
+  // Autosave and switch lesson in editor
+  const handleSelectLessonInEditor = async (nextLesson, nextModuleId) => {
+    if (activeLesson && typeof activeLesson.id === 'number' && courseId) {
+      try {
+        await api.put(`/courses/lessons/${activeLesson.id}`, {
+          title: activeLesson.title,
+          order_index: activeLesson.order_index,
+          lesson_type: activeLesson.lesson_type,
+          content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
+          file_url: activeLesson.file_url,
+          file_size_bytes: activeLesson.file_size_bytes,
+          quiz_id: activeLesson.quiz_id,
+        });
+      } catch {
+        try {
+          await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+            title: activeLesson.title,
+            order_index: activeLesson.order_index,
+            lesson_type: activeLesson.lesson_type,
+            content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
+            file_url: activeLesson.file_url,
+            file_size_bytes: activeLesson.file_size_bytes,
+            quiz_id: activeLesson.quiz_id,
+          });
+        } catch (e) {
+          console.warn('Autosave on switch failed:', e);
+        }
+      }
+    }
+    setActiveLesson(nextLesson);
+    setActiveModuleId(nextModuleId);
   };
 
   if (loading) {
@@ -800,10 +888,7 @@ export const CourseConstructorPage = () => {
                         return (
                           <div
                             key={les.id}
-                            onClick={() => {
-                              setActiveLesson(les);
-                              setActiveModuleId(mod.id);
-                            }}
+                            onClick={() => handleSelectLessonInEditor(les, mod.id)}
                             className={`flex items-center justify-between p-2 rounded-lg cursor-pointer text-xs transition-all ${
                               isSelected
                                 ? 'bg-slate-800 text-white font-medium shadow-sm border border-slate-700'
@@ -1181,28 +1266,14 @@ export const CourseConstructorPage = () => {
                       </div>
                     </div>
 
-                    {/* Drag and Drop Zone */}
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/50 hover:bg-slate-950 space-y-3"
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="video/mp4,video/mkv,video/webm,video/*"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-                      <Upload className="w-8 h-8 text-sky-400 mx-auto" />
-                      <div>
-                        <span className="text-xs font-semibold text-slate-200">
-                          Нажмите для выбора файла или перетащите тяжелое видео сюда
-                        </span>
-                        <div className="text-[11px] text-slate-500 mt-1">
-                          До 10 ГБ • Потоковая чанковая отправка • Стриминг Range (HTTP 206)
-                        </div>
-                      </div>
-                    </div>
+                    {/* Hidden file input for chunked video upload */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/mp4,video/mkv,video/webm,video/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
 
                     {/* Upload Progress Indicator */}
                     {uploadStatus === 'uploading' && (
@@ -1227,7 +1298,7 @@ export const CourseConstructorPage = () => {
                     {uploadStatus === 'completed' && (
                       <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs flex items-center gap-2">
                         <Check className="w-4 h-4" />
-                        <span>Видео успешно загружено и склеено на сервере! Стриминг готов к перемотке.</span>
+                        <span>Видео успешно загружено и привязано к уроку! Автосохранение выполнено.</span>
                       </div>
                     )}
 
@@ -1238,25 +1309,63 @@ export const CourseConstructorPage = () => {
                       </div>
                     )}
 
-                    {/* Preview Player if file_url exists */}
+                    {/* Swap: Embedded Video Preview Player with Replace Video Button OR Dropzone */}
                     {activeLesson.file_url ? (
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center justify-between text-xs text-slate-400">
-                          <span>Проверка плеера (HTTP 206 Range Stream):</span>
-                          <span className="font-mono text-[11px] text-slate-500">{activeLesson.file_url}</span>
+                      <div className="space-y-3 pt-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                            <Check className="w-4 h-4 text-emerald-400" />
+                            <span className="font-semibold">Текущее видео урока:</span>
+                            <span className="font-mono text-[11px] text-slate-500 truncate max-w-xs">{activeLesson.file_url}</span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3 hover:border-sky-500 hover:text-sky-400 transition-colors"
+                            title="Загрузить новый видеофайл для этого урока"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-sky-400" />
+                            Заменить видео
+                          </button>
                         </div>
-                        <div className="rounded-xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[420px]">
+
+                        <div className="rounded-xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[420px] shadow-lg">
                           <video
                             controls
-                            className="w-full h-full object-contain"
-                            src={activeLesson.file_url}
+                            playsInline
                             preload="metadata"
+                            src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
+                            className="w-full h-full object-contain rounded-xl"
                           >
                             Ваш браузер не поддерживает HTML5 видео.
                           </video>
                         </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
+                          <span>Поддержка HTTP 206 Partial Content (перемотка без задержки)</span>
+                          {activeLesson.file_size_bytes ? (
+                            <span>Размер: {(activeLesson.file_size_bytes / (1024 * 1024)).toFixed(1)} МБ</span>
+                          ) : null}
+                        </div>
                       </div>
-                    ) : null}
+                    ) : (
+                      /* Drag and Drop Zone */
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/50 hover:bg-slate-900/60 space-y-3 group"
+                      >
+                        <Upload className="w-8 h-8 text-sky-400 group-hover:scale-110 transition-transform mx-auto" />
+                        <div>
+                          <span className="text-xs font-semibold text-slate-200">
+                            Нажмите для выбора файла или перетащите видео сюда
+                          </span>
+                          <div className="text-[11px] text-slate-500 mt-1">
+                            До 10 ГБ • Потоковая чанковая отправка • Стриминг Range (HTTP 206)
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1348,12 +1457,23 @@ export const CourseConstructorPage = () => {
                     <select
                       className="input-field text-sm"
                       value={activeLesson.quiz_id || ''}
-                      onChange={(e) =>
-                        updateActiveLessonField(
-                          'quiz_id',
-                          e.target.value ? parseInt(e.target.value, 10) : null
-                        )
-                      }
+                      onChange={async (e) => {
+                        const quizId = e.target.value ? Number(e.target.value) : null;
+                        updateActiveLessonField('quiz_id', quizId);
+                        if (activeLesson && typeof activeLesson.id === 'number') {
+                          try {
+                            await api.put(`/courses/lessons/${activeLesson.id}`, { quiz_id: quizId });
+                          } catch {
+                            if (courseId) {
+                              try {
+                                await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, { quiz_id: quizId });
+                              } catch (errQ) {
+                                console.warn('Не удалось автоматически сохранить quiz_id:', errQ);
+                              }
+                            }
+                          }
+                        }
+                      }}
                     >
                       <option value="">-- Выберите тест из списка --</option>
                       {availableTests.map((t) => (

@@ -30,6 +30,18 @@ export default {
         'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.25)',
         'glow-rose': '0 0 25px -5px rgba(244, 63, 94, 0.25)',
       },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+      },
+      transitionProperty: {
+        'max-height': 'max-height',
+      },
     },
   },
   plugins: [],
