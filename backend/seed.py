@@ -343,8 +343,121 @@ async def seed_data() -> None:
 
             logger.info("Банк вопросов успешно наполнен стартовыми вопросами по отделам.")
 
+        # 6. Seed Demo Course (iSpring style for AutoMall СТО)
+        from app.models.course import Course, CourseModule, CourseLesson
+        import json
+
+        res_course = await db.execute(select(Course))
+        existing_course = res_course.scalars().first()
+
+        if not existing_course:
+            logger.info("Создание демонстрационного обучающего курса: 'Диагностика и регламентное обслуживание тормозных систем AutoMall'...")
+            
+            # Find test for quiz lesson
+            res_any_test = await db.execute(select(Test).order_by(Test.id.asc()))
+            any_test = res_any_test.scalars().first()
+            test_id = any_test.id if any_test else None
+
+            demo_course = Course(
+                title="Диагностика и регламентное обслуживание тормозных систем AutoMall",
+                description="Полный курс квалификации мастера слесарного цеха СТО: регламенты дефектовки, работа со специнструментом, замена расходных материалов и итоговое тестирование.",
+                department_tag="СТО",
+                cover_image_url="https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1200&q=80",
+                is_published=True,
+                author_id=superadmin.id,
+            )
+            db.add(demo_course)
+            await db.flush()
+
+            # Module 1: Теория и безопасность
+            mod1 = CourseModule(
+                course_id=demo_course.id,
+                title="Раздел 1: Теоретические стандарты и техника безопасности",
+                order_index=0,
+            )
+            db.add(mod1)
+            await db.flush()
+
+            longread_blocks = [
+                {"type": "h1", "text": "Технологический регламент дефектовки тормозных механизмов"},
+                {"type": "paragraph", "text": "Перед началом любых сервисных работ слесарь СТО обязан произвести инструментальный контроль толщины рабочих поверхностей фрикционных накладок и тормозного ротора с занесением данных в заказ-наряд."},
+                {
+                    "type": "callout",
+                    "variant": "danger",
+                    "title": "КРИТИЧЕСКИЙ РЕГЛАМЕНТ БЕЗОПАСНОСТИ",
+                    "text": "Категорически запрещается передавать автомобиль клиенту с толщиной фрикционного слоя колодок менее 2.0 мм или при наличии глубоких кольцевых борозд на рабочей поверхности диска более 1.5 мм."
+                },
+                {"type": "h2", "text": "Карта предельно допустимых параметров узла"},
+                {
+                    "type": "list",
+                    "items": [
+                        "Минимальная остаточная толщина фрикциона: 3.0 мм (стандарт AutoMall)",
+                        "Торцевое биение ступицы и тормозного диска: не более 0.05 мм (измерение микрометром на стойке)",
+                        "Разность толщин диска по окружности (пульсация педали): не более 0.015 мм",
+                        "Состояние пыльников направляющих: отсутствие трещин, надрывов и следов разбухания резины"
+                    ]
+                },
+                {
+                    "type": "callout",
+                    "variant": "warning",
+                    "title": "СМАЗКА НАПРАВЛЯЮЩИХ ПАЛЬЦЕВ",
+                    "text": "Использовать исключительно специализированную полигликолевую смазку (TRW PFG110 или аналог PAG). Применение медной или литиевой пасты в закрытых резиновых пыльниках строго воспрещается из-за риска заклинивания суппорта!"
+                },
+                {"type": "paragraph", "text": "После установки новых колодок обязательна проверка свободного хода поршня и прокачка гидравлической магистрали до полного удаления воздушных пробок."}
+            ]
+
+            lesson1 = CourseLesson(
+                module_id=mod1.id,
+                title="Регламент дефектовки и нормы износа тормозных дисков и колодок",
+                order_index=0,
+                lesson_type="article",
+                content_json=json.dumps(longread_blocks, ensure_ascii=False),
+            )
+            db.add(lesson1)
+
+            lesson2 = CourseLesson(
+                module_id=mod1.id,
+                title="Сервисный бюллетень по гидравлическим системам ABS/ESP (Презентация)",
+                order_index=1,
+                lesson_type="presentation",
+                file_url="",
+                file_size_bytes=1024 * 1024 * 4,
+            )
+            db.add(lesson2)
+
+            # Module 2: Практика и видео
+            mod2 = CourseModule(
+                course_id=demo_course.id,
+                title="Раздел 2: Практический видеопрактикум и аттестация",
+                order_index=1,
+            )
+            db.add(mod2)
+            await db.flush()
+
+            lesson3 = CourseLesson(
+                module_id=mod2.id,
+                title="Видеолекция: Полная разборка суппорта, замена поршня и обслуживание направляющих",
+                order_index=0,
+                lesson_type="video",
+                file_url="",
+                file_size_bytes=1024 * 1024 * 750,
+            )
+            db.add(lesson3)
+
+            lesson4 = CourseLesson(
+                module_id=mod2.id,
+                title="Итоговый квалификационный экзамен мастера СТО",
+                order_index=1,
+                lesson_type="quiz",
+                quiz_id=test_id,
+            )
+            db.add(lesson4)
+
+            logger.info("Демо-курс с модулями и уроками успешно создан.")
+
         await db.commit()
         logger.info("Сид данных успешно завершен.")
+
 
 
 if __name__ == "__main__":

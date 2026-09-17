@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     FIRST_SUPERADMIN_PASSWORD: str = "admin123"
     FIRST_SUPERADMIN_NAME: str = "Super Administrator"
 
+    # Media Storage for giant videos, presentations and assets
+    MEDIA_DIR: str = "media"
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["*"]
 

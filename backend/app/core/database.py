@@ -59,6 +59,9 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
         try:
             async with engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
+                # Ensure all models are imported so Base.metadata is fully populated
+                import app.models  # noqa: F401
+
                 # Create all tables defined in models
                 await conn.run_sync(Base.metadata.create_all)
 
@@ -81,12 +84,18 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1;",
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_assigned_only BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE bank_questions ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Общий';",
+                    # Courses schema checks
+                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS cover_image_url VARCHAR(500);",
+                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS department_tag VARCHAR(100) DEFAULT 'СТО';",
+                    "ALTER TABLE course_lessons ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT;",
+                    "ALTER TABLE user_lesson_progress ADD COLUMN IF NOT EXISTS last_timestamp_seconds DOUBLE PRECISION DEFAULT 0.0;",
                 ]
                 for stmt in migration_sqls:
                     try:
                         await conn.execute(text(stmt))
                     except Exception as migration_err:
                         logger.debug(f"Migration statement ignored/already applied: {stmt} ({migration_err})")
+
 
             logger.info("Successfully connected to PostgreSQL and initialized tables.")
             return

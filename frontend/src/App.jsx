@@ -13,6 +13,8 @@ import { TestCatalogPage } from './pages/employee/TestCatalogPage';
 import { TakeTestPage } from './pages/employee/TakeTestPage';
 import { TestResultPage } from './pages/employee/TestResultPage';
 import { MyAttemptsPage } from './pages/employee/MyAttemptsPage';
+import { CoursesCatalogPage } from './pages/employee/CoursesCatalogPage';
+import { CoursePlayerPage } from './pages/employee/CoursePlayerPage';
 
 // Admin Pages
 import { AdminTestsPage } from './pages/admin/AdminTestsPage';
@@ -20,9 +22,12 @@ import { TestConstructorPage } from './pages/admin/TestConstructorPage';
 import { TestAnalyticsPage } from './pages/admin/TestAnalyticsPage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { QuestionBankPage } from './pages/admin/QuestionBankPage';
+import { AdminCoursesPage } from './pages/admin/AdminCoursesPage';
+import { CourseConstructorPage } from './pages/admin/CourseConstructorPage';
 
 // Public Guest Test Page
 import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
+
 
 function App() {
   return (
@@ -43,6 +48,30 @@ function App() {
               {/* Employee Routes */}
               <Route
                 path="/"
+                element={
+                  <ProtectedRoute>
+                    <CoursesCatalogPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courses"
+                element={
+                  <ProtectedRoute>
+                    <CoursesCatalogPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courses/:id/learn"
+                element={
+                  <ProtectedRoute>
+                    <CoursePlayerPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tests"
                 element={
                   <ProtectedRoute>
                     <TestCatalogPage />
@@ -75,6 +104,30 @@ function App() {
               />
 
               {/* Admin Routes */}
+              <Route
+                path="/admin/courses"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminCoursesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/courses/new"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <CourseConstructorPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/courses/:id/edit"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <CourseConstructorPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/admin/tests"
                 element={

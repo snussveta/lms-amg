@@ -54,13 +54,25 @@ export const Navbar = () => {
                 <Link
                   to="/"
                   className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive('/')
+                    isActive('/') || isActive('/courses')
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4 text-sky-400" />
+                  Курсы
+                </Link>
+
+                <Link
+                  to="/tests"
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    isActive('/tests')
                       ? 'bg-slate-800 text-white'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                   }`}
                 >
                   <FileQuestion className="w-4 h-4" />
-                  Каталог тестов
+                  Тесты
                 </Link>
 
                 <Link
@@ -80,27 +92,27 @@ export const Navbar = () => {
                     <div className="w-px h-4 bg-slate-800 mx-2" />
 
                     <Link
+                      to="/admin/courses"
+                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        isActive('/admin/courses') || location.pathname.startsWith('/admin/courses')
+                          ? 'bg-slate-800 text-white'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4 text-sky-400" />
+                      Управление курсами
+                    </Link>
+
+                    <Link
                       to="/admin/tests"
                       className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/tests')
+                        isActive('/admin/tests') || location.pathname.startsWith('/admin/tests')
                           ? 'bg-slate-800 text-white'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                       }`}
                     >
                       <LayoutDashboard className="w-4 h-4" />
                       Управление тестами
-                    </Link>
-
-                    <Link
-                      to="/admin/tests/new"
-                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/tests/new')
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <PlusCircle className="w-4 h-4 text-slate-300" />
-                      Конструктор
                     </Link>
 
                     <Link
@@ -197,6 +209,13 @@ export const Navbar = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
               >
+                Курсы обучения
+              </Link>
+              <Link
+                to="/tests"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
+              >
                 Каталог тестов
               </Link>
               <Link
@@ -213,12 +232,27 @@ export const Navbar = () => {
                     Администрирование
                   </div>
                   <Link
+                    to="/admin/courses"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
+                  >
+                    Управление курсами
+                  </Link>
+                  <Link
+                    to="/admin/courses/new"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
+                  >
+                    Конструктор курсов
+                  </Link>
+                  <Link
                     to="/admin/tests"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
                   >
                     Управление тестами
                   </Link>
+
                   <Link
                     to="/admin/tests/new"
                     onClick={() => setMobileMenuOpen(false)}
