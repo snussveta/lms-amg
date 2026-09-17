@@ -71,11 +71,15 @@ export const TakeTestPage = () => {
     setSubmitting(true);
 
     try {
-      const formattedAnswers = Object.entries(answersRef.current).map(([qId, ans]) => ({
-        question_id: parseInt(qId, 10),
-        selected_option_ids: ans.selected_option_ids || [],
-        text_answer: ans.text_answer || '',
-      }));
+      const formattedAnswers = Object.entries(answersRef.current).map(([qId, ans]) => {
+        const val = ans.text_answer || ans.answer_text || '';
+        return {
+          question_id: parseInt(qId, 10),
+          selected_option_ids: ans.selected_option_ids || [],
+          text_answer: val,
+          answer_text: val,
+        };
+      });
 
       await api.post(`/attempts/${attemptId}/submit`, {
         answers: formattedAnswers,
@@ -145,6 +149,7 @@ export const TakeTestPage = () => {
       [questionId]: {
         selected_option_ids: [],
         text_answer: text,
+        answer_text: text,
       },
     }));
   };
@@ -152,8 +157,10 @@ export const TakeTestPage = () => {
   const isQuestionAnswered = (q) => {
     const ans = userAnswers[q.id];
     if (!ans) return false;
-    if (q.question_type === 'text' || q.question_type === 'manual_review') {
-      return !!ans.text_answer && ans.text_answer.trim().length > 0;
+    const qType = q.question_type || q.type;
+    if (['text', 'manual_review', 'open', 'free_text'].includes(qType)) {
+      const textVal = ans.text_answer || ans.answer_text || '';
+      return textVal.trim().length > 0;
     }
     return ans.selected_option_ids && ans.selected_option_ids.length > 0;
   };
@@ -397,38 +404,38 @@ export const TakeTestPage = () => {
                 </div>
               )}
 
-              {/* Ручной ввод развернутого ответа с проверкой администратором */}
-              {currentQuestion.question_type === 'manual_review' && (
+              {/* Ручной ввод развернутого ответа с проверкой администратором / открытый вопрос */}
+              {(['manual_review', 'open', 'free_text'].includes(currentQuestion.question_type) || ['manual_review', 'open', 'free_text'].includes(currentQuestion.type)) && (
                 <div className="space-y-3">
                   <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-xs text-amber-300/90">
                     <FileEdit className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
                     <span>
-                      Данный вопрос требует развернутого ответа в свободной форме. После завершения теста ответ будет проверен экзаменатором/администратором.
+                      Данный вопрос требует развернутого ответа в свободной форме. После завершения теста ответ будет сохранен и передан методисту/экзаменатору на проверку.
                     </span>
                   </div>
                   <textarea
                     rows={6}
-                    value={userAnswers[currentQuestion.id]?.text_answer || ''}
+                    value={userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || ''}
                     onChange={(e) => handleTextAnswerChange(currentQuestion.id, e.target.value)}
                     placeholder="Введите ваш развернутый ответ на вопрос..."
                     className="input-field text-sm leading-relaxed resize-y font-normal"
                   />
                   <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Символов: {(userAnswers[currentQuestion.id]?.text_answer || '').length}</span>
+                    <span>Символов: {(userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || '').length}</span>
                     <span>Максимальный балл за ответ: {currentQuestion.points}</span>
                   </div>
                 </div>
               )}
 
               {/* Стандартный текстовый ввод */}
-              {currentQuestion.question_type === 'text' && (
+              {(currentQuestion.question_type === 'text' || currentQuestion.type === 'text') && (
                 <div className="space-y-2">
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Ваш ответ
                   </label>
                   <textarea
                     rows={4}
-                    value={userAnswers[currentQuestion.id]?.text_answer || ''}
+                    value={userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || ''}
                     onChange={(e) => handleTextAnswerChange(currentQuestion.id, e.target.value)}
                     placeholder="Введите точный ответ..."
                     className="input-field text-sm resize-none font-normal"

@@ -212,7 +212,9 @@ async def submit_guest_attempt(
     for q in test.questions:
         user_ans = submitted_answers_map.get(q.id)
         user_selected = user_ans.selected_option_ids if user_ans and user_ans.selected_option_ids else []
-        user_text = user_ans.text_answer.strip() if user_ans and user_ans.text_answer else ""
+        user_text = ""
+        if user_ans:
+            user_text = (user_ans.text_answer or user_ans.answer_text or "").strip()
 
         is_q_correct = False
         points_earned = 0
@@ -232,7 +234,7 @@ async def submit_guest_attempt(
                 is_q_correct = True
                 points_earned = q.points
 
-        elif q.question_type == "manual_review":
+        elif q.question_type in ("manual_review", "open", "free_text"):
             # Open question requiring administrator manual review
             is_q_reviewed = False
             has_unreviewed = True

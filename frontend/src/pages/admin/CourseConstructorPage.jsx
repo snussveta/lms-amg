@@ -514,6 +514,9 @@ export const CourseConstructorPage = () => {
       formData.append('total_chunks', totalChunks);
       formData.append('original_filename', file.name);
       formData.append('category', activeLesson?.lesson_type === 'presentation' ? 'presentation' : 'video');
+      if (activeLesson?.id && typeof activeLesson.id === 'number') {
+        formData.append('lesson_id', activeLesson.id);
+      }
       formData.append('chunk_file', chunkBlob, file.name);
 
       try {
@@ -533,7 +536,7 @@ export const CourseConstructorPage = () => {
           speed: `${mbPerSec} МБ/с`,
         });
 
-        if (res.data.status === 'completed') {
+        if (res.data.status === 'completed' || res.data.status === 'success') {
           const compData = res.data;
           setUploadStatus('completed');
           updateActiveLessonField('file_url', compData.file_url);
@@ -563,13 +566,17 @@ export const CourseConstructorPage = () => {
         }
 
         // Explicit complete fallback on final chunk
-        if (chunkIndex === totalChunks - 1 && res.data.status !== 'completed') {
+        if (chunkIndex === totalChunks - 1 && res.data.status !== 'completed' && res.data.status !== 'success') {
           try {
-            const compRes = await api.post('/v1/media/upload/complete', {
+            const compPayload = {
               upload_id: uploadId,
               original_filename: file.name,
               category: activeLesson?.lesson_type === 'presentation' ? 'presentation' : 'video',
-            });
+            };
+            if (activeLesson?.id && typeof activeLesson.id === 'number') {
+              compPayload.lesson_id = activeLesson.id;
+            }
+            const compRes = await api.post('/v1/media/upload/complete', compPayload);
             if (compRes.data && compRes.data.file_url) {
               setUploadStatus('completed');
               updateActiveLessonField('file_url', compRes.data.file_url);
@@ -1311,42 +1318,44 @@ export const CourseConstructorPage = () => {
 
                     {/* Swap: Embedded Video Preview Player with Replace Video Button OR Dropzone */}
                     {activeLesson.file_url ? (
-                      <div className="space-y-3 pt-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 text-xs text-slate-300">
-                            <Check className="w-4 h-4 text-emerald-400" />
-                            <span className="font-semibold">Текущее видео урока:</span>
-                            <span className="font-mono text-[11px] text-slate-500 truncate max-w-xs">{activeLesson.file_url}</span>
+                      <div className="rounded-xl overflow-hidden border border-slate-700 bg-black p-2 space-y-2">
+                        <video 
+                          key={activeLesson.file_url}
+                          src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
+                          controls 
+                          playsInline
+                          preload="metadata"
+                          className="w-full max-h-[380px] rounded-lg object-contain bg-black"
+                        />
+                        <div className="mt-2 flex items-center justify-between px-2 text-xs text-slate-400">
+                          <span className="truncate max-w-sm">Файл: {activeLesson.file_url}</span>
+                          <div className="flex items-center gap-3">
+                            <button 
+                              type="button" 
+                              onClick={() => fileInputRef.current?.click()}
+                              className="text-sky-400 hover:text-sky-300 transition-colors"
+                            >
+                              Заменить видео
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={async () => {
+                                updateActiveLessonField('file_url', null);
+                                if (activeLesson && typeof activeLesson.id === 'number') {
+                                  try {
+                                    await api.put(`/courses/lessons/${activeLesson.id}`, { file_url: null });
+                                  } catch {
+                                    if (courseId) {
+                                      await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, { file_url: null });
+                                    }
+                                  }
+                                }
+                              }}
+                              className="text-rose-400 hover:text-rose-300 transition-colors"
+                            >
+                              Удалить / Заменить
+                            </button>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3 hover:border-sky-500 hover:text-sky-400 transition-colors"
-                            title="Загрузить новый видеофайл для этого урока"
-                          >
-                            <Upload className="w-3.5 h-3.5 text-sky-400" />
-                            Заменить видео
-                          </button>
-                        </div>
-
-                        <div className="rounded-xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[420px] shadow-lg">
-                          <video
-                            controls
-                            playsInline
-                            preload="metadata"
-                            src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
-                            className="w-full h-full object-contain rounded-xl"
-                          >
-                            Ваш браузер не поддерживает HTML5 видео.
-                          </video>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
-                          <span>Поддержка HTTP 206 Partial Content (перемотка без задержки)</span>
-                          {activeLesson.file_size_bytes ? (
-                            <span>Размер: {(activeLesson.file_size_bytes / (1024 * 1024)).toFixed(1)} МБ</span>
-                          ) : null}
                         </div>
                       </div>
                     ) : (

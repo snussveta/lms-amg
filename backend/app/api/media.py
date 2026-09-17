@@ -8,8 +8,12 @@ from typing import Optional, AsyncGenerator
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Header, Request, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.security import get_current_user, require_role
+from app.models.course import CourseLesson
 from app.models.user import User
 
 router = APIRouter(tags=["Media"])
@@ -105,6 +109,8 @@ async def upload_media_chunk(
     chunk_file: UploadFile = Form(...),
     original_filename: str = Form("file.mp4"),
     category: str = Form("video"),  # video, presentation, image
+    lesson_id: Optional[int] = Form(None),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):
     """
@@ -172,8 +178,26 @@ async def upload_media_chunk(
         # Clean up temporary chunks directory
         shutil.rmtree(temp_session_dir, ignore_errors=True)
 
+        final_file_url = f"/media/courses/{cat_subdir}/{final_filename}"
+
+        # If lesson_id is passed, immediately bind file_url to CourseLesson in database
+        if lesson_id:
+            try:
+                lid = int(lesson_id)
+                stmt = select(CourseLesson).where(CourseLesson.id == lid)
+                res = await db.execute(stmt)
+                lesson = res.scalar_one_or_none()
+                if lesson:
+                    lesson.file_url = final_file_url
+                    lesson.file_size_bytes = total_size
+                    await db.commit()
+                    await db.refresh(lesson)
+            except Exception as e:
+                print(f"Error binding lesson {lesson_id} file_url: {e}")
+
         return {
-            "status": "completed",
+            "status": "success",
+            "state": "completed",
             "upload_id": safe_upload_id,
             "chunk_index": chunk_index,
             "total_chunks": total_chunks,
@@ -181,7 +205,8 @@ async def upload_media_chunk(
             "filename": final_filename,
             "original_name": original_filename,
             "file_size_bytes": total_size,
-            "file_url": f"/media/courses/{cat_subdir}/{final_filename}",
+            "file_url": final_file_url,
+            "lesson_id": lesson_id,
             "stream_url": f"/api/v1/media/stream/{final_file_id}",
         }
 
@@ -198,16 +223,19 @@ async def upload_media_chunk(
 @router.post("/v1/media/upload/complete")
 async def complete_media_upload(
     request: Request,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):
     """
     Finalize chunk upload or confirm upload complete.
-    Returns file_url formatted as /media/courses/... and file_id.
+    Saves file_url to CourseLesson if lesson_id is passed,
+    and returns { status: "success", file_url: ..., lesson_id: ... }.
     """
     upload_id = None
     original_filename = "file.mp4"
     category = "video"
     file_id = None
+    lesson_id = None
 
     content_type = request.headers.get("content-type", "")
     if "application/json" in content_type:
@@ -217,6 +245,7 @@ async def complete_media_upload(
             original_filename = body.get("original_filename", "file.mp4")
             category = body.get("category", "video")
             file_id = body.get("file_id")
+            lesson_id = body.get("lesson_id")
         except Exception:
             pass
     else:
@@ -226,6 +255,7 @@ async def complete_media_upload(
             original_filename = form.get("original_filename", "file.mp4")
             category = form.get("category", "video")
             file_id = form.get("file_id")
+            lesson_id = form.get("lesson_id")
         except Exception:
             pass
 
@@ -234,12 +264,29 @@ async def complete_media_upload(
         found_file = get_file_path_by_id(file_id)
         if found_file and found_file.is_file():
             rel_path = found_file.relative_to(MEDIA_BASE)
+            final_file_url = f"/media/{rel_path.as_posix()}"
+            if lesson_id:
+                try:
+                    lid = int(lesson_id)
+                    stmt = select(CourseLesson).where(CourseLesson.id == lid)
+                    res = await db.execute(stmt)
+                    lesson = res.scalar_one_or_none()
+                    if lesson:
+                        lesson.file_url = final_file_url
+                        lesson.file_size_bytes = found_file.stat().st_size
+                        await db.commit()
+                        await db.refresh(lesson)
+                except Exception as e:
+                    print(f"Error binding lesson {lesson_id} file_url: {e}")
+
             return {
-                "status": "completed",
+                "status": "success",
+                "state": "completed",
                 "file_id": file_id,
                 "filename": found_file.name,
                 "file_size_bytes": found_file.stat().st_size,
-                "file_url": f"/media/{rel_path.as_posix()}",
+                "file_url": final_file_url,
+                "lesson_id": lesson_id,
                 "stream_url": f"/api/v1/media/stream/{file_id}",
             }
 
@@ -283,23 +330,56 @@ async def complete_media_upload(
 
                 shutil.rmtree(temp_session_dir, ignore_errors=True)
 
+                final_file_url = f"/media/courses/{cat_subdir}/{final_filename}"
+                if lesson_id:
+                    try:
+                        lid = int(lesson_id)
+                        stmt = select(CourseLesson).where(CourseLesson.id == lid)
+                        res = await db.execute(stmt)
+                        lesson = res.scalar_one_or_none()
+                        if lesson:
+                            lesson.file_url = final_file_url
+                            lesson.file_size_bytes = total_size
+                            await db.commit()
+                            await db.refresh(lesson)
+                    except Exception as e:
+                        print(f"Error binding lesson {lesson_id} file_url: {e}")
+
                 return {
-                    "status": "completed",
+                    "status": "success",
+                    "state": "completed",
                     "upload_id": safe_upload_id,
                     "file_id": final_file_id,
                     "filename": final_filename,
                     "original_name": original_filename,
                     "file_size_bytes": total_size,
-                    "file_url": f"/media/courses/{cat_subdir}/{final_filename}",
+                    "file_url": final_file_url,
+                    "lesson_id": lesson_id,
                     "stream_url": f"/api/v1/media/stream/{final_file_id}",
                 }
 
     # Fallback if already finished or unknown
+    final_file_url = f"/media/courses/videos/{original_filename}"
+    if lesson_id:
+        try:
+            lid = int(lesson_id)
+            stmt = select(CourseLesson).where(CourseLesson.id == lid)
+            res = await db.execute(stmt)
+            lesson = res.scalar_one_or_none()
+            if lesson:
+                lesson.file_url = final_file_url
+                await db.commit()
+                await db.refresh(lesson)
+        except Exception:
+            pass
+
     return {
-        "status": "completed",
+        "status": "success",
+        "state": "completed",
         "upload_id": upload_id,
         "file_id": file_id or "default",
-        "file_url": f"/media/courses/videos/{original_filename}",
+        "file_url": final_file_url,
+        "lesson_id": lesson_id,
         "stream_url": f"/api/v1/media/stream/{file_id or 'default'}",
     }
 

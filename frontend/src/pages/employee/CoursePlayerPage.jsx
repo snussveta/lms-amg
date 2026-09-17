@@ -307,6 +307,17 @@ export const CoursePlayerPage = () => {
     });
   };
 
+  const handleAnswerChange = (questionId, text) => {
+    setQuizAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        text_answer: text,
+        answer_text: text,
+      },
+    }));
+  };
+
   const handleSubmitQuiz = async () => {
     if (!quizAttempt) return;
     const attemptId = quizAttempt.attempt_id || quizAttempt.id;
@@ -314,11 +325,15 @@ export const CoursePlayerPage = () => {
 
     try {
       setQuizSubmitting(true);
-      const answersPayload = Object.entries(quizAnswers).map(([qId, ans]) => ({
-        question_id: parseInt(qId, 10),
-        selected_option_ids: ans.selected_option_ids || [],
-        text_answer: ans.text_answer || '',
-      }));
+      const answersPayload = Object.entries(quizAnswers).map(([qId, ans]) => {
+        const textVal = typeof ans === 'string' ? ans : (ans.answer_text || ans.text_answer || '');
+        return {
+          question_id: parseInt(qId, 10),
+          selected_option_ids: ans.selected_option_ids || [],
+          text_answer: textVal,
+          answer_text: textVal,
+        };
+      });
 
       const res = await api.post(`/attempts/${attemptId}/submit`, {
         answers: answersPayload,
@@ -856,14 +871,15 @@ export const CoursePlayerPage = () => {
               {/* ============================================== */}
               {activeLesson.lesson_type === 'video' && (
                 <div className="space-y-6 pt-2 animate-fade-in">
-                  <div className="rounded-2xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[540px] shadow-2xl relative">
+                  <div className="w-full bg-black rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center border border-slate-800">
                     {activeLesson.file_url ? (
                       <video
+                        key={activeLesson.file_url}
                         ref={videoRef}
                         controls
                         playsInline
                         preload="metadata"
-                        className="w-full h-full object-contain rounded-xl"
+                        className="w-full max-h-[70vh] rounded-2xl object-contain bg-black"
                         src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
                         onTimeUpdate={handleVideoTimeUpdate}
                         onEnded={handleVideoEnded}
@@ -871,7 +887,7 @@ export const CoursePlayerPage = () => {
                         Ваш браузер не поддерживает встроенное видео.
                       </video>
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-2 p-6 text-center">
+                      <div className="w-full h-full min-h-[360px] flex flex-col items-center justify-center text-slate-500 gap-2 p-6 text-center">
                         <Video className="w-12 h-12 text-slate-700" />
                         <div className="text-sm font-semibold">Видеофайл еще не загружен методистом</div>
                         <div className="text-xs">Зайдите в конструктор курса и прикрепите видео лекции.</div>
@@ -1014,7 +1030,20 @@ export const CoursePlayerPage = () => {
                       <div className="space-y-5">
                         {(quizAttempt.test?.questions || []).map((q, qIdx) => {
                           const isMultiple = q.question_type === 'multiple_choice';
+                          const isOpen =
+                            q.type === 'text' ||
+                            q.type === 'open' ||
+                            q.type === 'free_text' ||
+                            q.type === 'manual_review' ||
+                            q.question_type === 'open' ||
+                            q.question_type === 'text' ||
+                            q.question_type === 'free_text' ||
+                            q.question_type === 'manual_review';
                           const selected = quizAnswers[q.id]?.selected_option_ids || [];
+                          const answerText =
+                            typeof quizAnswers[q.id] === 'string'
+                              ? quizAnswers[q.id]
+                              : (quizAnswers[q.id]?.answer_text || quizAnswers[q.id]?.text_answer || '');
 
                           return (
                             <div key={q.id} className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
@@ -1025,34 +1054,50 @@ export const CoursePlayerPage = () => {
                                 <div className="text-sm font-semibold text-slate-100">{q.text}</div>
                               </div>
 
-                              {/* Options */}
-                              <div className="space-y-2 pt-1">
-                                {(q.options || []).map((opt) => {
-                                  const isChecked = selected.includes(opt.id);
-                                  return (
-                                    <div
-                                      key={opt.id}
-                                      onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
-                                      className={`p-3 rounded-lg border text-xs cursor-pointer transition-all duration-150 flex items-center gap-3 ${
-                                        isChecked
-                                          ? 'bg-sky-950/60 border-sky-700 text-white font-medium shadow-sm'
-                                          : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-900'
-                                      }`}
-                                    >
+                              {/* Открытый вопрос */}
+                              {isOpen ? (
+                                <div className="mt-4">
+                                  <textarea
+                                    rows={5}
+                                    value={answerText}
+                                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                                    placeholder="Введите развернутый ответ на вопрос..."
+                                    className="w-full p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-y"
+                                  />
+                                  <div className="mt-2 text-xs text-slate-400">
+                                    Ответ будет сохранен и передан методисту на проверку.
+                                  </div>
+                                </div>
+                              ) : (
+                                /* Варианты с выбором */
+                                <div className="space-y-2 pt-1">
+                                  {(q.options || []).map((opt) => {
+                                    const isChecked = selected.includes(opt.id);
+                                    return (
                                       <div
-                                        className={`w-4 h-4 rounded flex items-center justify-center ${
-                                          isMultiple ? 'rounded' : 'rounded-full'
-                                        } border ${
-                                          isChecked ? 'border-sky-400 bg-sky-500' : 'border-slate-600'
+                                        key={opt.id}
+                                        onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
+                                        className={`p-3 rounded-lg border text-xs cursor-pointer transition-all duration-150 flex items-center gap-3 ${
+                                          isChecked
+                                            ? 'bg-sky-950/60 border-sky-700 text-white font-medium shadow-sm'
+                                            : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-900'
                                         }`}
                                       >
-                                        {isChecked && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+                                        <div
+                                          className={`w-4 h-4 rounded flex items-center justify-center ${
+                                            isMultiple ? 'rounded' : 'rounded-full'
+                                          } border ${
+                                            isChecked ? 'border-sky-400 bg-sky-500' : 'border-slate-600'
+                                          }`}
+                                        >
+                                          {isChecked && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+                                        </div>
+                                        <span>{opt.text}</span>
                                       </div>
-                                      <span>{opt.text}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

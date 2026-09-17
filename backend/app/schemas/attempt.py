@@ -29,6 +29,7 @@ class AnswerSubmitItem(BaseModel):
     question_id: int
     selected_option_ids: Optional[List[int]] = []
     text_answer: Optional[str] = None
+    answer_text: Optional[str] = None
 
 
 class AttemptSubmitRequest(BaseModel):
