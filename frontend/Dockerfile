@@ -9,6 +9,7 @@ RUN npm install
 
 # Build production bundle
 COPY . .
+RUN chmod +x node_modules/.bin/*
 RUN npm run build
 
 # Production runtime stage
