@@ -225,6 +225,10 @@ async def upload_media_chunk(
                 if lesson:
                     lesson.file_url = final_file_url
                     lesson.file_size_bytes = total_size
+                    if category == "video" and lesson.lesson_type != "video":
+                        lesson.lesson_type = "video"
+                    elif category == "presentation" and lesson.lesson_type != "presentation":
+                        lesson.lesson_type = "presentation"
                     await db.commit()
                     await db.refresh(lesson)
             except Exception as e:
@@ -320,6 +324,10 @@ async def complete_media_upload(
                     if lesson:
                         lesson.file_url = final_file_url
                         lesson.file_size_bytes = found_file.stat().st_size
+                        if category == "video" and lesson.lesson_type != "video":
+                            lesson.lesson_type = "video"
+                        elif category == "presentation" and lesson.lesson_type != "presentation":
+                            lesson.lesson_type = "presentation"
                         await db.commit()
                         await db.refresh(lesson)
                 except Exception as e:
@@ -386,6 +394,10 @@ async def complete_media_upload(
                         if lesson:
                             lesson.file_url = final_file_url
                             lesson.file_size_bytes = total_size
+                            if category == "video" and lesson.lesson_type != "video":
+                                lesson.lesson_type = "video"
+                            elif category == "presentation" and lesson.lesson_type != "presentation":
+                                lesson.lesson_type = "presentation"
                             await db.commit()
                             await db.refresh(lesson)
                     except Exception as e:
@@ -541,6 +553,10 @@ async def upload_media_direct(
             if lesson:
                 lesson.file_url = final_file_url
                 lesson.file_size_bytes = total_size
+                if cat == "video" and lesson.lesson_type != "video":
+                    lesson.lesson_type = "video"
+                elif cat == "presentation" and lesson.lesson_type != "presentation":
+                    lesson.lesson_type = "presentation"
                 await db.commit()
                 await db.refresh(lesson)
         except Exception as e:

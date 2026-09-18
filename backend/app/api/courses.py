@@ -550,7 +550,17 @@ async def update_lesson(
     if payload.content_json is not None:
         lesson.content_json = payload.content_json
     if payload.file_url is not None:
-        lesson.file_url = payload.file_url
+        clean_url = payload.file_url.strip() if isinstance(payload.file_url, str) and payload.file_url.strip() else None
+        lesson.file_url = clean_url
+        # Auto-adjust lesson type if media file is attached and type was generic article
+        if clean_url:
+            clean_url_lower = clean_url.lower()
+            if "/videos/" in clean_url_lower or any(clean_url_lower.endswith(ext) for ext in [".mp4", ".webm", ".mkv", ".mov"]):
+                if lesson.lesson_type in ["article", ""]:
+                    lesson.lesson_type = "video"
+            elif "/presentations/" in clean_url_lower or clean_url_lower.endswith(".pdf"):
+                if lesson.lesson_type in ["article", ""]:
+                    lesson.lesson_type = "presentation"
     if payload.file_size_bytes is not None:
         lesson.file_size_bytes = payload.file_size_bytes
     if payload.quiz_id is not None:

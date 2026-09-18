@@ -69,6 +69,7 @@ export const CourseConstructorPage = () => {
   const [uploadError, setUploadError] = useState('');
   const [chunkStats, setChunkStats] = useState({ current: 0, total: 0, speed: '' });
   const fileInputRef = useRef(null);
+  const pdfInputRef = useRef(null);
   const imageInputRef = useRef(null);
 
   // Knowledge Base Picker Modal
@@ -169,6 +170,12 @@ export const CourseConstructorPage = () => {
 
       let currentCId = courseId;
 
+      // Ensure current activeLesson state is deeply merged into modules tree before saving
+      const currentModules = modules.map((m) => ({
+        ...m,
+        lessons: (m.lessons || []).map((l) => (activeLesson && l.id === activeLesson.id ? activeLesson : l)),
+      }));
+
       if (!isEditing || !currentCId) {
         // Create Course
         const payload = {
@@ -183,7 +190,7 @@ export const CourseConstructorPage = () => {
         setCourseId(currentCId);
 
         // Save custom modules & lessons from initial template
-        for (const mod of modules) {
+        for (const mod of currentModules) {
           const modRes = await api.post(`/courses/${currentCId}/modules`, {
             title: mod.title,
             order_index: mod.order_index,
@@ -196,9 +203,9 @@ export const CourseConstructorPage = () => {
               order_index: les.order_index,
               lesson_type: les.lesson_type,
               content_json: typeof les.content_json === 'string' ? les.content_json : JSON.stringify(les.content_json),
-              file_url: les.file_url,
-              file_size_bytes: les.file_size_bytes,
-              quiz_id: les.quiz_id,
+              file_url: les.file_url || null,
+              file_size_bytes: les.file_size_bytes || 0,
+              quiz_id: les.quiz_id || null,
             });
           }
         }
@@ -213,27 +220,63 @@ export const CourseConstructorPage = () => {
           is_published: isPublished,
         });
 
-        // Save active lesson if modified
-        if (activeLesson && typeof activeLesson.id === 'number') {
-          await api.put(`/courses/${currentCId}/lessons/${activeLesson.id}`, {
-            title: activeLesson.title,
-            order_index: activeLesson.order_index,
-            lesson_type: activeLesson.lesson_type,
-            content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
-            file_url: activeLesson.file_url,
-            file_size_bytes: activeLesson.file_size_bytes,
-            quiz_id: activeLesson.quiz_id,
-          });
+        // Persist all modules and lessons across all sections
+        for (const mod of currentModules) {
+          let realModId = mod.id;
+          if (typeof mod.id === 'string' && mod.id.startsWith('temp-')) {
+            const modRes = await api.post(`/courses/${currentCId}/modules`, {
+              title: mod.title,
+              order_index: mod.order_index,
+            });
+            realModId = modRes.data.id;
+          }
+
+          for (const les of mod.lessons || []) {
+            const lessonData = {
+              title: les.title,
+              order_index: les.order_index,
+              lesson_type: les.lesson_type,
+              content_json: typeof les.content_json === 'string' ? les.content_json : JSON.stringify(les.content_json),
+              file_url: les.file_url || null,
+              file_size_bytes: les.file_size_bytes || 0,
+              quiz_id: les.quiz_id || null,
+            };
+
+            if (typeof les.id === 'string' && les.id.startsWith('temp-')) {
+              await api.post(`/courses/${currentCId}/modules/${realModId}/lessons`, lessonData);
+            } else if (typeof les.id === 'number') {
+              await api.put(`/courses/${currentCId}/lessons/${les.id}`, lessonData);
+            }
+          }
         }
       }
 
       setSuccessMessage('Курс успешно сохранен!');
       setTimeout(() => setSuccessMessage(''), 3500);
 
-      // Refresh full course data to get accurate IDs
+      // Refresh full course data from server and preserve activeLesson reference
       if (currentCId) {
         const res = await api.get(`/courses/${currentCId}`);
-        setModules(res.data.modules || []);
+        const freshModules = res.data.modules || [];
+        setModules(freshModules);
+
+        if (activeLesson) {
+          let updatedActive = null;
+          for (const m of freshModules) {
+            const found = (m.lessons || []).find((l) => l.id === activeLesson.id || l.title === activeLesson.title);
+            if (found) {
+              updatedActive = found;
+              setActiveModuleId(m.id);
+              break;
+            }
+          }
+          if (updatedActive) {
+            setActiveLesson(updatedActive);
+          } else if (freshModules.length > 0 && freshModules[0].lessons?.length > 0) {
+            setActiveLesson(freshModules[0].lessons[0]);
+            setActiveModuleId(freshModules[0].id);
+          }
+        }
       }
     } catch (err) {
       console.error('Ошибка сохранения курса:', err);
@@ -410,20 +453,24 @@ export const CourseConstructorPage = () => {
   };
 
   // ----------------------------------------------------
-  // Active Lesson Field Updates
+  // Active Lesson Field Updates (Atomic & Functional)
   // ----------------------------------------------------
-  const updateActiveLessonField = (field, value) => {
-    if (!activeLesson) return;
-    const updated = { ...activeLesson, [field]: value };
-    setActiveLesson(updated);
+  const updateActiveLessonFields = (fieldsObj) => {
+    setActiveLesson((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...fieldsObj };
+      setModules((prevMods) =>
+        prevMods.map((m) => ({
+          ...m,
+          lessons: (m.lessons || []).map((l) => (l.id === updated.id ? updated : l)),
+        }))
+      );
+      return updated;
+    });
+  };
 
-    // Update in modules tree
-    setModules((prev) =>
-      prev.map((m) => ({
-        ...m,
-        lessons: (m.lessons || []).map((l) => (l.id === updated.id ? updated : l)),
-      }))
-    );
+  const updateActiveLessonField = (field, value) => {
+    updateActiveLessonFields({ [field]: value });
   };
 
   // Parse longread content blocks
@@ -512,30 +559,31 @@ export const CourseConstructorPage = () => {
   };
 
   const handleSelectKnowledgeFile = async (kf) => {
-    updateActiveLessonField('file_url', kf.file_url);
-    updateActiveLessonField('file_size_bytes', kf.file_size_bytes);
+    const shouldUpdateTitle =
+      activeLesson &&
+      (!activeLesson.title ||
+        activeLesson.title.startsWith('Видеоурок') ||
+        activeLesson.title.startsWith('Урок') ||
+        activeLesson.title.startsWith('Презентация'));
 
-    if (activeLesson && (!activeLesson.title || activeLesson.title.startsWith('Видеоурок ') || activeLesson.title.startsWith('Урок ') || activeLesson.title.startsWith('Презентация '))) {
-      updateActiveLessonField('title', kf.title);
-    }
+    const fieldsToUpdate = {
+      file_url: kf.file_url,
+      file_size_bytes: kf.file_size_bytes || 0,
+      lesson_type: knowledgePickerType === 'presentation' ? 'presentation' : 'video',
+      ...(shouldUpdateTitle ? { title: kf.title } : {}),
+    };
+
+    updateActiveLessonFields(fieldsToUpdate);
 
     if (activeLesson && typeof activeLesson.id === 'number') {
       try {
-        await api.put(`/courses/lessons/${activeLesson.id}`, {
-          file_url: kf.file_url,
-          file_size_bytes: kf.file_size_bytes,
-        });
-      } catch {
         if (courseId) {
-          try {
-            await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
-              file_url: kf.file_url,
-              file_size_bytes: kf.file_size_bytes,
-            });
-          } catch (e2) {
-            console.warn('Autosave file_url failed:', e2);
-          }
+          await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, fieldsToUpdate);
+        } else {
+          await api.put(`/courses/lessons/${activeLesson.id}`, fieldsToUpdate);
         }
+      } catch (err) {
+        console.warn('Autosave file_url failed:', err);
       }
     }
 
@@ -579,25 +627,37 @@ export const CourseConstructorPage = () => {
         });
 
         const compData = res.data;
+        const uploadedUrl = compData.file_url;
+        const uploadedSize = compData.file_size_bytes || totalSize;
+
         setUploadStatus('completed');
-        updateActiveLessonField('file_url', compData.file_url);
-        updateActiveLessonField('file_size_bytes', compData.file_size_bytes || totalSize);
+        updateActiveLessonFields({
+          file_url: uploadedUrl,
+          file_size_bytes: uploadedSize,
+          lesson_type: category,
+        });
 
         if (activeLesson && typeof activeLesson.id === 'number') {
           try {
-            await api.put(`/courses/lessons/${activeLesson.id}`, {
-              file_url: compData.file_url,
-              file_size_bytes: compData.file_size_bytes || totalSize,
-            });
-          } catch {
             if (courseId) {
               await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
-                file_url: compData.file_url,
-                file_size_bytes: compData.file_size_bytes || totalSize,
+                file_url: uploadedUrl,
+                file_size_bytes: uploadedSize,
+                lesson_type: category,
+              });
+            } else {
+              await api.put(`/courses/lessons/${activeLesson.id}`, {
+                file_url: uploadedUrl,
+                file_size_bytes: uploadedSize,
+                lesson_type: category,
               });
             }
+          } catch (e) {
+            console.warn('Autosave after direct upload failed:', e);
           }
         }
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
         return;
       } catch (err) {
         console.warn('Прямая загрузка завершилась с ошибкой, переключение на чанки:', err);
@@ -649,30 +709,37 @@ export const CourseConstructorPage = () => {
 
         if (res.data.status === 'completed' || res.data.status === 'success') {
           const compData = res.data;
-          setUploadStatus('completed');
-          updateActiveLessonField('file_url', compData.file_url);
-          updateActiveLessonField('file_size_bytes', compData.file_size_bytes || totalSize);
+          const uploadedUrl = compData.file_url;
+          const uploadedSize = compData.file_size_bytes || totalSize;
 
-          // Immediately autosave lesson via PUT /courses/lessons/{id}
+          setUploadStatus('completed');
+          updateActiveLessonFields({
+            file_url: uploadedUrl,
+            file_size_bytes: uploadedSize,
+            lesson_type: category,
+          });
+
           if (activeLesson && typeof activeLesson.id === 'number') {
             try {
-              await api.put(`/courses/lessons/${activeLesson.id}`, {
-                file_url: compData.file_url,
-                file_size_bytes: compData.file_size_bytes || totalSize,
-              });
-            } catch {
               if (courseId) {
-                try {
-                  await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
-                    file_url: compData.file_url,
-                    file_size_bytes: compData.file_size_bytes || totalSize,
-                  });
-                } catch (e2) {
-                  console.warn('Autosave file_url failed:', e2);
-                }
+                await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+                  file_url: uploadedUrl,
+                  file_size_bytes: uploadedSize,
+                  lesson_type: category,
+                });
+              } else {
+                await api.put(`/courses/lessons/${activeLesson.id}`, {
+                  file_url: uploadedUrl,
+                  file_size_bytes: uploadedSize,
+                  lesson_type: category,
+                });
               }
+            } catch (e2) {
+              console.warn('Autosave file_url failed:', e2);
             }
           }
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          if (pdfInputRef.current) pdfInputRef.current.value = '';
           break;
         }
 
@@ -689,28 +756,41 @@ export const CourseConstructorPage = () => {
             }
             const compRes = await api.post('/v1/media/upload/complete', compPayload);
             if (compRes.data && compRes.data.file_url) {
+              const uploadedUrl = compRes.data.file_url;
+              const uploadedSize = compRes.data.file_size_bytes || totalSize;
+
               setUploadStatus('completed');
-              updateActiveLessonField('file_url', compRes.data.file_url);
-              updateActiveLessonField('file_size_bytes', compRes.data.file_size_bytes || totalSize);
+              updateActiveLessonFields({
+                file_url: uploadedUrl,
+                file_size_bytes: uploadedSize,
+                lesson_type: category,
+              });
+
               if (activeLesson && typeof activeLesson.id === 'number') {
                 try {
-                  await api.put(`/courses/lessons/${activeLesson.id}`, {
-                    file_url: compRes.data.file_url,
-                    file_size_bytes: compRes.data.file_size_bytes || totalSize,
-                  });
-                } catch {
                   if (courseId) {
                     await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
-                      file_url: compRes.data.file_url,
-                      file_size_bytes: compRes.data.file_size_bytes || totalSize,
+                      file_url: uploadedUrl,
+                      file_size_bytes: uploadedSize,
+                      lesson_type: category,
+                    });
+                  } else {
+                    await api.put(`/courses/lessons/${activeLesson.id}`, {
+                      file_url: uploadedUrl,
+                      file_size_bytes: uploadedSize,
+                      lesson_type: category,
                     });
                   }
+                } catch (e2) {
+                  console.warn('Autosave file_url failed:', e2);
                 }
               }
             }
           } catch (compErr) {
             console.warn('Complete call fallback:', compErr);
           }
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          if (pdfInputRef.current) pdfInputRef.current.value = '';
         }
       } catch (err) {
         console.error('Ошибка отправки чанка:', err);
@@ -725,29 +805,17 @@ export const CourseConstructorPage = () => {
   const handleSelectLessonInEditor = async (nextLesson, nextModuleId) => {
     if (activeLesson && typeof activeLesson.id === 'number' && courseId) {
       try {
-        await api.put(`/courses/lessons/${activeLesson.id}`, {
+        await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
           title: activeLesson.title,
           order_index: activeLesson.order_index,
           lesson_type: activeLesson.lesson_type,
           content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
-          file_url: activeLesson.file_url,
-          file_size_bytes: activeLesson.file_size_bytes,
-          quiz_id: activeLesson.quiz_id,
+          file_url: activeLesson.file_url || null,
+          file_size_bytes: activeLesson.file_size_bytes || 0,
+          quiz_id: activeLesson.quiz_id || null,
         });
-      } catch {
-        try {
-          await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
-            title: activeLesson.title,
-            order_index: activeLesson.order_index,
-            lesson_type: activeLesson.lesson_type,
-            content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
-            file_url: activeLesson.file_url,
-            file_size_bytes: activeLesson.file_size_bytes,
-            quiz_id: activeLesson.quiz_id,
-          });
-        } catch (e) {
-          console.warn('Autosave on switch failed:', e);
-        }
+      } catch (e) {
+        console.warn('Autosave on switch failed:', e);
       }
     }
     setActiveLesson(nextLesson);
@@ -1016,6 +1084,12 @@ export const CourseConstructorPage = () => {
                             <div className="flex items-center gap-2 min-w-0 pr-2">
                               {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
                               <span className="truncate">{les.title}</span>
+                              {les.lesson_type === 'video' && les.file_url && (
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-sm" title="Видео прикреплено" />
+                              )}
+                              {les.lesson_type === 'presentation' && les.file_url && (
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-sm" title="Презентация прикреплена" />
+                              )}
                             </div>
 
                             <button
@@ -1447,42 +1521,65 @@ export const CourseConstructorPage = () => {
 
                     {/* Swap: Embedded Video Preview Player with Replace Video Button OR Dropzone */}
                     {activeLesson.file_url ? (
-                      <div className="rounded-xl overflow-hidden border border-slate-700 bg-black p-2 space-y-2">
+                      <div className="rounded-xl overflow-hidden border border-slate-700 bg-black p-3 space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>Видео успешно привязано к уроку</span>
+                          </div>
+                          {activeLesson.file_size_bytes > 0 && (
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                              {(activeLesson.file_size_bytes / (1024 * 1024)).toFixed(1)} МБ
+                            </span>
+                          )}
+                        </div>
+
                         <video 
                           key={activeLesson.file_url}
                           src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
                           controls 
                           playsInline
                           preload="metadata"
-                          className="w-full max-h-[380px] rounded-lg object-contain bg-black"
+                          className="w-full max-h-[380px] rounded-lg object-contain bg-black border border-slate-800"
                         />
-                        <div className="mt-2 flex items-center justify-between px-2 text-xs text-slate-400">
-                          <span className="truncate max-w-sm">Файл: {activeLesson.file_url}</span>
+                        <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1 text-xs text-slate-400">
+                          <span className="truncate max-w-sm font-mono text-[11px] text-slate-500">
+                            {activeLesson.file_url}
+                          </span>
                           <div className="flex items-center gap-3">
                             <button 
                               type="button" 
-                              onClick={() => fileInputRef.current?.click()}
-                              className="text-sky-400 hover:text-sky-300 transition-colors"
+                              onClick={() => handleOpenKnowledgePicker('video')}
+                              className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
                             >
-                              Заменить видео
+                              Выбрать другое из Базы
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => fileInputRef.current?.click()}
+                              className="text-sky-400 hover:text-sky-300 transition-colors font-medium"
+                            >
+                              Загрузить с ПК
                             </button>
                             <button 
                               type="button" 
                               onClick={async () => {
-                                updateActiveLessonField('file_url', null);
+                                updateActiveLessonFields({ file_url: null, file_size_bytes: 0 });
                                 if (activeLesson && typeof activeLesson.id === 'number') {
                                   try {
-                                    await api.put(`/courses/lessons/${activeLesson.id}`, { file_url: null });
-                                  } catch {
                                     if (courseId) {
-                                      await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, { file_url: null });
+                                      await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, { file_url: null, file_size_bytes: 0 });
+                                    } else {
+                                      await api.put(`/courses/lessons/${activeLesson.id}`, { file_url: null, file_size_bytes: 0 });
                                     }
+                                  } catch (errDel) {
+                                    console.warn('Failed to clear video:', errDel);
                                   }
                                 }
                               }}
-                              className="text-rose-400 hover:text-rose-300 transition-colors"
+                              className="text-rose-400 hover:text-rose-300 transition-colors font-medium"
                             >
-                              Удалить / Заменить
+                              Удалить видео
                             </button>
                           </div>
                         </div>
@@ -1534,7 +1631,7 @@ export const CourseConstructorPage = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => pdfInputRef.current?.click()}
                           className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1.5"
                         >
                           <Upload className="w-3.5 h-3.5" />
@@ -1544,11 +1641,11 @@ export const CourseConstructorPage = () => {
                     </div>
 
                     <div
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => pdfInputRef.current?.click()}
                       className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/50 hover:bg-slate-950 space-y-3"
                     >
                       <input
-                        ref={fileInputRef}
+                        ref={pdfInputRef}
                         type="file"
                         accept="application/pdf"
                         onChange={handleFileSelect}
@@ -1577,8 +1674,49 @@ export const CourseConstructorPage = () => {
                     )}
 
                     {activeLesson.file_url ? (
-                      <div className="space-y-2 pt-2">
-                        <span className="text-xs text-slate-400">Предпросмотр презентации:</span>
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>Презентация успешно привязана</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs">
+                            <button 
+                              type="button" 
+                              onClick={() => handleOpenKnowledgePicker('presentation')}
+                              className="text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                            >
+                              Выбрать другую из Базы
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => pdfInputRef.current?.click()}
+                              className="text-sky-400 hover:text-sky-300 transition-colors font-medium"
+                            >
+                              Загрузить PDF
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={async () => {
+                                updateActiveLessonFields({ file_url: null, file_size_bytes: 0 });
+                                if (activeLesson && typeof activeLesson.id === 'number') {
+                                  try {
+                                    if (courseId) {
+                                      await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, { file_url: null, file_size_bytes: 0 });
+                                    } else {
+                                      await api.put(`/courses/lessons/${activeLesson.id}`, { file_url: null, file_size_bytes: 0 });
+                                    }
+                                  } catch (errDel) {
+                                    console.warn('Failed to clear pdf:', errDel);
+                                  }
+                                }
+                              }}
+                              className="text-rose-400 hover:text-rose-300 transition-colors font-medium"
+                            >
+                              Удалить PDF
+                            </button>
+                          </div>
+                        </div>
                         <iframe
                           src={activeLesson.file_url}
                           className="w-full h-[500px] rounded-xl border border-slate-800 bg-slate-950"
