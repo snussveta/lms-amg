@@ -12,6 +12,7 @@ import {
   Eye,
   FileCode,
   FileText,
+  FolderArchive,
   GripVertical,
   HelpCircle,
   Image as ImageIcon,
@@ -69,6 +70,13 @@ export const CourseConstructorPage = () => {
   const [chunkStats, setChunkStats] = useState({ current: 0, total: 0, speed: '' });
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  // Knowledge Base Picker Modal
+  const [showKnowledgePicker, setShowKnowledgePicker] = useState(false);
+  const [knowledgeFiles, setKnowledgeFiles] = useState([]);
+  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+  const [knowledgePickerType, setKnowledgePickerType] = useState('video');
+  const [knowledgeSearchTerm, setKnowledgeSearchTerm] = useState('');
 
   // Fetch course data and tests on load
   useEffect(() => {
@@ -484,20 +492,123 @@ export const CourseConstructorPage = () => {
   };
 
   // ----------------------------------------------------
-  // Chunked Upload for Giant Videos (2-10 GB) & PDFs
+  // Knowledge Base Picker Handlers
+  // ----------------------------------------------------
+  const handleOpenKnowledgePicker = async (type = 'video') => {
+    setKnowledgePickerType(type);
+    setShowKnowledgePicker(true);
+    setLoadingKnowledge(true);
+    setKnowledgeSearchTerm('');
+    try {
+      const res = await api.get('/knowledge', {
+        params: { file_type: type },
+      });
+      setKnowledgeFiles(res.data || []);
+    } catch (err) {
+      console.error('Ошибка загрузки файлов из базы знаний:', err);
+    } finally {
+      setLoadingKnowledge(false);
+    }
+  };
+
+  const handleSelectKnowledgeFile = async (kf) => {
+    updateActiveLessonField('file_url', kf.file_url);
+    updateActiveLessonField('file_size_bytes', kf.file_size_bytes);
+
+    if (activeLesson && (!activeLesson.title || activeLesson.title.startsWith('Видеоурок ') || activeLesson.title.startsWith('Урок ') || activeLesson.title.startsWith('Презентация '))) {
+      updateActiveLessonField('title', kf.title);
+    }
+
+    if (activeLesson && typeof activeLesson.id === 'number') {
+      try {
+        await api.put(`/courses/lessons/${activeLesson.id}`, {
+          file_url: kf.file_url,
+          file_size_bytes: kf.file_size_bytes,
+        });
+      } catch {
+        if (courseId) {
+          try {
+            await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+              file_url: kf.file_url,
+              file_size_bytes: kf.file_size_bytes,
+            });
+          } catch (e2) {
+            console.warn('Autosave file_url failed:', e2);
+          }
+        }
+      }
+    }
+
+    setShowKnowledgePicker(false);
+    setSuccessMessage(`Материал «${kf.title}» прикреплен к уроку!`);
+    setTimeout(() => setSuccessMessage(''), 3500);
+  };
+
+  // ----------------------------------------------------
+  // Direct & Chunked Upload for Giant Videos & PDFs
   // ----------------------------------------------------
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
-    const totalSize = file.size;
-    const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
-    const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
     setUploadProgress(0);
     setUploadStatus('uploading');
     setUploadError('');
+
+    const totalSize = file.size;
+    const category = activeLesson?.lesson_type === 'presentation' ? 'presentation' : 'video';
+
+    // 1. Direct stream upload for standard size files (< 100MB)
+    if (totalSize < 100 * 1024 * 1024) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('category', category);
+        if (activeLesson?.id && typeof activeLesson.id === 'number') {
+          formData.append('lesson_id', activeLesson.id);
+        }
+        formData.append('title', activeLesson?.title || file.name);
+
+        const res = await api.post('/v1/media/upload/direct', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (pe) => {
+            if (pe.total) {
+              setUploadProgress(Math.round((pe.loaded * 100) / pe.total));
+            }
+          },
+        });
+
+        const compData = res.data;
+        setUploadStatus('completed');
+        updateActiveLessonField('file_url', compData.file_url);
+        updateActiveLessonField('file_size_bytes', compData.file_size_bytes || totalSize);
+
+        if (activeLesson && typeof activeLesson.id === 'number') {
+          try {
+            await api.put(`/courses/lessons/${activeLesson.id}`, {
+              file_url: compData.file_url,
+              file_size_bytes: compData.file_size_bytes || totalSize,
+            });
+          } catch {
+            if (courseId) {
+              await api.put(`/courses/${courseId}/lessons/${activeLesson.id}`, {
+                file_url: compData.file_url,
+                file_size_bytes: compData.file_size_bytes || totalSize,
+              });
+            }
+          }
+        }
+        return;
+      } catch (err) {
+        console.warn('Прямая загрузка завершилась с ошибкой, переключение на чанки:', err);
+      }
+    }
+
+    // 2. Chunked upload for giant files (100MB - 10GB)
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
+    const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
+    const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
     setChunkStats({ current: 0, total: totalChunks, speed: '' });
 
     const startTime = Date.now();
@@ -513,7 +624,7 @@ export const CourseConstructorPage = () => {
       formData.append('chunk_index', chunkIndex);
       formData.append('total_chunks', totalChunks);
       formData.append('original_filename', file.name);
-      formData.append('category', activeLesson?.lesson_type === 'presentation' ? 'presentation' : 'video');
+      formData.append('category', category);
       if (activeLesson?.id && typeof activeLesson.id === 'number') {
         formData.append('lesson_id', activeLesson.id);
       }
@@ -1262,14 +1373,32 @@ export const CourseConstructorPage = () => {
               {activeLesson.lesson_type === 'video' && (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
                         <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                          Загрузка видеофайла лекции (MP4 / MKV / WebM)
+                          Видеофайл лекции (MP4 / MKV / WebM)
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          Поддерживаются видеофайлы длительностью 5+ часов и размером от 2 до 10 ГБ. Загрузка производится чанками по 10 МБ без перегрузки RAM сервера.
+                          Поддерживаются видеофайлы длительностью 5+ часов и размером до 10 ГБ. Загрузите файл с ПК или выберите готовый из Базы знаний.
                         </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenKnowledgePicker('video')}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/60 hover:bg-emerald-900/60 text-emerald-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                        >
+                          <FolderArchive className="w-3.5 h-3.5" />
+                          <span>Выбрать из Базы знаний</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg bg-sky-950/60 border border-sky-800/60 hover:bg-sky-900/60 text-sky-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Загрузить видео с ПК</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1385,8 +1514,33 @@ export const CourseConstructorPage = () => {
               {activeLesson.lesson_type === 'presentation' && (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Загрузка презентации регламента (PDF)
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                          Презентация регламента (PDF)
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Интерактивный встроенный просмотр PDF-слайдов для сотрудников. Загрузите файл с ПК или выберите из Базы знаний.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenKnowledgePicker('presentation')}
+                          className="px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/60 hover:bg-amber-900/60 text-amber-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                        >
+                          <FolderArchive className="w-3.5 h-3.5" />
+                          <span>Выбрать из Базы знаний</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Загрузить PDF с ПК</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div
@@ -1507,6 +1661,107 @@ export const CourseConstructorPage = () => {
           )}
         </div>
       </div>
+
+      {/* Knowledge Base Picker Modal */}
+      {showKnowledgePicker && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-panel max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl border border-slate-700 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <FolderArchive className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">
+                  Выбрать {knowledgePickerType === 'presentation' ? 'презентацию' : 'видео'} из Базы знаний
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowKnowledgePicker(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick search */}
+            <div className="relative">
+              <input
+                type="text"
+                value={knowledgeSearchTerm}
+                onChange={(e) => setKnowledgeSearchTerm(e.target.value)}
+                placeholder="Поиск по названию файла в Базе знаний..."
+                className="input-field text-xs py-2 w-full"
+              />
+            </div>
+
+            {/* File list */}
+            <div className="flex-1 overflow-y-auto divide-y divide-slate-800/80 max-h-[50vh] pr-1">
+              {loadingKnowledge ? (
+                <div className="py-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                  <span>Загрузка файлов из Базы знаний...</span>
+                </div>
+              ) : knowledgeFiles.filter((kf) =>
+                  !knowledgeSearchTerm.trim() ||
+                  kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
+                  kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
+                ).length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <FolderArchive className="w-8 h-8 text-slate-600 mx-auto" />
+                  <div className="text-xs text-slate-400">
+                    В Базе знаний пока нет загруженных {knowledgePickerType === 'presentation' ? 'презентаций' : 'видео'}.
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Вы можете загрузить файл с компьютера, и он автоматически сохранится в Базу знаний.
+                  </div>
+                </div>
+              ) : (
+                knowledgeFiles
+                  .filter((kf) =>
+                    !knowledgeSearchTerm.trim() ||
+                    kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
+                    kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
+                  )
+                  .map((kf) => (
+                    <div
+                      key={kf.id}
+                      className="py-3 px-2 flex items-center justify-between gap-3 hover:bg-slate-900/60 rounded-xl transition-colors group"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="text-xs font-bold text-slate-200 group-hover:text-sky-300 transition-colors truncate">
+                          {kf.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2 truncate">
+                          <span className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] text-slate-300 font-semibold">
+                            {kf.department}
+                          </span>
+                          <span>{kf.file_name}</span>
+                          <span>• {(kf.file_size_bytes / (1024 * 1024)).toFixed(1)} МБ</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectKnowledgeFile(kf)}
+                        className="btn-primary text-xs py-1.5 px-3 shrink-0"
+                      >
+                        Прикрепить
+                      </button>
+                    </div>
+                  ))
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowKnowledgePicker(false)}
+                className="btn-secondary text-xs py-1.5 px-4"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Assignment Modal */}
       {showAssignModal && courseId && (

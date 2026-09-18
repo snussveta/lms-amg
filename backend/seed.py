@@ -515,6 +515,82 @@ async def seed_data() -> None:
                 ))
                 logger.info("Демо-курс успешно назначен сотруднику Алексей Смирнов.")
 
+        # 8. Seed Knowledge Base Materials
+        from app.models.knowledge import KnowledgeFile
+        res_kf = await db.execute(select(KnowledgeFile))
+        if not res_kf.scalars().first():
+            logger.info("Наполнение Базы знаний демонстрационными учебными материалами...")
+            demo_knowledge_files = [
+                KnowledgeFile(
+                    title="Видеоинструкция: Регламент дефектовки и замена суппортов СТО",
+                    description="Практический видеоурок для слесарей и механиков цеха: правильный демонтаж, очистка посадочных мест и нанесение полигликолевой смазки.",
+                    file_name="brake_system_repair_guide.mp4",
+                    file_url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                    file_type="video",
+                    file_size_bytes=48 * 1024 * 1024,
+                    mime_type="video/mp4",
+                    department="СТО",
+                    uploaded_by_id=superadmin.id,
+                    downloads_count=14,
+                    views_count=42,
+                ),
+                KnowledgeFile(
+                    title="Презентация: Сервисный регламент и стандарты приемки AutoMall",
+                    description="Официальный стандарт корпоративного бренда: этапы приемки автомобиля в сервис, оформление акта дефектовки и согласование допработ с клиентом.",
+                    file_name="automall_service_standards_2026.pdf",
+                    file_url="/media/courses/presentations/automall_service_standards_2026.pdf",
+                    file_type="presentation",
+                    file_size_bytes=6 * 1024 * 1024,
+                    mime_type="application/pdf",
+                    department="СТО",
+                    uploaded_by_id=superadmin.id,
+                    downloads_count=28,
+                    views_count=85,
+                ),
+                KnowledgeFile(
+                    title="Чек-лист: Инструментальный контроль и калибровка диагностического оборудования",
+                    description="Бланк ежедневной поверки стендов сход-развала, люфт-детекторов и манометров шиномонтажного поста.",
+                    file_name="diagnostic_checklist.docx",
+                    file_url="/media/courses/documents/diagnostic_checklist.docx",
+                    file_type="document",
+                    file_size_bytes=128 * 1024,
+                    mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    department="СТО",
+                    uploaded_by_id=superadmin.id,
+                    downloads_count=35,
+                    views_count=110,
+                ),
+                KnowledgeFile(
+                    title="Политика безопасности и правила работы с корпоративными учетными записями",
+                    description="Регламент информационной безопасности компании AMG: парольная политика, защита от фишинга и правила удаленного доступа.",
+                    file_name="information_security_policy.pdf",
+                    file_url="/media/courses/documents/information_security_policy.pdf",
+                    file_type="document",
+                    file_size_bytes=2 * 1024 * 1024,
+                    mime_type="application/pdf",
+                    department="IT",
+                    uploaded_by_id=superadmin.id,
+                    downloads_count=52,
+                    views_count=160,
+                ),
+                KnowledgeFile(
+                    title="Видеоурок: Алгоритм отработки ключевых возражений клиентов",
+                    description="Курс для отдела прямых продаж: разбор 7 главных возражений («дорого», «подумаю», «работаем с другими») с демонстрацией диалогов.",
+                    file_name="sales_objections_masterclass.mp4",
+                    file_url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                    file_type="video",
+                    file_size_bytes=32 * 1024 * 1024,
+                    mime_type="video/mp4",
+                    department="Продажи",
+                    uploaded_by_id=superadmin.id,
+                    downloads_count=19,
+                    views_count=67,
+                ),
+            ]
+            for kf in demo_knowledge_files:
+                db.add(kf)
+            logger.info("База знаний успешно наполнена материалами.")
+
         await db.commit()
         logger.info("Сид данных успешно завершен.")
 

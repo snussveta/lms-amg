@@ -14,6 +14,7 @@ from app.models.course import (
     UserLessonProgress,
     CourseAssignment,
 )
+from app.models.knowledge import KnowledgeFile
 
 __all__ = [
     "Base",
@@ -32,5 +33,6 @@ __all__ = [
     "UserCourseEnrollment",
     "UserLessonProgress",
     "CourseAssignment",
+    "KnowledgeFile",
 ]
 

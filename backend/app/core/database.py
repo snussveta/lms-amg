@@ -106,6 +106,26 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     );""",
                     "CREATE INDEX IF NOT EXISTS ix_course_assignments_course_id ON course_assignments(course_id);",
                     "CREATE INDEX IF NOT EXISTS ix_course_assignments_user_id ON course_assignments(user_id);",
+                    # Knowledge Files table
+                    """CREATE TABLE IF NOT EXISTS knowledge_files (
+                        id SERIAL PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        description TEXT DEFAULT '',
+                        file_name VARCHAR(255) NOT NULL,
+                        file_url VARCHAR(500) NOT NULL,
+                        file_type VARCHAR(50) DEFAULT 'video' NOT NULL,
+                        file_size_bytes BIGINT DEFAULT 0 NOT NULL,
+                        mime_type VARCHAR(100),
+                        department VARCHAR(100) DEFAULT 'Общий' NOT NULL,
+                        uploaded_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                        downloads_count INTEGER DEFAULT 0 NOT NULL,
+                        views_count INTEGER DEFAULT 0 NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_files_title ON knowledge_files(title);",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_files_file_type ON knowledge_files(file_type);",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_files_department ON knowledge_files(department);",
                 ]
                 for stmt in migration_sqls:
                     try:

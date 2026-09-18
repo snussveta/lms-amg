@@ -7,6 +7,7 @@ from app.api.public import router as public_router
 from app.api.bank_questions import router as bank_questions_router
 from app.api.courses import router as courses_router
 from app.api.media import router as media_router
+from app.api.knowledge import router as knowledge_router
 
 
 api_router = APIRouter(prefix="/api")
@@ -20,4 +21,6 @@ api_router.include_router(bank_questions_router)
 api_router.include_router(courses_router)
 api_router.include_router(courses_router, prefix="/v1")
 api_router.include_router(media_router)
+api_router.include_router(knowledge_router)
+api_router.include_router(knowledge_router, prefix="/v1")
 

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   FileQuestion,
+  FolderArchive,
   GraduationCap,
   History,
   LayoutDashboard,
@@ -85,6 +86,18 @@ export const Navbar = () => {
                 >
                   <History className="w-4 h-4" />
                   Мои результаты
+                </Link>
+
+                <Link
+                  to="/knowledge-base"
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    isActive('/knowledge-base')
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <FolderArchive className="w-4 h-4 text-emerald-400" />
+                  База знаний
                 </Link>
 
                 {isAdmin && (
@@ -224,6 +237,13 @@ export const Navbar = () => {
                 className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
               >
                 Мои результаты
+              </Link>
+              <Link
+                to="/knowledge-base"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-xs font-medium text-emerald-300 hover:bg-slate-800"
+              >
+                База знаний
               </Link>
 
               {isAdmin && (

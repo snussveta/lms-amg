@@ -25,6 +25,9 @@ import { QuestionBankPage } from './pages/admin/QuestionBankPage';
 import { AdminCoursesPage } from './pages/admin/AdminCoursesPage';
 import { CourseConstructorPage } from './pages/admin/CourseConstructorPage';
 
+// Knowledge Base Page
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+
 // Public Guest Test Page
 import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
 
@@ -83,6 +86,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyAttemptsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/knowledge-base"
+                element={
+                  <ProtectedRoute>
+                    <KnowledgeBasePage />
                   </ProtectedRoute>
                 }
               />

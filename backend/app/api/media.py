@@ -15,6 +15,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user, require_role
 from app.models.course import CourseLesson
 from app.models.user import User
+from app.models.knowledge import KnowledgeFile
 
 router = APIRouter(tags=["Media"])
 
@@ -24,10 +25,11 @@ COURSES_MEDIA = MEDIA_BASE / "courses"
 VIDEOS_DIR = COURSES_MEDIA / "videos"
 PRESENTATIONS_DIR = COURSES_MEDIA / "presentations"
 IMAGES_DIR = COURSES_MEDIA / "images"
+DOCUMENTS_DIR = COURSES_MEDIA / "documents"
 TEMP_DIR = MEDIA_BASE / "temp_chunks"
 
 # Ensure storage directories exist
-for p in [VIDEOS_DIR, PRESENTATIONS_DIR, IMAGES_DIR, TEMP_DIR]:
+for p in [VIDEOS_DIR, PRESENTATIONS_DIR, IMAGES_DIR, DOCUMENTS_DIR, TEMP_DIR]:
     p.mkdir(parents=True, exist_ok=True)
 
 # Register common video/document mimetypes
@@ -37,15 +39,48 @@ mimetypes.add_type("video/x-matroska", ".mkv")
 mimetypes.add_type("application/pdf", ".pdf")
 
 
+async def register_knowledge_file_helper(
+    db: AsyncSession,
+    title: str,
+    file_name: str,
+    file_url: str,
+    file_type: str,
+    file_size_bytes: int,
+    user_id: Optional[int] = None,
+    department: str = "Общий",
+):
+    """Automatically record uploaded files in the Knowledge Base catalog."""
+    try:
+        stmt = select(KnowledgeFile).where(KnowledgeFile.file_url == file_url)
+        res = await db.execute(stmt)
+        existing = res.scalar_one_or_none()
+        if not existing:
+            mime_type, _ = mimetypes.guess_type(file_name)
+            kfile = KnowledgeFile(
+                title=title or Path(file_name).stem,
+                description="",
+                file_name=file_name,
+                file_url=file_url,
+                file_type=file_type,
+                file_size_bytes=file_size_bytes,
+                mime_type=mime_type or ("video/mp4" if file_type == "video" else "application/octet-stream"),
+                department=department,
+                uploaded_by_id=user_id,
+            )
+            db.add(kfile)
+            await db.commit()
+    except Exception as e:
+        print(f"Warning: could not auto-register knowledge file: {e}")
+
+
 def get_file_path_by_id(file_id: str) -> Optional[Path]:
     """Find file in media storage directories by file_id prefix or exact name."""
-    # Sanitize file_id to prevent path traversal
     safe_id = re.sub(r"[^a-zA-Z0-9_\-\.]", "", file_id)
     if not safe_id:
         return None
 
-    # Search in videos, presentations, images
-    for search_dir in [VIDEOS_DIR, PRESENTATIONS_DIR, IMAGES_DIR]:
+    # Search in videos, presentations, images, documents
+    for search_dir in [VIDEOS_DIR, PRESENTATIONS_DIR, IMAGES_DIR, DOCUMENTS_DIR]:
         # Exact match
         exact = search_dir / safe_id
         if exact.is_file():
@@ -194,6 +229,17 @@ async def upload_media_chunk(
                     await db.refresh(lesson)
             except Exception as e:
                 print(f"Error binding lesson {lesson_id} file_url: {e}")
+
+        # Register in Knowledge Base
+        await register_knowledge_file_helper(
+            db=db,
+            title=Path(original_filename).stem,
+            file_name=original_filename,
+            file_url=final_file_url,
+            file_type=category if category in ["video", "presentation", "image", "document"] else "video",
+            file_size_bytes=total_size,
+            user_id=current_user.id if current_user else None,
+        )
 
         return {
             "status": "success",
@@ -345,6 +391,16 @@ async def complete_media_upload(
                     except Exception as e:
                         print(f"Error binding lesson {lesson_id} file_url: {e}")
 
+                await register_knowledge_file_helper(
+                    db=db,
+                    title=Path(original_filename).stem,
+                    file_name=original_filename,
+                    file_url=final_file_url,
+                    file_type=category if category in ["video", "presentation", "image", "document"] else "video",
+                    file_size_bytes=total_size,
+                    user_id=current_user.id if current_user else None,
+                )
+
                 return {
                     "status": "success",
                     "state": "completed",
@@ -416,6 +472,102 @@ async def upload_image_direct(
         "filename": filename,
         "file_url": f"/api/v1/media/stream/{file_id}",
         "file_size_bytes": size,
+    }
+
+
+@router.post("/media/upload/direct")
+@router.post("/v1/media/upload/direct")
+async def upload_media_direct(
+    file: UploadFile,
+    category: str = Form("video"),  # video, presentation, document, image
+    lesson_id: Optional[int] = Form(None),
+    title: Optional[str] = Form(None),
+    department: Optional[str] = Form("Общий"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """
+    Direct single-request stream upload for videos, presentations and documents.
+    Ideal for files up to a few hundred MBs, saving directly to disk without chunking.
+    """
+    original_name = file.filename or "file.mp4"
+    ext = Path(original_name).suffix.lower()
+
+    if category == "presentation" or ext in [".pdf", ".ppt", ".pptx"]:
+        target_dir = PRESENTATIONS_DIR
+        cat_subdir = "presentations"
+        cat = "presentation"
+        ext = ext if ext else ".pdf"
+    elif category == "document" or ext in [".doc", ".docx", ".xls", ".xlsx", ".txt", ".odt"]:
+        target_dir = DOCUMENTS_DIR
+        cat_subdir = "documents"
+        cat = "document"
+        ext = ext if ext else ".pdf"
+    elif category == "image" or ext in [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"]:
+        target_dir = IMAGES_DIR
+        cat_subdir = "images"
+        cat = "image"
+        ext = ext if ext else ".png"
+    else:
+        target_dir = VIDEOS_DIR
+        cat_subdir = "videos"
+        cat = "video"
+        ext = ext if ext else ".mp4"
+
+    final_file_id = uuid.uuid4().hex
+    final_filename = f"{final_file_id}{ext}"
+    dest_path = target_dir / final_filename
+
+    total_size = 0
+    try:
+        with open(dest_path, "wb") as f_out:
+            while True:
+                block = await file.read(64 * 1024)
+                if not block:
+                    break
+                f_out.write(block)
+                total_size += len(block)
+    finally:
+        await file.close()
+
+    final_file_url = f"/media/courses/{cat_subdir}/{final_filename}"
+
+    if lesson_id:
+        try:
+            lid = int(lesson_id)
+            stmt = select(CourseLesson).where(CourseLesson.id == lid)
+            res = await db.execute(stmt)
+            lesson = res.scalar_one_or_none()
+            if lesson:
+                lesson.file_url = final_file_url
+                lesson.file_size_bytes = total_size
+                await db.commit()
+                await db.refresh(lesson)
+        except Exception as e:
+            print(f"Error binding lesson {lesson_id} file_url: {e}")
+
+    # Auto-register in Knowledge Base
+    await register_knowledge_file_helper(
+        db=db,
+        title=title or Path(original_name).stem,
+        file_name=original_name,
+        file_url=final_file_url,
+        file_type=cat,
+        file_size_bytes=total_size,
+        user_id=current_user.id if current_user else None,
+        department=department or "Общий",
+    )
+
+    return {
+        "status": "success",
+        "state": "completed",
+        "file_id": final_file_id,
+        "filename": final_filename,
+        "original_name": original_name,
+        "file_size_bytes": total_size,
+        "file_url": final_file_url,
+        "lesson_id": lesson_id,
+        "stream_url": f"/api/v1/media/stream/{final_file_id}",
     }
 
 

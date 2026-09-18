@@ -43,6 +43,14 @@ export const CoursePlayerPage = () => {
 
   // Video playback & syncing state
   const videoRef = useRef(null);
+  const [videoSpeed, setVideoSpeed] = useState(1);
+
+  const handleSpeedChange = (speed) => {
+    setVideoSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+  };
 
   // Sidebar module collapse states
   const [collapsedModules, setCollapsedModules] = useState({});
@@ -881,6 +889,16 @@ export const CoursePlayerPage = () => {
                         preload="metadata"
                         className="w-full max-h-[70vh] rounded-2xl object-contain bg-black"
                         src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
+                        onLoadedMetadata={(e) => {
+                          if (activeLesson.last_timestamp_seconds && activeLesson.last_timestamp_seconds > 0) {
+                            try {
+                              e.target.currentTime = activeLesson.last_timestamp_seconds;
+                            } catch (err) {
+                              console.warn('Не удалось применить таймкод:', err);
+                            }
+                          }
+                          e.target.playbackRate = videoSpeed;
+                        }}
                         onTimeUpdate={handleVideoTimeUpdate}
                         onEnded={handleVideoEnded}
                       >
@@ -895,16 +913,34 @@ export const CoursePlayerPage = () => {
                     )}
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                  <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-400">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-sky-400" />
-                      <span>Позиция просмотра сохраняется автоматически каждые 10 секунд.</span>
-                    </div>
-                    {activeLesson.last_timestamp_seconds > 0 && (
-                      <span className="text-[11px] text-slate-500">
-                        Восстановлено с {Math.round(activeLesson.last_timestamp_seconds)} сек
+                      <Clock className="w-4 h-4 text-sky-400 shrink-0" />
+                      <span>
+                        {activeLesson.last_timestamp_seconds > 0
+                          ? `Восстановлено с ${Math.round(activeLesson.last_timestamp_seconds)} сек. Позиция сохраняется каждые 10 сек.`
+                          : 'Позиция просмотра сохраняется автоматически каждые 10 секунд.'}
                       </span>
-                    )}
+                    </div>
+
+                    {/* Playback speed selector */}
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                      <span className="text-slate-400 text-[11px] font-medium mr-1">Скорость:</span>
+                      {[0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          onClick={() => handleSpeedChange(rate)}
+                          className={`px-2 py-0.5 rounded text-[11px] font-bold transition-colors ${
+                            videoSpeed === rate
+                              ? 'bg-sky-500 text-white'
+                              : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {rate}x
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="pt-4 border-t border-slate-800 flex justify-end">
