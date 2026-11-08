@@ -39,7 +39,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         api.get('/users'),
         api.get(`/tests/${test.id}/assignments`),
       ]);
-      setUsers(usersRes.data);
+      setUsers(usersRes.data || []);
       setAssignments(assignRes.data.assignments || []);
     } catch (err) {
       console.error('Ошибка загрузки данных назначения:', err);
@@ -55,8 +55,8 @@ export const TestAssignmentModal = ({ test, onClose }) => {
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
     return (
-      u.full_name.toLowerCase().includes(term) ||
-      u.email.toLowerCase().includes(term)
+      u.full_name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term)
     );
   });
 
@@ -68,7 +68,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
 
   const selectAll = () => {
     const allFilteredIds = filteredUsers.map((u) => u.id);
-    const allSelected = allFilteredIds.every((id) => selectedUserIds.includes(id));
+    const allSelected = allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedUserIds.includes(id));
     if (allSelected) {
       setSelectedUserIds((prev) => prev.filter((id) => !allFilteredIds.includes(id)));
     } else {
@@ -139,117 +139,117 @@ export const TestAssignmentModal = ({ test, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="glass-panel max-w-2xl w-full border border-slate-800 shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-slate-400" />
+        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+          <div className="min-w-0 pr-3">
+            <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#003B73] shrink-0" />
               <span>Назначение теста сотрудникам</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-md">
-              {test.title}
+            <p className="text-xs text-[#003B73] font-semibold mt-0.5 truncate max-w-md">
+              «{test.title}»
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors shrink-0"
+            aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-slate-800 px-5 pt-2 gap-4">
+        <div className="flex border-b border-[#E0E0E0] bg-[#F4F5F7] px-4 sm:px-5">
           <button
             onClick={() => setActiveTab('assign')}
-            className={`pb-2 text-xs font-semibold border-b-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-all min-h-[44px] flex items-center gap-2 ${
               activeTab === 'assign'
-                ? 'border-slate-200 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
+                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
             }`}
           >
-            Назначить сотрудникам
+            <Users className="w-4 h-4 text-[#003B73]" />
+            <span>Назначить сотрудникам</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
-            className={`pb-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-all min-h-[44px] flex items-center gap-2 ${
               activeTab === 'list'
-                ? 'border-slate-200 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
+                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
             }`}
           >
-            <span>Назначенные сотрудники</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">
-              {assignments.length}
-            </span>
+            <UserCheck className="w-4 h-4 text-[#003B73]" />
+            <span>Назначенные ({assignments.length})</span>
           </button>
         </div>
 
         {/* Notification banners */}
         {error && (
-          <div className="mx-5 mt-4 p-3 rounded-lg bg-rose-950/40 border border-rose-900/60 flex items-start gap-2.5 text-rose-300 text-xs">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E30613] text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
         {successMsg && (
-          <div className="mx-5 mt-4 p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/60 flex items-start gap-2.5 text-emerald-300 text-xs">
-            <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-emerald-700 text-xs">
+            <Check className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Body */}
-        <div className="p-5 flex-1 overflow-y-auto">
+        <div className="p-4 sm:p-5 flex-1 overflow-y-auto">
           {loading ? (
             <div className="py-12 flex justify-center">
-              <div className="w-7 h-7 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-7 h-7 border-2 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : activeTab === 'assign' ? (
             <div className="space-y-4">
               {/* Optional Deadline */}
-              <div className="p-3.5 rounded-lg bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-                  <Calendar className="w-4 h-4 text-slate-400" />
+              <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs text-[#212529] font-semibold">
+                  <Calendar className="w-4 h-4 text-[#003B73]" />
                   <span>Дедлайн сдачи (опционально):</span>
                 </div>
                 <input
                   type="datetime-local"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="input-field text-xs py-1.5 max-w-xs"
+                  className="input-field text-xs sm:text-sm py-1.5 max-w-xs bg-white"
                 />
               </div>
 
               {/* Search & Select All */}
               <div className="flex items-center justify-between gap-3">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
                   <input
                     type="text"
                     placeholder="Поиск по ФИО или email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-field pl-9 text-xs py-1.5"
+                    className="input-field pl-9 text-xs sm:text-sm py-2 bg-white"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={selectAll}
-                  className="btn-secondary text-xs py-1.5 px-3 whitespace-nowrap"
+                  className="btn-secondary text-xs py-2 px-3 whitespace-nowrap min-h-[44px]"
                 >
                   Выбрать всех
                 </button>
               </div>
 
               {/* Users list with checkboxes */}
-              <div className="border border-slate-800 rounded-lg overflow-hidden divide-y divide-slate-800/80 max-h-64 overflow-y-auto">
+              <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-64 overflow-y-auto bg-white">
                 {filteredUsers.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-500">
+                  <div className="p-6 text-center text-xs text-[#6C757D]">
                     Пользователи не найдены
                   </div>
                 ) : (
@@ -263,29 +263,26 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                         onClick={() => toggleSelectUser(u.id)}
                         className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
                           isSelected
-                            ? 'bg-slate-800/60 text-white'
-                            : 'hover:bg-slate-900 text-slate-300'
+                            ? 'bg-[#003B73]/5 border-l-4 border-[#003B73]'
+                            : 'hover:bg-[#F4F5F7] text-[#212529]'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            className="text-slate-400 hover:text-white"
-                          >
+                        <div className="flex items-center gap-3 min-w-0 pr-2">
+                          <div className="text-[#003B73]">
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-slate-100" />
+                              <CheckSquare className="w-4 h-4 text-[#003B73]" />
                             ) : (
-                              <Square className="w-4 h-4 text-slate-600" />
+                              <Square className="w-4 h-4 text-[#6C757D]" />
                             )}
-                          </button>
-                          <div>
-                            <div className="font-semibold text-slate-200">{u.full_name}</div>
-                            <div className="text-[11px] text-slate-500">{u.email}</div>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-[#212529] truncate">{u.full_name}</div>
+                            <div className="text-[11px] text-[#6C757D] truncate">{u.email}</div>
                           </div>
                         </div>
 
                         {isAlreadyAssigned && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-medium">
                             Уже назначен
                           </span>
                         )}
@@ -299,54 +296,54 @@ export const TestAssignmentModal = ({ test, onClose }) => {
             /* Assigned list tab */
             <div className="space-y-3">
               {assignments.length === 0 ? (
-                <div className="py-10 text-center text-xs text-slate-500">
+                <div className="py-12 text-center text-xs text-[#6C757D]">
                   Тест пока никому не назначен. Перейдите во вкладку «Назначить сотрудникам».
                 </div>
               ) : (
-                <div className="border border-slate-800 rounded-lg overflow-hidden divide-y divide-slate-800/80 max-h-80 overflow-y-auto">
+                <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-80 overflow-y-auto bg-white">
                   {assignments.map((a) => (
                     <div
                       key={a.id}
-                      className="p-3 flex items-center justify-between text-xs gap-3 hover:bg-slate-900/60 transition-colors"
+                      className="p-3 flex items-center justify-between text-xs gap-3 hover:bg-[#F4F5F7] transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-200 truncate">
+                        <div className="font-semibold text-[#212529] truncate">
                           {a.user_name}
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate">
+                        <div className="text-[11px] text-[#6C757D] truncate">
                           {a.user_email} • Дедлайн: {formatDate(a.due_date)}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2.5">
                         {a.attempt_status === 'passed' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/40 text-emerald-300 border border-emerald-900/60">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Сдан ({a.score} б.)
                           </span>
                         ) : a.attempt_status === 'needs_review' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-900/60">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                             На проверке
                           </span>
                         ) : a.attempt_status === 'failed' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-950/40 text-rose-300 border border-rose-900/60">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-[#E30613] border border-red-200">
                             Не сдан ({a.score} б.)
                           </span>
                         ) : a.attempt_status === 'in_progress' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-950/40 text-blue-300 border border-blue-900/60">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-[#003B73] border border-blue-200">
                             В процессе
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0]">
                             Ожидает сдачи
                           </span>
                         )}
 
                         <button
                           onClick={() => handleRevoke(a.user_id)}
-                          className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                          className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
                           title="Отозвать назначение"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -358,11 +355,11 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 flex items-center justify-between">
-          <div className="text-xs text-slate-500">
+        <div className="p-4 border-t border-[#E0E0E0] flex items-center justify-between bg-white">
+          <div className="text-xs text-[#6C757D]">
             {activeTab === 'assign' && (
               <span>
-                Выбрано для назначения: <strong className="text-slate-200">{selectedUserIds.length}</strong>
+                Выбрано: <strong className="text-[#003B73] font-bold">{selectedUserIds.length}</strong>
               </span>
             )}
           </div>
@@ -371,7 +368,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary text-xs"
+              className="btn-secondary text-xs min-h-[44px] px-4"
             >
               Закрыть
             </button>
@@ -380,7 +377,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                 type="button"
                 onClick={handleAssign}
                 disabled={submitting || selectedUserIds.length === 0}
-                className="btn-primary text-xs"
+                className="btn-primary text-xs min-h-[44px] px-5"
               >
                 {submitting ? 'Назначение...' : `Подтвердить назначение (${selectedUserIds.length})`}
               </button>

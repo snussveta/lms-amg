@@ -77,7 +77,6 @@ export const CoursePlayerPage = () => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // Load course state on initial mount or when ID changes
   useEffect(() => {
     fetchCourseLearnState();
   }, [id]);
@@ -97,7 +96,6 @@ export const CoursePlayerPage = () => {
       const data = res.data;
       setCourseData(data);
 
-      // Find active lesson: preserved, or current_lesson_id, or first unlocked
       let targetLesson = null;
       const allLessons = [];
       (data?.modules || []).forEach((m) => {
@@ -123,15 +121,11 @@ export const CoursePlayerPage = () => {
     }
   };
 
-  // ----------------------------------------------------
   // Video 10-Second Heartbeat & Resume Logic
-  // ----------------------------------------------------
   useEffect(() => {
     if (!activeLesson || activeLesson.lesson_type !== 'video' || !videoRef.current) return;
 
     const videoElement = videoRef.current;
-
-    // Restore last timestamp offset
     if (activeLesson.last_timestamp_seconds && activeLesson.last_timestamp_seconds > 0) {
       try {
         videoElement.currentTime = activeLesson.last_timestamp_seconds;
@@ -139,57 +133,39 @@ export const CoursePlayerPage = () => {
         console.warn('Не удалось восстановить позицию видео:', e);
       }
     }
-
-    // Interval to sync playback position to backend every 10 seconds
-    const interval = setInterval(() => {
-      if (!videoElement.paused && !videoElement.ended) {
-        syncVideoProgress(videoElement.currentTime, false);
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, [activeLesson?.id]);
 
-  const syncVideoProgress = async (timestamp, isCompleted = false) => {
-    if (!activeLesson) return;
-    try {
-      await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
-        last_timestamp_seconds: timestamp,
-        status: isCompleted ? 'completed' : 'in_progress',
-      });
-      if (isCompleted) {
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-        fetchCourseLearnState(activeLesson.id);
+  const lastSavedTimeRef = useRef(0);
+  const handleVideoTimeUpdate = async () => {
+    if (!videoRef.current || !activeLesson) return;
+    const current = Math.floor(videoRef.current.currentTime);
+    if (current > 0 && current - lastSavedTimeRef.current >= 10) {
+      lastSavedTimeRef.current = current;
+      try {
+        await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/progress`, {
+          status: 'in_progress',
+          last_timestamp_seconds: current,
+        });
+      } catch {
+        try {
+          await api.post(`/courses/${id}/lessons/${activeLesson.id}/progress`, {
+            status: 'in_progress',
+            last_timestamp_seconds: current,
+          });
+        } catch {
+          // ignore background progress failures
+        }
       }
-    } catch (err) {
-      console.error('Ошибка синхронизации таймкода видео:', err);
     }
   };
 
-  const handleVideoTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-
-    // If 90%+ watched and not yet completed
-    if (video.currentTime / video.duration >= 0.9 && activeLesson?.status !== 'completed') {
-      syncVideoProgress(video.currentTime, true);
-    }
+  const handleVideoEnded = async () => {
+    await handleMarkStepCompleted();
   };
 
-  const handleVideoEnded = () => {
-    const video = videoRef.current;
-    if (video) {
-      syncVideoProgress(video.currentTime, true);
-    }
-  };
-
-  // ----------------------------------------------------
-  // Mark Step as Completed & Advance to Next
-  // ----------------------------------------------------
   const handleMarkStepCompleted = async () => {
     if (!activeLesson) return;
     try {
-      // 1. Send complete signal to dedicated complete endpoint
       try {
         await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/complete`);
       } catch {
@@ -205,7 +181,6 @@ export const CoursePlayerPage = () => {
 
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
 
-      // 2. Refresh state and advance to next lesson
       let res;
       try {
         res = await api.get(`/v1/courses/${id}/learn`);
@@ -225,7 +200,6 @@ export const CoursePlayerPage = () => {
         const nextLesson = allLessons[currentIdx + 1];
         setActiveLesson(nextLesson);
       } else if (currentIdx === allLessons.length - 1) {
-        // Entire course finished!
         confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
       }
     } catch (err) {
@@ -233,9 +207,7 @@ export const CoursePlayerPage = () => {
     }
   };
 
-  // ----------------------------------------------------
   // Embedded Quiz Logic
-  // ----------------------------------------------------
   useEffect(() => {
     if (activeLesson?.lesson_type === 'quiz' && activeLesson.quiz_id) {
       initQuizAttempt(activeLesson.quiz_id);
@@ -275,7 +247,6 @@ export const CoursePlayerPage = () => {
     }
   };
 
-  // Live countdown timer for active quiz attempt
   useEffect(() => {
     if (!quizAttempt?.expires_at || quizResult) return;
 
@@ -352,7 +323,6 @@ export const CoursePlayerPage = () => {
 
       if (result.is_passed) {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-        // Mark lesson progress completed
         try {
           await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/complete`);
         } catch {
@@ -369,18 +339,18 @@ export const CoursePlayerPage = () => {
     }
   };
 
-  // ----------------------------------------------------
-  // Lesson Selection with Step-by-Step Lock Enforcement
-  // ----------------------------------------------------
   const handleSelectLesson = (lesson) => {
     if (lesson.is_locked) {
       alert('🔒 Этот шаг заблокирован. Пожалуйста, завершите предыдущие уроки курса, чтобы разблокировать доступ.');
       return;
     }
     setActiveLesson(lesson);
+    // On small screens, close sidebar when lesson is picked
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
   };
 
-  // Safe parsing helper for longread blocks
   const parseBlocks = (content) => {
     if (!content) return [];
     let parsed = content;
@@ -413,94 +383,42 @@ export const CoursePlayerPage = () => {
     });
   };
 
-  // Video streaming URL builder
-  const getVideoUrl = (lesson) => {
-    if (!lesson || !lesson.file_url) return '';
-    let url = lesson.file_url.trim();
-    if (!url) return '';
-
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-
-    if (url.startsWith('/api/v1/media/stream/')) {
-      // standard v1 format
-    } else if (url.startsWith('/api/media/stream/')) {
-      url = url.replace('/api/media/stream/', '/api/v1/media/stream/');
-    } else if (url.startsWith('/')) {
-      // other local path
-    } else {
-      url = `/api/v1/media/stream/${url}`;
-    }
-
-    const token = localStorage.getItem('token');
-    if (token && !url.includes('token=')) {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}token=${encodeURIComponent(token)}`;
-    }
-    return url;
-  };
-
-  // ====================================================
-  // 1. LOADING SKELETON STATE
-  // ====================================================
+  // 1. Loading Skeleton
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-56px)] flex flex-col bg-slate-950 text-slate-100 animate-fade-in">
-        {/* Skeleton Top Bar */}
-        <div className="sticky top-14 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
-            <div className="space-y-1.5 min-w-0">
-              <div className="w-44 sm:w-64 h-4 rounded bg-slate-800 animate-pulse" />
-              <div className="w-24 h-3 rounded bg-slate-800/60 animate-pulse" />
+      <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F4F5F7] animate-fade-in">
+        <div className="sticky top-14 sm:top-16 z-30 bg-white border-b border-[#E0E0E0] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#E0E0E0] animate-pulse" />
+            <div className="space-y-1.5">
+              <div className="w-48 h-4 rounded bg-[#E0E0E0] animate-pulse" />
+              <div className="w-24 h-3 rounded bg-[#E0E0E0] animate-pulse" />
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-28 h-3 rounded bg-slate-800 animate-pulse hidden sm:block" />
-            <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
-          </div>
+          <div className="w-32 h-3 rounded bg-[#E0E0E0] animate-pulse" />
         </div>
-
-        {/* Skeleton Main Workspace */}
-        <div className="flex-1 flex overflow-hidden">
-          <div className="w-80 border-r border-slate-800 bg-slate-900/60 p-4 space-y-4 hidden md:block shrink-0">
-            <div className="w-32 h-3.5 rounded bg-slate-800 animate-pulse" />
-            <div className="space-y-2 pt-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-10 rounded-lg bg-slate-800/40 animate-pulse" />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex-1 p-6 sm:p-10 max-w-4xl mx-auto w-full space-y-6">
-            <div className="w-28 h-5 rounded bg-slate-800 animate-pulse" />
-            <div className="w-3/4 h-8 rounded bg-slate-800 animate-pulse" />
-            <div className="space-y-3 pt-4">
-              <div className="w-full h-4 rounded bg-slate-800/60 animate-pulse" />
-              <div className="w-full h-4 rounded bg-slate-800/60 animate-pulse" />
-              <div className="w-5/6 h-4 rounded bg-slate-800/60 animate-pulse" />
-            </div>
-            <div className="h-64 rounded-2xl bg-slate-800/30 animate-pulse mt-8 border border-slate-800/60" />
+        <div className="flex-1 flex p-6 max-w-5xl mx-auto w-full">
+          <div className="w-full bg-white rounded-2xl p-8 border border-[#E0E0E0] space-y-4 animate-pulse">
+            <div className="h-6 w-1/3 bg-[#F4F5F7] rounded" />
+            <div className="h-4 w-3/4 bg-[#F4F5F7] rounded" />
+            <div className="h-64 bg-[#F4F5F7] rounded-xl" />
           </div>
         </div>
       </div>
     );
   }
 
-  // ====================================================
-  // 2. ERROR STATE
-  // ====================================================
+  // 2. Error State
   if (error || !courseData) {
     return (
-      <div className="min-h-[calc(100vh-56px)] bg-slate-950 flex items-center justify-center p-4">
-        <div className="glass-panel max-w-md w-full p-8 text-center space-y-5 border border-slate-800 shadow-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-rose-950/60 border border-rose-800/50 flex items-center justify-center mx-auto text-rose-400">
+      <div className="min-h-[calc(100vh-56px)] bg-[#F4F5F7] flex items-center justify-center p-4">
+        <div className="bg-white max-w-md w-full p-8 text-center space-y-5 border border-[#E0E0E0] rounded-2xl shadow-card">
+          <div className="w-16 h-16 rounded-2xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-center justify-center mx-auto text-[#E30613]">
             <AlertCircle className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-100">Ошибка загрузки курса</h2>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            <h2 className="text-xl font-extrabold text-[#212529]">Ошибка загрузки курса</h2>
+            <p className="text-xs sm:text-sm text-[#6C757D] leading-relaxed">
               {error || 'Курс не найден или у вас нет доступа к его прохождению.'}
             </p>
           </div>
@@ -525,102 +443,49 @@ export const CoursePlayerPage = () => {
     );
   }
 
-  // Calculate lessons flat list
   const allLessons = [];
   (courseData.modules || []).forEach((m) => {
     (m.lessons || []).forEach((l) => allLessons.push(l));
   });
 
-  // ====================================================
-  // 3. EMPTY STATE (No modules or no lessons yet)
-  // ====================================================
-  if (!courseData.modules || courseData.modules.length === 0 || allLessons.length === 0) {
-    return (
-      <div className="min-h-[calc(100vh-56px)] bg-slate-950 flex flex-col text-slate-100">
-        <div className="sticky top-14 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link
-              to="/courses"
-              className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              title="Вернуться к курсам"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="text-xs sm:text-sm font-bold text-slate-100 truncate">
-                {courseData.title}
-              </h1>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                {courseData.department_tag}
-              </span>
-            </div>
-          </div>
-          <Link to="/courses" className="btn-secondary text-xs py-1.5 px-3">
-            В каталог
-          </Link>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="glass-panel max-w-md w-full p-8 text-center space-y-4 border border-slate-800 shadow-xl">
-            <div className="w-14 h-14 rounded-2xl bg-amber-950/50 border border-amber-800/40 flex items-center justify-center mx-auto text-amber-400">
-              <BookOpen className="w-7 h-7" />
-            </div>
-            <h2 className="text-lg font-bold text-slate-100">В курсе пока нет уроков</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Методисты и авторы программы еще наполняют этот курс учебными материалами. Загляните сюда чуть позже или выберите другой курс.
-            </p>
-            <div className="pt-2">
-              <Link to="/courses" className="btn-primary text-xs py-2 px-5 inline-flex items-center gap-1.5">
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Вернуться к каталогу курсов
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ====================================================
-  // 4. MAIN INTERACTIVE PLAYER INTERFACE
-  // ====================================================
   return (
-    <div className="min-h-[calc(100vh-56px)] flex flex-col bg-slate-950 text-slate-100">
-      {/* Top Header: iSpring Style Bar */}
-      <div className="sticky top-14 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+    <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F4F5F7] text-[#212529]">
+      {/* Top Header: Clean Corporate Bar */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-white/95 backdrop-blur border-b border-[#E0E0E0] px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"
-            title={sidebarOpen ? 'Скрыть структуру курса' : 'Показать структуру курса'}
+            className="flex items-center gap-1.5 p-2 rounded-lg bg-[#F4F5F7] border border-[#E0E0E0] text-[#003B73] hover:bg-[#E0E0E0] transition-colors min-h-[40px] text-xs font-bold"
+            title={sidebarOpen ? 'Скрыть программу курса' : 'Показать программу курса'}
           >
             <Menu className="w-4 h-4" />
+            <span className="hidden sm:inline">Программа</span>
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-sm font-bold text-slate-100 truncate">
+            <h1 className="text-xs sm:text-sm font-bold text-[#212529] truncate">
               {courseData.title}
             </h1>
-            <div className="text-[11px] text-slate-400 truncate flex items-center gap-2">
-              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] font-bold text-slate-300">
-                {courseData.department_tag}
+            <div className="text-[11px] text-[#6C757D] truncate flex items-center gap-2">
+              <span className="px-1.5 py-0.2 rounded bg-[#003B73]/10 text-[10px] font-bold text-[#003B73]">
+                {courseData.department_tag || 'AMG'}
               </span>
-              <span>{activeLesson?.title || 'Выберите шаг'}</span>
+              <span>{activeLesson?.title || 'Выберите урок'}</span>
             </div>
           </div>
         </div>
 
         {/* Course Progress Indicator */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <div className="hidden sm:flex flex-col items-end">
-            <div className="text-xs font-bold text-slate-200">
+            <div className="text-xs font-bold text-[#212529]">
               {courseData.progress_percent || 0}% пройдено
             </div>
-            <div className="text-[10px] text-slate-400">
+            <div className="text-[10px] text-[#6C757D]">
               {courseData.completed_lessons || 0} из {courseData.total_lessons || allLessons.length} уроков
             </div>
           </div>
-          <div className="w-24 sm:w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div className="w-20 sm:w-28 h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 transition-all duration-300"
               style={{ width: `${courseData.progress_percent || 0}%` }}
@@ -629,7 +494,7 @@ export const CoursePlayerPage = () => {
 
           <Link
             to="/courses"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors"
             title="Выйти в каталог"
           >
             <X className="w-4 h-4" />
@@ -637,21 +502,35 @@ export const CoursePlayerPage = () => {
         </div>
       </div>
 
-      {/* Main Two-Column Body */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ==================================================== */}
-        {/* LEFT COLUMN: iSpring Navigation Sidebar (Collapsible)*/}
-        {/* ==================================================== */}
+      {/* Main Two-Column Body with Responsive Drawer on Mobile */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mobile Backdrop Overlay */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-[#003B73]/40 backdrop-blur-xs z-40 animate-fade-in"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* LEFT COLUMN: Navigation Sidebar */}
         <div
           className={`${
-            sidebarOpen ? 'w-80' : 'w-0'
-          } shrink-0 transition-all duration-200 ease-in-out border-r border-slate-800 bg-slate-900/60 overflow-y-auto flex flex-col`}
+            sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-0'
+          } shrink-0 transition-all duration-200 ease-in-out border-r border-[#E0E0E0] bg-white overflow-y-auto flex flex-col fixed md:static inset-y-0 left-0 z-50 md:z-auto shadow-2xl md:shadow-none`}
         >
           {sidebarOpen && (
             <div className="p-4 space-y-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-sky-400" />
-                Содержание курса
+              <div className="flex items-center justify-between pb-2 border-b border-[#E0E0E0]">
+                <div className="text-xs font-bold uppercase tracking-wider text-[#003B73] flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4" />
+                  Содержание курса
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="md:hidden p-1.5 rounded-lg text-[#6C757D] hover:bg-[#F4F5F7]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Modules & Lessons List */}
@@ -659,15 +538,15 @@ export const CoursePlayerPage = () => {
                 {(courseData.modules || []).map((mod) => {
                   const isCollapsed = Boolean(collapsedModules[mod.id]);
                   return (
-                    <div key={mod.id} className="space-y-1.5">
+                    <div key={mod.id} className="space-y-1">
                       <button
                         type="button"
                         onClick={() => toggleModuleCollapse(mod.id)}
-                        className="w-full flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1.5 rounded hover:bg-slate-800/60 transition-colors text-left group"
+                        className="w-full flex items-center justify-between text-[11px] font-bold text-[#6C757D] uppercase tracking-wider px-2 py-1.5 rounded hover:bg-[#F4F5F7] transition-colors text-left group"
                         title={isCollapsed ? 'Развернуть модуль' : 'Свернуть модуль'}
                       >
-                        <span className="truncate group-hover:text-slate-200 transition-colors">{mod.title}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-300 shrink-0 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
+                        <span className="truncate group-hover:text-[#212529] transition-colors">{mod.title}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-[#6C757D] transition-transform duration-300 shrink-0 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
                       </button>
 
                       <div
@@ -691,30 +570,28 @@ export const CoursePlayerPage = () => {
                             <div
                               key={les.id}
                               onClick={() => handleSelectLesson(les)}
-                              className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md ${
+                              className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all select-none min-h-[38px] ${
                                 isCurrent
-                                  ? 'bg-sky-950/70 border border-sky-800/80 text-white font-medium shadow-sm'
+                                  ? 'bg-[#F0F5FA] border border-[#B8D5ED] text-[#003B73] font-bold shadow-2xs'
                                   : isLocked
-                                  ? 'opacity-40 text-slate-500 hover:bg-slate-900 cursor-not-allowed'
-                                  : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                                  ? 'opacity-40 text-[#6C757D] hover:bg-[#F4F5F7] cursor-not-allowed'
+                                  : 'text-[#212529] hover:bg-[#F4F5F7]'
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0 pr-2">
-                                {/* Status Icon */}
                                 {isCompleted ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                                 ) : isLocked ? (
-                                  <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                  <Lock className="w-3.5 h-3.5 text-[#6C757D] shrink-0" />
                                 ) : isCurrent ? (
-                                  <PlayCircle className="w-4 h-4 text-sky-400 shrink-0" />
+                                  <PlayCircle className="w-4 h-4 text-[#003B73] shrink-0" />
                                 ) : (
-                                  <div className="w-3.5 h-3.5 rounded-full border border-slate-600 shrink-0" />
+                                  <div className="w-3.5 h-3.5 rounded-full border border-[#CED4DA] shrink-0" />
                                 )}
-
                                 <span className="truncate">{les.title}</span>
                               </div>
 
-                              <div className="text-slate-500 shrink-0">
+                              <div className="text-[#6C757D] shrink-0">
                                 {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
                               </div>
                             </div>
@@ -729,83 +606,79 @@ export const CoursePlayerPage = () => {
           )}
         </div>
 
-        {/* ==================================================== */}
-        {/* CENTRAL WORKSPACE: CONTENT LEARNING PLAYER           */}
-        {/* ==================================================== */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col justify-between">
+        {/* CENTRAL WORKSPACE: CONTENT LEARNING PLAYER */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between">
           {!activeLesson ? (
-            <div className="text-center py-20 text-slate-500 text-sm space-y-2">
-              <BookOpen className="w-8 h-8 mx-auto text-slate-600" />
+            <div className="text-center py-20 text-[#6C757D] text-sm space-y-2">
+              <BookOpen className="w-8 h-8 mx-auto text-[#CED4DA]" />
               <div>Выберите урок в меню слева для начала изучения.</div>
             </div>
           ) : (
             <div className="max-w-4xl mx-auto w-full space-y-6">
               {/* Active Lesson Header Badge */}
-              <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+              <div className="flex items-center justify-between gap-2 border-b border-[#E0E0E0] pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#003B73] text-white">
                     {activeLesson.lesson_type === 'article' && 'Лонгрид'}
                     {activeLesson.lesson_type === 'video' && 'Видеопрактикум'}
                     {activeLesson.lesson_type === 'presentation' && 'Презентация'}
                     {activeLesson.lesson_type === 'quiz' && 'Аттестация'}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">Шаг урока</span>
+                  <span className="text-xs text-[#6C757D] font-medium">Шаг урока</span>
                 </div>
 
                 {activeLesson.status === 'completed' && (
-                  <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
-                    <CheckCircle2 className="w-4 h-4" />
+                  <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Изучено</span>
                   </div>
                 )}
               </div>
 
               {/* Lesson Title */}
-              <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
                 {activeLesson.title}
               </h2>
 
-              {/* ============================================== */}
-              {/* 1. ARTICLE / LONGREAD RENDERER                 */}
-              {/* ============================================== */}
+              {/* 1. ARTICLE / LONGREAD RENDERER */}
               {activeLesson.lesson_type === 'article' && (
-                <div className="space-y-6 pt-2">
+                <div className="bg-white border border-[#E0E0E0] rounded-2xl p-5 sm:p-8 shadow-card space-y-6">
                   <div className="space-y-5">
                     {parseBlocks(activeLesson.content_json).map((block, idx) => {
                       if (block.type === 'h1') {
                         return (
-                          <h3 key={idx} className="text-xl sm:text-2xl font-black text-slate-100 mt-6 pb-2 border-b border-slate-800">
+                          <h3 key={idx} className="text-xl sm:text-2xl font-black text-[#212529] mt-6 pb-2 border-b border-[#E0E0E0]">
                             {block.text || ''}
                           </h3>
                         );
                       }
                       if (block.type === 'h2') {
                         return (
-                          <h4 key={idx} className="text-lg font-bold text-slate-200 mt-6">
+                          <h4 key={idx} className="text-lg font-bold text-[#212529] mt-6">
                             {block.text || ''}
                           </h4>
                         );
                       }
                       if (block.type === 'paragraph') {
                         return (
-                          <p key={idx} className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                          <p key={idx} className="text-sm sm:text-base text-[#212529] leading-relaxed">
                             {block.text || ''}
                           </p>
                         );
                       }
                       if (block.type === 'callout') {
                         const calloutColors = {
-                          danger: 'bg-rose-950/40 border-rose-800/80 text-rose-200',
-                          warning: 'bg-amber-950/40 border-amber-800/80 text-amber-200',
-                          info: 'bg-sky-950/40 border-sky-800/80 text-sky-200',
-                          success: 'bg-emerald-950/40 border-emerald-800/80 text-emerald-200',
+                          danger: 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613]',
+                          warning: 'bg-amber-50 border-amber-200 text-amber-800',
+                          info: 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]',
+                          success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
                         };
                         const variant = block.variant || 'info';
                         const calloutIcons = {
-                          danger: <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />,
-                          warning: <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />,
-                          info: <Info className="w-5 h-5 text-sky-400 shrink-0" />,
-                          success: <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />,
+                          danger: <AlertCircle className="w-5 h-5 text-[#E30613] shrink-0" />,
+                          warning: <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />,
+                          info: <Info className="w-5 h-5 text-[#003B73] shrink-0" />,
+                          success: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />,
                         };
                         return (
                           <div
@@ -819,7 +692,7 @@ export const CoursePlayerPage = () => {
                               <div className="text-xs font-bold uppercase tracking-wider">
                                 {block.title || 'Регламент'}
                               </div>
-                              <div className="text-xs sm:text-sm leading-relaxed opacity-90">
+                              <div className="text-xs sm:text-sm leading-relaxed">
                                 {block.text || ''}
                               </div>
                             </div>
@@ -830,8 +703,8 @@ export const CoursePlayerPage = () => {
                         return (
                           <ul key={idx} className="space-y-2 my-3 pl-2">
                             {(block.items || []).map((item, iIdx) => (
-                              <li key={iIdx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2 shrink-0" />
+                              <li key={iIdx} className="flex items-start gap-2 text-xs sm:text-sm text-[#212529]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] mt-2 shrink-0" />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -844,17 +717,16 @@ export const CoursePlayerPage = () => {
                             <img
                               src={block.url}
                               alt={block.caption || 'Иллюстрация'}
-                              className="rounded-xl max-h-[500px] mx-auto border border-slate-800 shadow-lg object-contain"
+                              className="rounded-xl max-h-[500px] mx-auto border border-[#E0E0E0] shadow-md object-contain"
                             />
                             {block.caption && (
-                              <div className="text-xs text-slate-400 italic">{block.caption}</div>
+                              <div className="text-xs text-[#6C757D] italic">{block.caption}</div>
                             )}
                           </div>
                         );
                       }
-                      // Fallback for any unknown block structure
                       return (
-                        <p key={idx} className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                        <p key={idx} className="text-sm sm:text-base text-[#212529] leading-relaxed">
                           {block.text || (typeof block === 'string' ? block : '')}
                         </p>
                       );
@@ -862,24 +734,22 @@ export const CoursePlayerPage = () => {
                   </div>
 
                   {/* Bottom Action: Finish Article */}
-                  <div className="pt-8 border-t border-slate-800 flex justify-end">
+                  <div className="pt-6 border-t border-[#E0E0E0] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
-                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
+                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
                       <Check className="w-4 h-4" />
-                      Материал изучен → Следующий шаг
+                      <span>Материал изучен → Следующий шаг</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* ============================================== */}
-              {/* 2. VIDEO STREAMING PLAYER (Range HTTP 206)     */}
-              {/* ============================================== */}
+              {/* 2. VIDEO STREAMING PLAYER */}
               {activeLesson.lesson_type === 'video' && (
-                <div className="space-y-6 pt-2 animate-fade-in">
-                  <div className="w-full bg-black rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center border border-slate-800">
+                <div className="space-y-5 pt-2 animate-fade-in">
+                  <div className="w-full bg-black rounded-2xl overflow-hidden shadow-card flex items-center justify-center border border-[#E0E0E0]">
                     {activeLesson.file_url ? (
                       <video
                         key={activeLesson.file_url}
@@ -905,17 +775,17 @@ export const CoursePlayerPage = () => {
                         Ваш браузер не поддерживает встроенное видео.
                       </video>
                     ) : (
-                      <div className="w-full h-full min-h-[360px] flex flex-col items-center justify-center text-slate-500 gap-2 p-6 text-center">
-                        <Video className="w-12 h-12 text-slate-700" />
-                        <div className="text-sm font-semibold">Видеофайл еще не загружен методистом</div>
-                        <div className="text-xs">Зайдите в конструктор курса и прикрепите видео лекции.</div>
+                      <div className="w-full h-full min-h-[340px] flex flex-col items-center justify-center text-[#6C757D] gap-2 p-6 text-center">
+                        <Video className="w-12 h-12 text-[#CED4DA]" />
+                        <div className="text-sm font-bold text-[#212529]">Видеофайл еще не прикреплен</div>
+                        <div className="text-xs">Зайдите в конструктор курса и добавьте видеоматериал.</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-400">
+                  <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#6C757D] shadow-2xs">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-sky-400 shrink-0" />
+                      <Clock className="w-4 h-4 text-[#003B73] shrink-0" />
                       <span>
                         {activeLesson.last_timestamp_seconds > 0
                           ? `Восстановлено с ${Math.round(activeLesson.last_timestamp_seconds)} сек. Позиция сохраняется каждые 10 сек.`
@@ -923,18 +793,17 @@ export const CoursePlayerPage = () => {
                       </span>
                     </div>
 
-                    {/* Playback speed selector */}
                     <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                      <span className="text-slate-400 text-[11px] font-medium mr-1">Скорость:</span>
+                      <span className="text-[#6C757D] text-[11px] font-semibold mr-1">Скорость:</span>
                       {[0.75, 1, 1.25, 1.5, 2].map((rate) => (
                         <button
                           key={rate}
                           type="button"
                           onClick={() => handleSpeedChange(rate)}
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold transition-colors ${
+                          className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${
                             videoSpeed === rate
-                              ? 'bg-sky-500 text-white'
-                              : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                              ? 'bg-[#003B73] text-white'
+                              : 'bg-[#F4F5F7] text-[#495057] hover:bg-[#E0E0E0]'
                           }`}
                         >
                           {rate}x
@@ -943,24 +812,22 @@ export const CoursePlayerPage = () => {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-800 flex justify-end">
+                  <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
-                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
+                      className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
                       <Check className="w-4 h-4" />
-                      Урок просмотрен → Следующий шаг
+                      <span>Урок просмотрен → Следующий шаг</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* ============================================== */}
-              {/* 3. PRESENTATION (PDF) VIEWER                   */}
-              {/* ============================================== */}
+              {/* 3. PRESENTATION (PDF) VIEWER */}
               {activeLesson.lesson_type === 'presentation' && (
-                <div className="space-y-6 pt-2 animate-fade-in">
-                  <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-900 min-h-[500px]">
+                <div className="space-y-5 pt-2 animate-fade-in">
+                  <div className="rounded-2xl overflow-hidden border border-[#E0E0E0] bg-white min-h-[500px] shadow-card">
                     {activeLesson.file_url ? (
                       <iframe
                         src={activeLesson.file_url}
@@ -968,84 +835,80 @@ export const CoursePlayerPage = () => {
                         title="Презентация"
                       />
                     ) : (
-                      <div className="p-16 text-center text-slate-500 space-y-2">
-                        <FileCode className="w-10 h-10 mx-auto text-slate-700" />
-                        <div className="text-sm font-semibold">Файл презентации PDF еще не загружен</div>
+                      <div className="p-16 text-center text-[#6C757D] space-y-2">
+                        <FileCode className="w-10 h-10 mx-auto text-[#CED4DA]" />
+                        <div className="text-sm font-bold text-[#212529]">Файл презентации еще не загружен</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-slate-800 flex justify-end">
+                  <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
                       <Check className="w-4 h-4" />
-                      Презентация изучена → Далее
+                      <span>Презентация изучена → Далее</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* ============================================== */}
-              {/* 4. QUIZ / TEST EMBEDDED TAKING                 */}
-              {/* ============================================== */}
+              {/* 4. QUIZ / TEST EMBEDDED */}
               {activeLesson.lesson_type === 'quiz' && (
                 <div className="space-y-6 pt-2 animate-fade-in">
                   {quizLoading ? (
-                    <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
-                      <div className="w-7 h-7 rounded-full border-2 border-sky-400 border-t-transparent animate-spin" />
-                      <span>Загрузка вопросов тестирования...</span>
+                    <div className="py-16 text-center text-[#6C757D] text-xs flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-full border-2 border-[#003B73] border-t-transparent animate-spin" />
+                      <span>Загрузка контрольного теста...</span>
                     </div>
                   ) : quizResult ? (
-                    /* Quiz Results Card */
-                    <div className="p-8 rounded-2xl glass-panel text-center space-y-4 animate-fade-in">
+                    <div className="p-8 rounded-2xl bg-white border border-[#E0E0E0] shadow-card text-center space-y-4 animate-fade-in">
                       {quizResult.is_passed ? (
                         <div className="space-y-3">
-                          <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
-                          <h3 className="text-xl font-bold text-slate-100">Тестирование успешно сдано!</h3>
-                          <div className="text-sm text-emerald-300 font-semibold">
+                          <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
+                          <h3 className="text-xl font-extrabold text-[#212529]">Тестирование успешно сдано!</h3>
+                          <div className="text-sm text-emerald-700 font-bold">
                             Результат: {quizResult.score_percent}% (Проходной балл: {quizResult.test?.passing_score || 70}%)
                           </div>
-                          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                          <p className="text-xs text-[#6C757D] max-w-sm mx-auto">
                             Вы подтвердили квалификацию по этому разделу. Урок отмечен как пройденный!
                           </p>
                           <div className="pt-4">
                             <button
                               onClick={handleMarkStepCompleted}
-                              className="btn-primary text-xs py-2.5 px-6 inline-flex items-center gap-2 shadow-lg"
+                              className="btn-primary text-xs sm:text-sm py-2.5 px-6 inline-flex items-center gap-2"
                             >
-                              Перейти к следующему шагу →
+                              <span>Перейти к следующему шагу →</span>
                             </button>
                           </div>
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <AlertTriangle className="w-14 h-14 text-rose-400 mx-auto" />
-                          <h3 className="text-xl font-bold text-slate-100">Тест не сдан</h3>
-                          <div className="text-sm text-rose-300 font-semibold">
+                          <AlertTriangle className="w-14 h-14 text-[#E30613] mx-auto" />
+                          <h3 className="text-xl font-extrabold text-[#212529]">Тест не сдан</h3>
+                          <div className="text-sm text-[#E30613] font-bold">
                             Ваш результат: {quizResult.score_percent}% (требуется {quizResult.test?.passing_score || 70}%)
                           </div>
-                          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                            Повторите теоретический материал лонгрида и попробуйте пройти тестирование снова.
+                          <p className="text-xs text-[#6C757D] max-w-sm mx-auto">
+                            Повторите теоретический материал и попробуйте пройти тестирование снова.
                           </p>
                           <button
                             onClick={() => initQuizAttempt(activeLesson.quiz_id)}
-                            className="btn-secondary text-xs py-2 px-4 inline-flex items-center gap-1.5"
+                            className="btn-secondary text-xs sm:text-sm py-2 px-4 inline-flex items-center gap-1.5"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            Попробовать снова
+                            <span>Попробовать снова</span>
                           </button>
                         </div>
                       )}
                     </div>
                   ) : quizAttempt ? (
-                    /* Active Quiz Form */
                     <div className="space-y-6 animate-fade-in">
-                      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs gap-3">
+                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-2xs flex items-center justify-between text-xs gap-3">
                         <div className="space-y-0.5">
-                          <div className="font-bold text-slate-200">{quizAttempt.test?.title}</div>
-                          <div className="text-slate-400">
+                          <div className="font-bold text-[#212529]">{quizAttempt.test?.title}</div>
+                          <div className="text-[#6C757D]">
                             Проходной порог: {quizAttempt.test?.passing_score}% • Вопросов: {quizAttempt.test?.questions?.length || 0}
                           </div>
                         </div>
@@ -1053,8 +916,8 @@ export const CoursePlayerPage = () => {
                         {quizTimeLeft !== null && (
                           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs shrink-0 ${
                             quizTimeLeft < 180
-                              ? 'bg-rose-950/60 border-rose-800 text-rose-300 animate-pulse'
-                              : 'bg-slate-800 border-slate-700 text-sky-400'
+                              ? 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613] animate-pulse'
+                              : 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]'
                           }`}>
                             <Clock className="w-3.5 h-3.5" />
                             <span>{formatTime(quizTimeLeft)}</span>
@@ -1063,7 +926,7 @@ export const CoursePlayerPage = () => {
                       </div>
 
                       {/* Questions List */}
-                      <div className="space-y-5">
+                      <div className="space-y-4">
                         {(quizAttempt.test?.questions || []).map((q, qIdx) => {
                           const isMultiple = q.question_type === 'multiple_choice';
                           const isOpen =
@@ -1082,30 +945,25 @@ export const CoursePlayerPage = () => {
                               : (quizAnswers[q.id]?.answer_text || quizAnswers[q.id]?.text_answer || '');
 
                           return (
-                            <div key={q.id} className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                            <div key={q.id} className="p-5 rounded-2xl bg-white border border-[#E0E0E0] shadow-2xs space-y-3">
                               <div className="flex items-start gap-2.5">
-                                <span className="px-2 py-0.5 rounded bg-slate-800 text-xs font-bold text-slate-300">
+                                <span className="px-2 py-0.5 rounded bg-[#003B73] text-xs font-bold text-white shrink-0">
                                   {qIdx + 1}
                                 </span>
-                                <div className="text-sm font-semibold text-slate-100">{q.text}</div>
+                                <div className="text-sm font-bold text-[#212529]">{q.text}</div>
                               </div>
 
-                              {/* Открытый вопрос */}
                               {isOpen ? (
-                                <div className="mt-4">
+                                <div className="mt-3">
                                   <textarea
                                     rows={5}
                                     value={answerText}
                                     onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                                     placeholder="Введите развернутый ответ на вопрос..."
-                                    className="w-full p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-y"
+                                    className="input-field text-sm leading-relaxed resize-y font-normal"
                                   />
-                                  <div className="mt-2 text-xs text-slate-400">
-                                    Ответ будет сохранен и передан методисту на проверку.
-                                  </div>
                                 </div>
                               ) : (
-                                /* Варианты с выбором */
                                 <div className="space-y-2 pt-1">
                                   {(q.options || []).map((opt) => {
                                     const isChecked = selected.includes(opt.id);
@@ -1113,20 +971,20 @@ export const CoursePlayerPage = () => {
                                       <div
                                         key={opt.id}
                                         onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
-                                        className={`p-3 rounded-lg border text-xs cursor-pointer transition-all duration-150 flex items-center gap-3 ${
+                                        className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center gap-3 min-h-[44px] ${
                                           isChecked
-                                            ? 'bg-sky-950/60 border-sky-700 text-white font-medium shadow-sm'
-                                            : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-900'
+                                            ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
+                                            : 'bg-white border-[#E0E0E0] text-[#212529] hover:bg-[#F8F9FA]'
                                         }`}
                                       >
                                         <div
                                           className={`w-4 h-4 rounded flex items-center justify-center ${
                                             isMultiple ? 'rounded' : 'rounded-full'
                                           } border ${
-                                            isChecked ? 'border-sky-400 bg-sky-500' : 'border-slate-600'
+                                            isChecked ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
                                           }`}
                                         >
-                                          {isChecked && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+                                          {isChecked && <Check className="w-3 h-3 text-white stroke-[3]" />}
                                         </div>
                                         <span>{opt.text}</span>
                                       </div>
@@ -1140,31 +998,20 @@ export const CoursePlayerPage = () => {
                       </div>
 
                       {/* Submit Quiz */}
-                      <div className="pt-4 border-t border-slate-800 flex justify-end">
+                      <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
                         <button
                           onClick={handleSubmitQuiz}
                           disabled={quizSubmitting}
-                          className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2 shadow-lg"
+                          className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                         >
                           <Send className="w-4 h-4" />
-                          {quizSubmitting ? 'Проверка...' : 'Завершить тест и проверить ответы'}
+                          <span>{quizSubmitting ? 'Проверка...' : 'Завершить тест и проверить ответы'}</span>
                         </button>
                       </div>
                     </div>
-                  ) : !activeLesson.quiz_id ? (
-                    <div className="p-8 text-center text-slate-500 text-xs">
-                      К этому уроку еще не привязан тест.
-                    </div>
                   ) : (
-                    <div className="p-8 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
-                      <div className="w-7 h-7 rounded-full border-2 border-sky-400 border-t-transparent animate-spin" />
-                      <span>Подготовка вопросов тестирования...</span>
-                      <button
-                        onClick={() => initQuizAttempt(activeLesson.quiz_id)}
-                        className="btn-secondary text-xs py-1.5 px-4 mt-1"
-                      >
-                        Запустить тест
-                      </button>
+                    <div className="p-8 text-center text-[#6C757D] text-xs">
+                      К этому уроку еще не привязан тест.
                     </div>
                   )}
                 </div>

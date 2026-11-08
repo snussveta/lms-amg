@@ -31,14 +31,13 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 // Public Guest Test Page
 import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
 
-
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <div className="min-h-screen flex flex-col bg-[#F4F5F7] text-[#212529] selection:bg-[#E30613] selection:text-white">
           <Navbar />
-          <div className="flex-1">
+          <div className="flex-1 pb-20 md:pb-6">
             <Routes>
               {/* Public Auth Routes */}
               <Route path="/login" element={<LoginPage />} />

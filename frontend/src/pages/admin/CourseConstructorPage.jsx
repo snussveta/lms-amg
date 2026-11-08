@@ -100,7 +100,7 @@ export const CourseConstructorPage = () => {
               content_json: JSON.stringify([
                 { type: 'h1', text: 'Стандарты работы сервисного участка' },
                 { type: 'paragraph', text: 'Ознакомьтесь с регламентом проведения работ и требованиями безопасности.' },
-                { type: 'callout', variant: 'warning', title: 'ВНИМАНИЕ', text: 'Соблюдение регламентов СТО проверяется службой контроля качества.' }
+                { type: 'callout', variant: 'warning', title: 'ВНИМАНИЕ', text: 'Соблюдение регламентов СТО проверяется службой контроля качества.' },
               ]),
               file_url: '',
               file_size_bytes: 0,
@@ -367,10 +367,13 @@ export const CourseConstructorPage = () => {
       title: `${typeNames[type] || 'Урок'} ${lessonCount + 1}`,
       order_index: lessonCount,
       lesson_type: type,
-      content_json: type === 'article' ? JSON.stringify([
-        { type: 'h1', text: 'Заголовок инструкции' },
-        { type: 'paragraph', text: 'Введите текст регламента или описания процесса...' }
-      ]) : '[]',
+      content_json:
+        type === 'article'
+          ? JSON.stringify([
+              { type: 'h1', text: 'Заголовок инструкции' },
+              { type: 'paragraph', text: 'Введите текст регламента или описания процесса...' },
+            ])
+          : '[]',
       file_url: '',
       file_size_bytes: 0,
       quiz_id: null,
@@ -809,7 +812,10 @@ export const CourseConstructorPage = () => {
           title: activeLesson.title,
           order_index: activeLesson.order_index,
           lesson_type: activeLesson.lesson_type,
-          content_json: typeof activeLesson.content_json === 'string' ? activeLesson.content_json : JSON.stringify(activeLesson.content_json),
+          content_json:
+            typeof activeLesson.content_json === 'string'
+              ? activeLesson.content_json
+              : JSON.stringify(activeLesson.content_json),
           file_url: activeLesson.file_url || null,
           file_size_bytes: activeLesson.file_size_bytes || 0,
           quiz_id: activeLesson.quiz_id || null,
@@ -824,37 +830,37 @@ export const CourseConstructorPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="min-h-[80vh] flex items-center justify-center bg-[#F4F5F7]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
-          <span className="text-sm text-slate-400">Загрузка структуры курса...</span>
+          <Loader2 className="w-8 h-8 text-[#003B73] animate-spin" />
+          <span className="text-sm font-semibold text-[#6C757D]">Загрузка структуры курса...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 pb-28">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
         <div className="flex items-center gap-3">
           <Link
             to="/admin/courses"
-            className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl bg-white border border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors shadow-2xs"
             title="Назад к списку курсов"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
                 {isEditing ? 'Конструктор курса' : 'Новый обучающий курс'}
               </h1>
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-sky-950/70 border border-sky-800/80 text-sky-400 uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#003B73]/10 border border-[#003B73]/20 text-[#003B73] uppercase tracking-wider">
                 iSpring Module
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#6C757D] mt-0.5">
               Настройка разделов, лонгридов, видео 5+ часов, презентаций и тестов
             </p>
           </div>
@@ -866,21 +872,21 @@ export const CourseConstructorPage = () => {
               <button
                 type="button"
                 onClick={() => setShowAssignModal(true)}
-                className="btn-secondary text-xs flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-400"
+                className="btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5"
                 title="Назначить курс сотрудникам"
               >
-                <Users className="w-3.5 h-3.5 text-sky-400" />
-                Назначить курс
+                <Users className="w-4 h-4 text-[#003B73]" />
+                <span>Назначить курс</span>
               </button>
 
               <Link
                 to={`/courses/${courseId}/learn`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-secondary text-xs flex items-center gap-1.5"
+                className="btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5"
               >
-                <Eye className="w-3.5 h-3.5 text-sky-400" />
-                Плеер сотрудника
+                <Eye className="w-4 h-4 text-[#003B73]" />
+                <span>Плеер сотрудника</span>
               </Link>
             </>
           )}
@@ -888,36 +894,36 @@ export const CourseConstructorPage = () => {
           <button
             onClick={handleSaveCourse}
             disabled={saving}
-            className="btn-primary text-xs flex items-center gap-1.5"
+            className="btn-primary text-xs flex items-center gap-1.5 min-h-[40px] px-5 font-bold"
           >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            {saving ? 'Сохранение...' : 'Сохранить курс'}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{saving ? 'Сохранение...' : 'Сохранить курс'}</span>
           </button>
         </div>
       </div>
 
       {/* Notifications */}
       {error && (
-        <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {/* Course Core Settings Card */}
-      <div className="glass-panel p-5 space-y-4">
+      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Название курса *</label>
+            <label className="text-xs font-bold text-[#212529]">Название курса *</label>
             <input
               type="text"
-              className="input-field font-semibold text-sm"
+              className="input-field font-bold text-sm bg-white"
               placeholder="Например: Диагностика тормозных систем AutoMall"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -925,9 +931,9 @@ export const CourseConstructorPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Подразделение (Тег)</label>
+            <label className="text-xs font-bold text-[#212529]">Подразделение (Тег)</label>
             <select
-              className="input-field text-sm"
+              className="input-field text-sm bg-white"
               value={departmentTag}
               onChange={(e) => setDepartmentTag(e.target.value)}
             >
@@ -941,10 +947,10 @@ export const CourseConstructorPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Краткое описание курса</label>
+            <label className="text-xs font-bold text-[#212529]">Краткое описание курса</label>
             <textarea
               rows={2}
-              className="input-field text-xs"
+              className="input-field text-xs bg-white"
               placeholder="Опишите цели обучения, приобретаемые навыки и регламенты..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -953,10 +959,10 @@ export const CourseConstructorPage = () => {
 
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">URL обложки курса (баннер)</label>
+              <label className="text-xs font-bold text-[#212529]">URL обложки курса (баннер)</label>
               <input
                 type="text"
-                className="input-field text-xs"
+                className="input-field text-xs bg-white"
                 placeholder="https://... или путь к фото"
                 value={coverImageUrl}
                 onChange={(e) => setCoverImageUrl(e.target.value)}
@@ -969,9 +975,9 @@ export const CourseConstructorPage = () => {
                 id="isPublished"
                 checked={isPublished}
                 onChange={(e) => setIsPublished(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-700 text-sky-500 bg-slate-900 focus:ring-0"
+                className="w-4 h-4 rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] cursor-pointer"
               />
-              <label htmlFor="isPublished" className="text-xs font-medium text-slate-300 cursor-pointer">
+              <label htmlFor="isPublished" className="text-xs font-bold text-[#212529] cursor-pointer">
                 Опубликовать курс для сотрудников
               </label>
             </div>
@@ -985,50 +991,50 @@ export const CourseConstructorPage = () => {
         {/* LEFT COLUMN: COURSE STRUCTURE TREE (4 cols)         */}
         {/* ==================================================== */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="glass-panel p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[#E0E0E0]">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-sky-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                <Layers className="w-4 h-4 text-[#003B73]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#212529]">
                   Структура курса
                 </span>
               </div>
               <button
                 onClick={handleAddModule}
-                className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                className="text-xs font-bold text-[#003B73] hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Раздел
+                <span>Раздел</span>
               </button>
             </div>
 
             {/* Modules List */}
             <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
               {modules.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-xs">
+                <div className="text-center py-8 text-[#6C757D] text-xs">
                   Нет разделов. Нажмите «+ Раздел», чтобы добавить.
                 </div>
               ) : (
                 modules.map((mod, modIdx) => (
                   <div
                     key={mod.id}
-                    className={`rounded-lg border transition-all ${
+                    className={`rounded-xl border transition-all ${
                       activeModuleId === mod.id
-                        ? 'border-slate-700 bg-slate-900/90'
-                        : 'border-slate-800/80 bg-slate-900/40'
+                        ? 'border-[#003B73] bg-[#003B73]/5 shadow-2xs'
+                        : 'border-[#E0E0E0] bg-[#F4F5F7]/60'
                     }`}
                   >
                     {/* Module Header */}
-                    <div className="p-2.5 flex items-center justify-between gap-2 border-b border-slate-800/60">
-                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                    <div className="p-2.5 flex items-center justify-between gap-2 border-b border-[#E0E0E0]">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#003B73] text-white shrink-0">
                           {modIdx + 1}
                         </span>
                         <input
                           type="text"
                           value={mod.title}
                           onChange={(e) => handleUpdateModuleTitle(mod.id, e.target.value)}
-                          className="bg-transparent text-xs font-bold text-slate-200 border-none focus:outline-none focus:ring-0 w-full truncate"
+                          className="bg-transparent text-xs font-bold text-[#212529] border-none focus:outline-none focus:ring-0 w-full truncate"
                           title="Кликните для редактирования названия"
                         />
                       </div>
@@ -1037,38 +1043,38 @@ export const CourseConstructorPage = () => {
                         <button
                           onClick={() => handleMoveModule(modIdx, 'up')}
                           disabled={modIdx === 0}
-                          className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30"
+                          className="p-1.5 rounded text-[#6C757D] hover:text-[#212529] hover:bg-white disabled:opacity-20"
                           title="Поднять раздел выше"
                         >
-                          <MoveUp className="w-3 h-3" />
+                          <MoveUp className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleMoveModule(modIdx, 'down')}
                           disabled={modIdx === modules.length - 1}
-                          className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30"
+                          className="p-1.5 rounded text-[#6C757D] hover:text-[#212529] hover:bg-white disabled:opacity-20"
                           title="Опустить раздел ниже"
                         >
-                          <MoveDown className="w-3 h-3" />
+                          <MoveDown className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteModule(mod.id)}
-                          className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
+                          className="p-1.5 rounded text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
                           title="Удалить раздел"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Lessons inside module */}
                     <div className="p-2 space-y-1">
-                      {(mod.lessons || []).map((les, lesIdx) => {
+                      {(mod.lessons || []).map((les) => {
                         const isSelected = activeLesson?.id === les.id;
                         const iconMap = {
-                          article: <FileText className="w-3.5 h-3.5 text-emerald-400" />,
-                          video: <Video className="w-3.5 h-3.5 text-rose-400" />,
-                          presentation: <FileCode className="w-3.5 h-3.5 text-amber-400" />,
-                          quiz: <HelpCircle className="w-3.5 h-3.5 text-sky-400" />,
+                          article: <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />,
+                          video: <Video className="w-3.5 h-3.5 text-[#003B73] shrink-0" />,
+                          presentation: <FileCode className="w-3.5 h-3.5 text-amber-600 shrink-0" />,
+                          quiz: <HelpCircle className="w-3.5 h-3.5 text-[#E30613] shrink-0" />,
                         };
 
                         return (
@@ -1077,12 +1083,16 @@ export const CourseConstructorPage = () => {
                             onClick={() => handleSelectLessonInEditor(les, mod.id)}
                             className={`flex items-center justify-between p-2 rounded-lg cursor-pointer text-xs transition-all ${
                               isSelected
-                                ? 'bg-slate-800 text-white font-medium shadow-sm border border-slate-700'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                                ? 'bg-[#003B73] text-white font-bold shadow-xs'
+                                : 'text-[#212529] hover:bg-white hover:border-[#E0E0E0] border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0 pr-2">
-                              {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
+                              {isSelected ? (
+                                <span className="text-white shrink-0">{iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}</span>
+                              ) : (
+                                iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />
+                              )}
                               <span className="truncate">{les.title}</span>
                               {les.lesson_type === 'video' && les.file_url && (
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-sm" title="Видео прикреплено" />
@@ -1097,7 +1107,9 @@ export const CourseConstructorPage = () => {
                                 e.stopPropagation();
                                 handleDeleteLesson(mod.id, les.id);
                               }}
-                              className="p-1 text-slate-500 hover:text-rose-400 transition-colors opacity-60 hover:opacity-100"
+                              className={`p-1 rounded transition-colors ${
+                                isSelected ? 'text-white/80 hover:text-white' : 'text-[#6C757D] hover:text-[#E30613]'
+                              }`}
                               title="Удалить урок"
                             >
                               <X className="w-3 h-3" />
@@ -1107,35 +1119,35 @@ export const CourseConstructorPage = () => {
                       })}
 
                       {/* Add Lesson Dropdown Button */}
-                      <div className="pt-1.5 flex items-center gap-1">
+                      <div className="pt-2 flex items-center gap-1.5 flex-wrap">
                         <button
                           onClick={() => handleAddLesson(mod.id, 'article')}
-                          className="text-[11px] px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 text-slate-300 font-medium transition-colors flex items-center gap-1"
+                          className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                         >
-                          <Plus className="w-3 h-3 text-emerald-400" />
-                          Лонгрид
+                          <Plus className="w-3 h-3 text-emerald-600" />
+                          <span>Лонгрид</span>
                         </button>
                         <button
                           onClick={() => handleAddLesson(mod.id, 'video')}
-                          className="text-[11px] px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 text-slate-300 font-medium transition-colors flex items-center gap-1"
+                          className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                         >
-                          <Plus className="w-3 h-3 text-rose-400" />
-                          Видео
+                          <Plus className="w-3 h-3 text-[#003B73]" />
+                          <span>Видео</span>
                         </button>
                         <button
                           onClick={() => handleAddLesson(mod.id, 'quiz')}
-                          className="text-[11px] px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 text-slate-300 font-medium transition-colors flex items-center gap-1"
+                          className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                         >
-                          <Plus className="w-3 h-3 text-sky-400" />
-                          Тест
+                          <Plus className="w-3 h-3 text-[#E30613]" />
+                          <span>Тест</span>
                         </button>
                         <button
                           onClick={() => handleAddLesson(mod.id, 'presentation')}
-                          className="text-[11px] px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 text-slate-300 font-medium transition-colors"
+                          className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                           title="Добавить презентацию (PDF)"
                         >
-                          <Plus className="w-3 h-3 text-amber-400" />
-                          PDF
+                          <Plus className="w-3 h-3 text-amber-600" />
+                          <span>PDF</span>
                         </button>
                       </div>
                     </div>
@@ -1151,23 +1163,23 @@ export const CourseConstructorPage = () => {
         {/* ==================================================== */}
         <div className="lg:col-span-8">
           {!activeLesson ? (
-            <div className="glass-panel p-12 text-center text-slate-500 space-y-3">
-              <Layers className="w-10 h-10 mx-auto text-slate-600" />
-              <div className="text-sm font-semibold text-slate-400">Урок не выбран</div>
-              <p className="text-xs max-w-sm mx-auto">
+            <div className="bg-white rounded-2xl border border-[#E0E0E0] p-12 text-center text-[#6C757D] space-y-3 shadow-sm">
+              <Layers className="w-12 h-12 mx-auto text-[#6C757D] opacity-40" />
+              <div className="text-base font-bold text-[#212529]">Урок не выбран</div>
+              <p className="text-xs max-w-sm mx-auto leading-relaxed">
                 Выберите урок в дереве слева или добавьте новый раздел и урок, чтобы приступить к верстке лонгрида или загрузке видео.
               </p>
             </div>
           ) : (
-            <div className="glass-panel p-6 space-y-6">
+            <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-5 sm:p-6 space-y-6">
               {/* Lesson General Header */}
-              <div className="space-y-4 pb-5 border-b border-slate-800">
+              <div className="space-y-4 pb-5 border-b border-[#E0E0E0]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <label className="text-xs font-semibold text-slate-400">Название урока</label>
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs font-bold text-[#212529]">Название урока</label>
                     <input
                       type="text"
-                      className="input-field text-base font-bold text-slate-100 mt-1"
+                      className="input-field text-base font-bold text-[#212529] bg-white"
                       value={activeLesson.title}
                       onChange={(e) => updateActiveLessonField('title', e.target.value)}
                     />
@@ -1176,25 +1188,25 @@ export const CourseConstructorPage = () => {
                   <div className="flex items-center gap-2 self-start sm:self-end">
                     <button
                       onClick={() => setPreviewMode(!previewMode)}
-                      className={`btn-secondary text-xs flex items-center gap-1.5 ${
-                        previewMode ? 'bg-slate-800 text-sky-400 border-sky-800' : ''
+                      className={`btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5 ${
+                        previewMode ? 'bg-[#003B73] text-white border-[#003B73]' : ''
                       }`}
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      {previewMode ? 'Редактор' : 'Предпросмотр'}
+                      <Eye className="w-4 h-4" />
+                      <span>{previewMode ? 'Редактор' : 'Предпросмотр'}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Lesson Type Selector Tabs */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-2">Формат урока</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <label className="text-xs font-bold text-[#212529] block mb-2">Формат урока</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {[
-                      { id: 'article', label: 'Лонгрид / Статья', icon: FileText, color: 'text-emerald-400' },
-                      { id: 'video', label: 'Видео (2–10 ГБ)', icon: Video, color: 'text-rose-400' },
-                      { id: 'presentation', label: 'Презентация PDF', icon: FileCode, color: 'text-amber-400' },
-                      { id: 'quiz', label: 'Тестирование', icon: HelpCircle, color: 'text-sky-400' },
+                      { id: 'article', label: 'Лонгрид / Статья', icon: FileText, color: 'text-emerald-600' },
+                      { id: 'video', label: 'Видео (2–10 ГБ)', icon: Video, color: 'text-[#003B73]' },
+                      { id: 'presentation', label: 'Презентация PDF', icon: FileCode, color: 'text-amber-600' },
+                      { id: 'quiz', label: 'Тестирование', icon: HelpCircle, color: 'text-[#E30613]' },
                     ].map((t) => {
                       const Icon = t.icon;
                       const active = activeLesson.lesson_type === t.id;
@@ -1203,14 +1215,14 @@ export const CourseConstructorPage = () => {
                           key={t.id}
                           type="button"
                           onClick={() => updateActiveLessonField('lesson_type', t.id)}
-                          className={`p-3 rounded-lg border text-left transition-all flex flex-col gap-1.5 ${
+                          className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 min-h-[64px] ${
                             active
-                              ? 'bg-slate-800 border-slate-600 text-white shadow-sm'
-                              : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                              ? 'bg-[#003B73] border-[#003B73] text-white shadow-sm'
+                              : 'bg-[#F4F5F7] border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#E0E0E0]/60'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 ${t.color}`} />
-                          <span className="text-xs font-semibold">{t.label}</span>
+                          <Icon className={`w-4 h-4 ${active ? 'text-white' : t.color}`} />
+                          <span className="text-xs font-bold">{t.label}</span>
                         </button>
                       );
                     })}
@@ -1225,23 +1237,23 @@ export const CourseConstructorPage = () => {
                 <div className="space-y-6">
                   {previewMode ? (
                     /* Read Mode Preview */
-                    <div className="prose prose-invert max-w-none space-y-4">
+                    <div className="prose max-w-none space-y-4 text-[#212529]">
                       {getParsedLongreadBlocks().map((block, idx) => {
                         if (block.type === 'h1') {
-                          return <h1 key={idx} className="text-2xl font-black text-slate-100">{block.text}</h1>;
+                          return <h1 key={idx} className="text-2xl font-black text-[#212529]">{block.text}</h1>;
                         }
                         if (block.type === 'h2') {
-                          return <h2 key={idx} className="text-xl font-bold text-slate-200 mt-6">{block.text}</h2>;
+                          return <h2 key={idx} className="text-xl font-bold text-[#003B73] mt-6">{block.text}</h2>;
                         }
                         if (block.type === 'paragraph') {
-                          return <p key={idx} className="text-sm text-slate-300 leading-relaxed">{block.text}</p>;
+                          return <p key={idx} className="text-sm text-[#212529] leading-relaxed">{block.text}</p>;
                         }
                         if (block.type === 'callout') {
                           const variants = {
-                            danger: 'bg-rose-950/30 border-rose-900/60 text-rose-300',
-                            warning: 'bg-amber-950/30 border-amber-900/60 text-amber-300',
-                            info: 'bg-sky-950/30 border-sky-900/60 text-sky-300',
-                            success: 'bg-emerald-950/30 border-emerald-900/60 text-emerald-300',
+                            danger: 'bg-red-50 border-red-200 text-[#E30613]',
+                            warning: 'bg-amber-50 border-amber-200 text-amber-800',
+                            info: 'bg-blue-50 border-blue-200 text-[#003B73]',
+                            success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
                           };
                           return (
                             <div key={idx} className={`p-4 rounded-xl border ${variants[block.variant] || variants.info}`}>
@@ -1252,7 +1264,7 @@ export const CourseConstructorPage = () => {
                         }
                         if (block.type === 'list') {
                           return (
-                            <ul key={idx} className="list-disc list-inside space-y-1 text-xs text-slate-300">
+                            <ul key={idx} className="list-disc list-inside space-y-1 text-xs text-[#212529]">
                               {(block.items || []).map((item, iIdx) => (
                                 <li key={iIdx}>{item}</li>
                               ))}
@@ -1262,8 +1274,8 @@ export const CourseConstructorPage = () => {
                         if (block.type === 'image') {
                           return (
                             <div key={idx} className="space-y-1.5 text-center my-4">
-                              <img src={block.url} alt={block.caption} className="rounded-lg max-h-96 mx-auto border border-slate-800" />
-                              {block.caption && <div className="text-[11px] text-slate-400 italic">{block.caption}</div>}
+                              <img src={block.url} alt={block.caption} className="rounded-xl max-h-96 mx-auto border border-[#E0E0E0]" />
+                              {block.caption && <div className="text-[11px] text-[#6C757D] italic">{block.caption}</div>}
                             </div>
                           );
                         }
@@ -1276,18 +1288,18 @@ export const CourseConstructorPage = () => {
                       {/* Blocks List */}
                       <div className="space-y-3">
                         {getParsedLongreadBlocks().map((block, bIdx) => (
-                          <div key={bIdx} className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 relative group space-y-2">
-                            <div className="flex items-center justify-between pb-1 border-b border-slate-800/60">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          <div key={bIdx} className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] relative group space-y-2">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#E0E0E0]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6C757D]">
                                 Блок: {block.type}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => removeLongreadBlock(bIdx)}
-                                className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                                className="text-[#6C757D] hover:text-[#E30613] transition-colors p-1 rounded"
                                 title="Удалить блок"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
 
@@ -1295,7 +1307,7 @@ export const CourseConstructorPage = () => {
                             {(block.type === 'h1' || block.type === 'h2' || block.type === 'paragraph') && (
                               <textarea
                                 rows={block.type === 'paragraph' ? 3 : 1}
-                                className="input-field text-xs"
+                                className="input-field text-xs bg-white"
                                 value={block.text || ''}
                                 onChange={(e) => updateLongreadBlock(bIdx, 'text', e.target.value)}
                                 placeholder={block.type === 'paragraph' ? 'Текст описания или регламента...' : 'Заголовок...'}
@@ -1308,17 +1320,17 @@ export const CourseConstructorPage = () => {
                                 <div className="grid grid-cols-2 gap-2">
                                   <input
                                     type="text"
-                                    className="input-field text-xs font-bold"
+                                    className="input-field text-xs font-bold bg-white"
                                     placeholder="Заголовок блока (например: ВНИМАНИЕ)"
                                     value={block.title || ''}
                                     onChange={(e) => updateLongreadBlock(bIdx, 'title', e.target.value)}
                                   />
                                   <select
-                                    className="input-field text-xs"
+                                    className="input-field text-xs bg-white"
                                     value={block.variant || 'warning'}
                                     onChange={(e) => updateLongreadBlock(bIdx, 'variant', e.target.value)}
                                   >
-                                    <option value="danger">Критично / Опасно (Розовый)</option>
+                                    <option value="danger">Критично / Опасно (Красный)</option>
                                     <option value="warning">Регламент / Внимание (Янтарный)</option>
                                     <option value="info">Инфо / Инструкция (Синий)</option>
                                     <option value="success">Норма / Рекомендация (Зеленый)</option>
@@ -1326,7 +1338,7 @@ export const CourseConstructorPage = () => {
                                 </div>
                                 <textarea
                                   rows={2}
-                                  className="input-field text-xs"
+                                  className="input-field text-xs bg-white"
                                   placeholder="Текст регламента..."
                                   value={block.text || ''}
                                   onChange={(e) => updateLongreadBlock(bIdx, 'text', e.target.value)}
@@ -1337,10 +1349,10 @@ export const CourseConstructorPage = () => {
                             {/* List block */}
                             {block.type === 'list' && (
                               <div className="space-y-1.5">
-                                <label className="text-[11px] text-slate-400">Пункты списка (по одному на строку)</label>
+                                <label className="text-[11px] font-bold text-[#6C757D]">Пункты списка (по одному на строку)</label>
                                 <textarea
                                   rows={3}
-                                  className="input-field text-xs"
+                                  className="input-field text-xs bg-white"
                                   value={(block.items || []).join('\n')}
                                   onChange={(e) =>
                                     updateLongreadBlock(bIdx, 'items', e.target.value.split('\n'))
@@ -1355,21 +1367,21 @@ export const CourseConstructorPage = () => {
                                 <div className="grid grid-cols-2 gap-2">
                                   <input
                                     type="text"
-                                    className="input-field text-xs"
+                                    className="input-field text-xs bg-white"
                                     placeholder="URL изображения..."
                                     value={block.url || ''}
                                     onChange={(e) => updateLongreadBlock(bIdx, 'url', e.target.value)}
                                   />
                                   <input
                                     type="text"
-                                    className="input-field text-xs"
+                                    className="input-field text-xs bg-white"
                                     placeholder="Подпись к фото..."
                                     value={block.caption || ''}
                                     onChange={(e) => updateLongreadBlock(bIdx, 'caption', e.target.value)}
                                   />
                                 </div>
                                 {block.url && (
-                                  <div className="p-2 bg-slate-950 rounded border border-slate-800 text-center">
+                                  <div className="p-2 bg-white rounded-xl border border-[#E0E0E0] text-center">
                                     <img src={block.url} alt="Превью" className="max-h-40 mx-auto rounded" />
                                   </div>
                                 )}
@@ -1380,41 +1392,41 @@ export const CourseConstructorPage = () => {
                       </div>
 
                       {/* Add Block Toolbar */}
-                      <div className="p-3 rounded-lg bg-slate-900/60 border border-dashed border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xs font-semibold text-slate-400">Добавить блок в статью:</span>
+                      <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-dashed border-[#E0E0E0] flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-xs font-bold text-[#212529]">Добавить блок в статью:</span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
                             onClick={() => addLongreadBlock('h1')}
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
+                            className="btn-secondary text-xs py-1.5 px-3 font-bold min-h-[34px]"
                           >
                             H1
                           </button>
                           <button
                             type="button"
                             onClick={() => addLongreadBlock('h2')}
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
+                            className="btn-secondary text-xs py-1.5 px-3 font-bold min-h-[34px]"
                           >
                             H2
                           </button>
                           <button
                             type="button"
                             onClick={() => addLongreadBlock('paragraph')}
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors"
+                            className="btn-secondary text-xs py-1.5 px-3 font-medium min-h-[34px]"
                           >
                             Параграф
                           </button>
                           <button
                             type="button"
                             onClick={() => addLongreadBlock('callout')}
-                            className="px-2.5 py-1 rounded bg-amber-950/50 hover:bg-amber-900/60 border border-amber-900/50 text-xs font-semibold text-amber-300 transition-colors"
+                            className="btn-secondary text-xs py-1.5 px-3 text-amber-800 font-bold min-h-[34px]"
                           >
                             Внимание / Регламент
                           </button>
                           <button
                             type="button"
                             onClick={() => addLongreadBlock('list')}
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors flex items-center gap-1"
+                            className="btn-secondary text-xs py-1.5 px-3 font-medium min-h-[34px] flex items-center gap-1"
                           >
                             <List className="w-3 h-3" />
                             Список
@@ -1422,10 +1434,10 @@ export const CourseConstructorPage = () => {
                           <button
                             type="button"
                             onClick={() => imageInputRef.current?.click()}
-                            className="px-2.5 py-1 rounded bg-sky-950/50 hover:bg-sky-900/60 border border-sky-900/50 text-xs font-semibold text-sky-300 transition-colors flex items-center gap-1"
+                            className="btn-secondary text-xs py-1.5 px-3 text-[#003B73] font-bold min-h-[34px] flex items-center gap-1"
                           >
-                            <ImageIcon className="w-3 h-3" />
-                            Загрузить фото авто
+                            <ImageIcon className="w-3.5 h-3.5" />
+                            Загрузить фото
                           </button>
                           <input
                             ref={imageInputRef}
@@ -1446,21 +1458,21 @@ export const CourseConstructorPage = () => {
               {/* ============================================== */}
               {activeLesson.lesson_type === 'video' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
                           Видеофайл лекции (MP4 / MKV / WebM)
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-[#6C757D] mt-0.5">
                           Поддерживаются видеофайлы длительностью 5+ часов и размером до 10 ГБ. Загрузите файл с ПК или выберите готовый из Базы знаний.
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleOpenKnowledgePicker('video')}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/60 hover:bg-emerald-900/60 text-emerald-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                          className="btn-secondary text-xs font-bold text-[#003B73] min-h-[38px] px-3.5 flex items-center gap-1.5"
                         >
                           <FolderArchive className="w-3.5 h-3.5" />
                           <span>Выбрать из Базы знаний</span>
@@ -1468,7 +1480,7 @@ export const CourseConstructorPage = () => {
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="px-3 py-1.5 rounded-lg bg-sky-950/60 border border-sky-800/60 hover:bg-sky-900/60 text-sky-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                          className="btn-primary text-xs font-bold min-h-[38px] px-3.5 flex items-center gap-1.5"
                         >
                           <Upload className="w-3.5 h-3.5" />
                           <span>Загрузить видео с ПК</span>
@@ -1487,18 +1499,18 @@ export const CourseConstructorPage = () => {
 
                     {/* Upload Progress Indicator */}
                     {uploadStatus === 'uploading' && (
-                      <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-sm space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-sky-400">
+                          <span className="font-bold text-[#003B73]">
                             Чанковая загрузка на сервер: {uploadProgress}%
                           </span>
-                          <span className="text-slate-400">
+                          <span className="text-[#6C757D]">
                             Чанк {chunkStats.current} из {chunkStats.total} ({chunkStats.speed})
                           </span>
                         </div>
-                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-[#E0E0E0] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-sky-500 transition-all duration-150"
+                            className="h-full bg-[#E30613] transition-all duration-150"
                             style={{ width: `${uploadProgress}%` }}
                           />
                         </div>
@@ -1506,63 +1518,63 @@ export const CourseConstructorPage = () => {
                     )}
 
                     {uploadStatus === 'completed' && (
-                      <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs flex items-center gap-2">
-                        <Check className="w-4 h-4" />
+                      <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
+                        <Check className="w-4 h-4 shrink-0" />
                         <span>Видео успешно загружено и привязано к уроку! Автосохранение выполнено.</span>
                       </div>
                     )}
 
                     {uploadStatus === 'error' && (
-                      <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs flex items-center gap-2">
+                      <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 shrink-0" />
                         <span>{uploadError}</span>
                       </div>
                     )}
 
-                    {/* Swap: Embedded Video Preview Player with Replace Video Button OR Dropzone */}
+                    {/* Embedded Video Preview Player with Replace Video Button OR Dropzone */}
                     {activeLesson.file_url ? (
-                      <div className="rounded-xl overflow-hidden border border-slate-700 bg-black p-3 space-y-3">
+                      <div className="rounded-2xl overflow-hidden border border-[#E0E0E0] bg-[#212529] p-3 space-y-3 shadow-md">
                         <div className="flex items-center justify-between px-1">
-                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                             <span>Видео успешно привязано к уроку</span>
                           </div>
                           {activeLesson.file_size_bytes > 0 && (
-                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-black/60 text-white">
                               {(activeLesson.file_size_bytes / (1024 * 1024)).toFixed(1)} МБ
                             </span>
                           )}
                         </div>
 
-                        <video 
+                        <video
                           key={activeLesson.file_url}
                           src={activeLesson.file_url.startsWith('http') ? activeLesson.file_url : `${activeLesson.file_url}`}
-                          controls 
+                          controls
                           playsInline
                           preload="metadata"
-                          className="w-full max-h-[380px] rounded-lg object-contain bg-black border border-slate-800"
+                          className="w-full max-h-[380px] rounded-xl object-contain bg-black border border-white/10"
                         />
-                        <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1 text-xs text-slate-400">
-                          <span className="truncate max-w-sm font-mono text-[11px] text-slate-500">
+                        <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1 text-xs text-white/80">
+                          <span className="truncate max-w-sm font-mono text-[11px] text-white/60">
                             {activeLesson.file_url}
                           </span>
                           <div className="flex items-center gap-3">
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => handleOpenKnowledgePicker('video')}
-                              className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+                              className="text-white hover:underline transition-colors font-bold"
                             >
                               Выбрать другое из Базы
                             </button>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => fileInputRef.current?.click()}
-                              className="text-sky-400 hover:text-sky-300 transition-colors font-medium"
+                              className="text-white hover:underline transition-colors font-bold"
                             >
                               Загрузить с ПК
                             </button>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={async () => {
                                 updateActiveLessonFields({ file_url: null, file_size_bytes: 0 });
                                 if (activeLesson && typeof activeLesson.id === 'number') {
@@ -1577,7 +1589,7 @@ export const CourseConstructorPage = () => {
                                   }
                                 }
                               }}
-                              className="text-rose-400 hover:text-rose-300 transition-colors font-medium"
+                              className="text-red-400 hover:text-red-300 transition-colors font-bold"
                             >
                               Удалить видео
                             </button>
@@ -1588,14 +1600,14 @@ export const CourseConstructorPage = () => {
                       /* Drag and Drop Zone */
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-700 hover:border-sky-500/60 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/50 hover:bg-slate-900/60 space-y-3 group"
+                        className="border-2 border-dashed border-[#E0E0E0] hover:border-[#003B73] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#003B73]/5 space-y-3 group"
                       >
-                        <Upload className="w-8 h-8 text-sky-400 group-hover:scale-110 transition-transform mx-auto" />
+                        <Upload className="w-8 h-8 text-[#003B73] group-hover:scale-110 transition-transform mx-auto" />
                         <div>
-                          <span className="text-xs font-semibold text-slate-200">
+                          <span className="text-xs font-bold text-[#212529]">
                             Нажмите для выбора файла или перетащите видео сюда
                           </span>
-                          <div className="text-[11px] text-slate-500 mt-1">
+                          <div className="text-[11px] text-[#6C757D] mt-1">
                             До 10 ГБ • Потоковая чанковая отправка • Стриминг Range (HTTP 206)
                           </div>
                         </div>
@@ -1610,21 +1622,21 @@ export const CourseConstructorPage = () => {
               {/* ============================================== */}
               {activeLesson.lesson_type === 'presentation' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
                           Презентация регламента (PDF)
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-[#6C757D] mt-0.5">
                           Интерактивный встроенный просмотр PDF-слайдов для сотрудников. Загрузите файл с ПК или выберите из Базы знаний.
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleOpenKnowledgePicker('presentation')}
-                          className="px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/60 hover:bg-amber-900/60 text-amber-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                          className="btn-secondary text-xs font-bold text-amber-800 min-h-[38px] px-3.5 flex items-center gap-1.5"
                         >
                           <FolderArchive className="w-3.5 h-3.5" />
                           <span>Выбрать из Базы знаний</span>
@@ -1632,7 +1644,7 @@ export const CourseConstructorPage = () => {
                         <button
                           type="button"
                           onClick={() => pdfInputRef.current?.click()}
-                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                          className="btn-secondary text-xs font-bold min-h-[38px] px-3.5 flex items-center gap-1.5"
                         >
                           <Upload className="w-3.5 h-3.5" />
                           <span>Загрузить PDF с ПК</span>
@@ -1642,7 +1654,7 @@ export const CourseConstructorPage = () => {
 
                     <div
                       onClick={() => pdfInputRef.current?.click()}
-                      className="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-xl p-8 text-center cursor-pointer transition-all bg-slate-950/50 hover:bg-slate-950 space-y-3"
+                      className="border-2 border-dashed border-[#E0E0E0] hover:border-[#003B73] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#003B73]/5 space-y-3"
                     >
                       <input
                         ref={pdfInputRef}
@@ -1651,23 +1663,23 @@ export const CourseConstructorPage = () => {
                         onChange={handleFileSelect}
                         className="hidden"
                       />
-                      <FileCode className="w-8 h-8 text-amber-400 mx-auto" />
+                      <FileCode className="w-8 h-8 text-amber-600 mx-auto" />
                       <div>
-                        <span className="text-xs font-semibold text-slate-200">
+                        <span className="text-xs font-bold text-[#212529]">
                           Нажмите для выбора PDF-файла презентации
                         </span>
-                        <div className="text-[11px] text-slate-500 mt-1">
+                        <div className="text-[11px] text-[#6C757D] mt-1">
                           Интерактивный встроенный просмотр для сотрудников
                         </div>
                       </div>
                     </div>
 
                     {uploadStatus === 'uploading' && (
-                      <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between text-xs text-amber-400 font-bold">
+                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-sm space-y-2">
+                        <div className="flex items-center justify-between text-xs text-amber-700 font-bold">
                           <span>Загрузка PDF: {uploadProgress}%</span>
                         </div>
-                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-[#E0E0E0] rounded-full overflow-hidden">
                           <div className="h-full bg-amber-500" style={{ width: `${uploadProgress}%` }} />
                         </div>
                       </div>
@@ -1676,27 +1688,27 @@ export const CourseConstructorPage = () => {
                     {activeLesson.file_url ? (
                       <div className="space-y-3 pt-2">
                         <div className="flex items-center justify-between px-1">
-                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                             <span>Презентация успешно привязана</span>
                           </div>
                           <div className="flex items-center gap-3 text-xs">
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => handleOpenKnowledgePicker('presentation')}
-                              className="text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                              className="text-amber-800 hover:underline transition-colors font-bold"
                             >
                               Выбрать другую из Базы
                             </button>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => pdfInputRef.current?.click()}
-                              className="text-sky-400 hover:text-sky-300 transition-colors font-medium"
+                              className="text-[#003B73] hover:underline transition-colors font-bold"
                             >
                               Загрузить PDF
                             </button>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={async () => {
                                 updateActiveLessonFields({ file_url: null, file_size_bytes: 0 });
                                 if (activeLesson && typeof activeLesson.id === 'number') {
@@ -1711,7 +1723,7 @@ export const CourseConstructorPage = () => {
                                   }
                                 }
                               }}
-                              className="text-rose-400 hover:text-rose-300 transition-colors font-medium"
+                              className="text-[#E30613] hover:underline transition-colors font-bold"
                             >
                               Удалить PDF
                             </button>
@@ -1719,7 +1731,7 @@ export const CourseConstructorPage = () => {
                         </div>
                         <iframe
                           src={activeLesson.file_url}
-                          className="w-full h-[500px] rounded-xl border border-slate-800 bg-slate-950"
+                          className="w-full h-[500px] rounded-2xl border border-[#E0E0E0] bg-white shadow-md"
                           title="Презентация"
                         />
                       </div>
@@ -1732,13 +1744,13 @@ export const CourseConstructorPage = () => {
               {/* 4. QUIZ ATTACHMENT FROM QUESTION BANK          */}
               {/* ============================================== */}
               {activeLesson.lesson_type === 'quiz' && (
-                <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
                         Привязка тестирования из Банка Тестов
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-[#6C757D] mt-0.5">
                         Сотрудник должен будет сдать этот тест для успешного завершения шага курса.
                       </p>
                     </div>
@@ -1746,17 +1758,17 @@ export const CourseConstructorPage = () => {
                     <Link
                       to="/admin/tests/new"
                       target="_blank"
-                      className="btn-secondary text-xs flex items-center gap-1.5"
+                      className="btn-secondary text-xs flex items-center gap-1.5 min-h-[38px] px-3.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Создать новый тест
+                      <span>Создать новый тест</span>
                     </Link>
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <label className="text-xs font-semibold text-slate-300">Выберите готовый тест</label>
+                    <label className="text-xs font-bold text-[#212529]">Выберите готовый тест</label>
                     <select
-                      className="input-field text-sm"
+                      className="input-field text-sm bg-white"
                       value={activeLesson.quiz_id || ''}
                       onChange={async (e) => {
                         const quizId = e.target.value ? Number(e.target.value) : null;
@@ -1786,9 +1798,9 @@ export const CourseConstructorPage = () => {
                   </div>
 
                   {activeLesson.quiz_id && (
-                    <div className="p-3.5 rounded-lg bg-sky-950/30 border border-sky-800/50 text-xs text-sky-200 flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                      <div>
+                    <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#003B73] flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#003B73] shrink-0" />
+                      <div className="font-medium">
                         Тест успешно привязан. В плеере сотрудника он будет запущен бесшовно с лимитом в 1 попытку и проверкой проходного балла.
                       </div>
                     </div>
@@ -1802,18 +1814,18 @@ export const CourseConstructorPage = () => {
 
       {/* Knowledge Base Picker Modal */}
       {showKnowledgePicker && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-panel max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl border border-slate-700 p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#003B73]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#E0E0E0] pb-3">
               <div className="flex items-center gap-2">
-                <FolderArchive className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-bold text-white">
+                <FolderArchive className="w-5 h-5 text-[#003B73]" />
+                <h3 className="text-base font-bold text-[#212529]">
                   Выбрать {knowledgePickerType === 'presentation' ? 'презентацию' : 'видео'} из Базы знаний
                 </h3>
               </div>
               <button
                 onClick={() => setShowKnowledgePicker(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-[#6C757D] hover:text-[#212529] p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1826,49 +1838,52 @@ export const CourseConstructorPage = () => {
                 value={knowledgeSearchTerm}
                 onChange={(e) => setKnowledgeSearchTerm(e.target.value)}
                 placeholder="Поиск по названию файла в Базе знаний..."
-                className="input-field text-xs py-2 w-full"
+                className="input-field text-xs sm:text-sm py-2 w-full bg-white"
               />
             </div>
 
             {/* File list */}
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-800/80 max-h-[50vh] pr-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-[#E0E0E0] max-h-[50vh] pr-1">
               {loadingKnowledge ? (
-                <div className="py-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                <div className="py-12 text-center text-xs text-[#6C757D] flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#003B73]" />
                   <span>Загрузка файлов из Базы знаний...</span>
                 </div>
-              ) : knowledgeFiles.filter((kf) =>
-                  !knowledgeSearchTerm.trim() ||
-                  kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
-                  kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
+              ) : knowledgeFiles.filter(
+                  (kf) =>
+                    !knowledgeSearchTerm.trim() ||
+                    kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
+                    kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
                 ).length === 0 ? (
                 <div className="py-12 text-center space-y-2">
-                  <FolderArchive className="w-8 h-8 text-slate-600 mx-auto" />
-                  <div className="text-xs text-slate-400">
+                  <FolderArchive className="w-8 h-8 text-[#6C757D] mx-auto opacity-50" />
+                  <div className="text-xs text-[#6C757D]">
                     В Базе знаний пока нет загруженных {knowledgePickerType === 'presentation' ? 'презентаций' : 'видео'}.
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-[#6C757D]">
                     Вы можете загрузить файл с компьютера, и он автоматически сохранится в Базу знаний.
                   </div>
                 </div>
               ) : (
                 knowledgeFiles
-                  .filter((kf) =>
-                    !knowledgeSearchTerm.trim() ||
-                    kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
-                    kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
+                  .filter(
+                    (kf) =>
+                      !knowledgeSearchTerm.trim() ||
+                      kf.title.toLowerCase().includes(knowledgeSearchTerm.toLowerCase()) ||
+                      kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
                   )
                   .map((kf) => (
                     <div
                       key={kf.id}
-                      className="py-3 px-2 flex items-center justify-between gap-3 hover:bg-slate-900/60 rounded-xl transition-colors group"
+                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-[#F4F5F7] rounded-xl transition-colors group cursor-pointer"
+                      onClick={() => handleSelectKnowledgeFile(kf)}
                     >
                       <div className="min-w-0 flex-1 space-y-1">
-                        <div className="text-xs font-bold text-slate-200 group-hover:text-sky-300 transition-colors truncate">
+                        <div className="text-xs font-bold text-[#212529] group-hover:text-[#003B73] transition-colors truncate">
                           {kf.title}
                         </div>
-                        <div className="text-[11px] text-slate-400 flex items-center gap-2 truncate">
-                          <span className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] text-slate-300 font-semibold">
+                        <div className="text-[11px] text-[#6C757D] flex items-center gap-2 truncate">
+                          <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] text-[#212529] font-bold">
                             {kf.department}
                           </span>
                           <span>{kf.file_name}</span>
@@ -1878,8 +1893,11 @@ export const CourseConstructorPage = () => {
 
                       <button
                         type="button"
-                        onClick={() => handleSelectKnowledgeFile(kf)}
-                        className="btn-primary text-xs py-1.5 px-3 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectKnowledgeFile(kf);
+                        }}
+                        className="btn-primary text-xs py-1.5 px-3.5 shrink-0 font-bold min-h-[34px]"
                       >
                         Прикрепить
                       </button>
@@ -1888,11 +1906,11 @@ export const CourseConstructorPage = () => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-3 border-t border-[#E0E0E0] flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowKnowledgePicker(false)}
-                className="btn-secondary text-xs py-1.5 px-4"
+                className="btn-secondary text-xs py-2 px-4 min-h-[40px]"
               >
                 Закрыть
               </button>

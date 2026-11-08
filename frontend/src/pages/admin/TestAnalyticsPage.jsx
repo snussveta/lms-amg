@@ -62,19 +62,19 @@ export const TestAnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="w-8 h-8 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
+        <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="max-w-md mx-auto my-16 p-6 glass-panel rounded-xl text-center border border-slate-800">
-        <XCircle className="w-10 h-10 mx-auto text-rose-400 mb-2.5" />
-        <h3 className="text-base font-bold text-white mb-1">Ошибка аналитики</h3>
-        <p className="text-xs text-slate-400 mb-5">{error}</p>
-        <Link to="/admin/tests" className="btn-primary text-xs">
+      <div className="max-w-md mx-auto my-16 p-6 bg-white rounded-2xl text-center border border-[#E0E0E0] shadow-sm">
+        <XCircle className="w-10 h-10 mx-auto text-[#E30613] mb-2.5" />
+        <h3 className="text-base font-bold text-[#212529] mb-1">Ошибка аналитики</h3>
+        <p className="text-xs text-[#6C757D] mb-5">{error}</p>
+        <Link to="/admin/tests" className="btn-primary text-xs inline-flex items-center gap-1.5 px-4 py-2">
           Вернуться к списку тестов
         </Link>
       </div>
@@ -84,187 +84,187 @@ export const TestAnalyticsPage = () => {
   const { summary, attempts } = data;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
       {/* Header */}
       <div className="mb-6">
         <Link
           to="/admin/tests"
-          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors mb-2"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6C757D] hover:text-[#003B73] transition-colors mb-2.5"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Назад к списку тестов
+          <ArrowLeft className="w-4 h-4" />
+          <span>Назад к списку тестов</span>
         </Link>
-        <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-          <BarChart3 className="w-6 h-6 text-slate-300" />
-          Аналитика: {data.test_title}
+        <h1 className="text-xl sm:text-2xl font-black text-[#212529] flex items-center gap-2.5">
+          <BarChart3 className="w-6 h-6 text-[#003B73] shrink-0" />
+          <span>Аналитика: {data.test_title}</span>
         </h1>
-        <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
-          Детальный журнал попыток сотрудников и внешних гостей, сдача и ручная проверка ответов.
+        <p className="text-[#6C757D] text-xs sm:text-sm mt-1">
+          Детальный журнал попыток сотрудников и внешних гостей, статистика сдачи и ручная проверка ответов.
         </p>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <div className="glass-panel rounded-xl p-4 border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-            <span>Всего попыток</span>
-            <Users className="w-3.5 h-3.5 text-slate-400" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-6">
+        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+            <span className="font-semibold">Всего попыток</span>
+            <Users className="w-4 h-4 text-[#003B73]" />
           </div>
-          <div className="text-2xl font-black text-white">{summary.total_attempts}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Зафиксировано</div>
+          <div className="text-2xl font-black text-[#212529]">{summary.total_attempts}</div>
+          <div className="text-[11px] text-[#6C757D] mt-0.5">Зафиксировано</div>
         </div>
 
-        <div className="glass-panel rounded-xl p-4 border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-            <span>Успешно сдали</span>
-            <Award className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+            <span className="font-semibold">Успешно сдали</span>
+            <Award className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-black text-emerald-400">{summary.passed_attempts}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
+          <div className="text-2xl font-black text-emerald-600">{summary.passed_attempts}</div>
+          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">
             {summary.pass_rate}% от сданных
           </div>
         </div>
 
-        <div className="glass-panel rounded-xl p-4 border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-            <span>Не сдали</span>
-            <XCircle className="w-3.5 h-3.5 text-rose-400" />
+        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+            <span className="font-semibold">Не сдали</span>
+            <XCircle className="w-4 h-4 text-[#E30613]" />
           </div>
-          <div className="text-2xl font-black text-rose-400">{summary.failed_attempts}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Ниже порога</div>
+          <div className="text-2xl font-black text-[#E30613]">{summary.failed_attempts}</div>
+          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">Ниже порога</div>
         </div>
 
-        <div className="glass-panel rounded-xl p-4 border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-            <span>На проверке</span>
-            <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+            <span className="font-semibold">На проверке</span>
+            <FileCheck className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-2xl font-black text-amber-400">{summary.needs_review_attempts}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Ждут оценки админа</div>
+          <div className="text-2xl font-black text-amber-600">{summary.needs_review_attempts}</div>
+          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">Ждут оценки</div>
         </div>
 
-        <div className="glass-panel rounded-xl p-4 border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-            <span>Средний балл</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-slate-300" />
+        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all col-span-2 md:col-span-1">
+          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+            <span className="font-semibold">Средний балл</span>
+            <CheckCircle2 className="w-4 h-4 text-[#003B73]" />
           </div>
-          <div className="text-2xl font-black text-slate-100">{summary.average_score}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">из {summary.max_possible_points} макс. б.</div>
+          <div className="text-2xl font-black text-[#212529]">{summary.average_score}</div>
+          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">из {summary.max_possible_points} макс. б.</div>
         </div>
       </div>
 
       {/* Submissions Roster */}
-      <div className="glass-panel rounded-xl overflow-hidden border border-slate-800 shadow-sm">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-white text-sm">Журнал сдачи теста</h3>
-          <span className="text-xs text-slate-500">
+      <div className="bg-white rounded-2xl overflow-hidden border border-[#E0E0E0] shadow-sm">
+        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+          <h3 className="font-bold text-[#212529] text-sm sm:text-base">Журнал сдачи теста</h3>
+          <span className="text-xs font-semibold text-[#6C757D] bg-[#F4F5F7] px-2.5 py-1 rounded-lg border border-[#E0E0E0]">
             {attempts.length} записей
           </span>
         </div>
 
         {attempts.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-xs">
+          <div className="p-12 text-center text-[#6C757D] text-xs">
             По данному тесту пока нет завершенных или активных попыток.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th className="py-3 px-5">Участник</th>
-                  <th className="py-3 px-5">Тип доступа</th>
-                  <th className="py-3 px-5">Статус</th>
-                  <th className="py-3 px-5">Баллы</th>
-                  <th className="py-3 px-5">Процент</th>
-                  <th className="py-3 px-5">Время</th>
-                  <th className="py-3 px-5">Дата сдачи</th>
-                  <th className="py-3 px-5 text-right">Действия</th>
+                <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                  <th className="py-3 px-4 sm:px-5">Участник</th>
+                  <th className="py-3 px-4 sm:px-5">Тип</th>
+                  <th className="py-3 px-4 sm:px-5">Статус</th>
+                  <th className="py-3 px-4 sm:px-5">Баллы</th>
+                  <th className="py-3 px-4 sm:px-5">Процент</th>
+                  <th className="py-3 px-4 sm:px-5">Время</th>
+                  <th className="py-3 px-4 sm:px-5">Дата сдачи</th>
+                  <th className="py-3 px-4 sm:px-5 text-right">Действия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-xs text-slate-300">
+              <tbody className="divide-y divide-[#E0E0E0] text-xs text-[#212529]">
                 {attempts.map((att) => {
                   const isPassed = att.is_passed;
                   const isNeedsReview = att.status === 'needs_review';
 
                   return (
-                    <tr key={att.id} className="hover:bg-slate-900/60 transition-colors">
-                      <td className="py-3 px-5">
-                        <div className="font-semibold text-slate-100">{att.user_name}</div>
-                        <div className="text-[11px] text-slate-400">{att.user_email}</div>
+                    <tr key={att.id} className="hover:bg-[#F4F5F7]/70 transition-colors">
+                      <td className="py-3.5 px-4 sm:px-5">
+                        <div className="font-bold text-[#212529]">{att.user_name}</div>
+                        <div className="text-[11px] text-[#6C757D]">{att.user_email}</div>
                         {att.guest_phone && (
-                          <div className="text-[10px] text-slate-500">Тел: {att.guest_phone}</div>
+                          <div className="text-[10px] text-[#6C757D]">Тел: {att.guest_phone}</div>
                         )}
                       </td>
 
-                      <td className="py-3 px-5">
+                      <td className="py-3.5 px-4 sm:px-5">
                         {att.is_guest ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                            <Globe className="w-3 h-3 text-slate-400" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#003B73] border border-[#E0E0E0]">
+                            <Globe className="w-3 h-3 text-[#003B73]" />
                             Гость
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0]">
                             Сотрудник
                           </span>
                         )}
                       </td>
 
-                      <td className="py-3 px-5">
+                      <td className="py-3.5 px-4 sm:px-5">
                         {isNeedsReview ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-900/60 animate-pulse">
-                            <Clock className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            <Clock className="w-3 h-3 text-amber-700" />
                             Требует проверки
                           </span>
                         ) : isPassed ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/40 text-emerald-300 border border-emerald-900/60">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             Сдан
                           </span>
                         ) : att.status === 'in_progress' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-950/40 text-blue-300 border border-blue-900/60">
-                            <Clock className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#003B73] border border-blue-200">
+                            <Clock className="w-3 h-3 text-[#003B73]" />
                             В процессе
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/40 text-rose-300 border border-rose-900/60">
-                            <XCircle className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-[#E30613] border border-red-200">
+                            <XCircle className="w-3 h-3 text-[#E30613]" />
                             Не сдан
                           </span>
                         )}
                       </td>
 
-                      <td className="py-3 px-5 font-mono">
-                        <span className="font-bold text-white">{att.score}</span> / {att.max_score}
+                      <td className="py-3.5 px-4 sm:px-5 font-mono">
+                        <span className="font-bold text-[#212529]">{att.score}</span> / {att.max_score}
                       </td>
 
-                      <td className="py-3 px-5">
+                      <td className="py-3.5 px-4 sm:px-5">
                         <span
-                          className={`font-bold ${
+                          className={`font-black ${
                             isNeedsReview
-                              ? 'text-amber-400'
+                              ? 'text-amber-700'
                               : isPassed
-                              ? 'text-emerald-400'
-                              : 'text-rose-400'
+                              ? 'text-emerald-600'
+                              : 'text-[#E30613]'
                           }`}
                         >
                           {att.percentage}%
                         </span>
                       </td>
 
-                      <td className="py-3 px-5 text-slate-400 text-[11px]">
+                      <td className="py-3.5 px-4 sm:px-5 text-[#6C757D] text-[11px]">
                         {formatDuration(att.time_spent_seconds)}
                       </td>
 
-                      <td className="py-3 px-5 text-slate-400 text-[11px]">
+                      <td className="py-3.5 px-4 sm:px-5 text-[#6C757D] text-[11px]">
                         {formatDate(att.submitted_at || att.started_at)}
                       </td>
 
-                      <td className="py-3 px-5 text-right">
+                      <td className="py-3.5 px-4 sm:px-5 text-right">
                         <div className="inline-flex items-center gap-1.5">
                           {isNeedsReview && (
                             <button
                               onClick={() => setReviewingAttemptId(att.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/70 text-amber-200 text-xs font-semibold border border-amber-800/80 transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all min-h-[36px]"
                               title="Проверить развернутые ответы"
                             >
                               <FileCheck className="w-3.5 h-3.5" />
@@ -274,7 +274,7 @@ export const TestAnalyticsPage = () => {
 
                           <Link
                             to={`/test/${att.id}/result`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+                            className="btn-secondary inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold min-h-[36px]"
                           >
                             <span>Детали</span>
                             <ExternalLink className="w-3 h-3" />

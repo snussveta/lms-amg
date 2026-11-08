@@ -172,66 +172,67 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="glass-panel max-w-3xl w-full border border-slate-800 shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-sky-400" />
+        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+          <div className="min-w-0 pr-3">
+            <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-[#003B73] shrink-0" />
               <span>Назначение курса сотрудникам</span>
             </h2>
-            <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-              <span className="font-semibold text-slate-200">«{course.title}»</span>
-              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] font-bold text-slate-300">
+            <div className="text-xs text-[#6C757D] mt-1 flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-[#003B73] truncate">«{course.title}»</span>
+              <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] font-bold text-[#212529]">
                 {course.department_tag}
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-800"
+            className="text-[#6C757D] hover:text-[#212529] transition-colors p-2 rounded-xl hover:bg-[#F4F5F7] shrink-0"
+            aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-800 bg-slate-900/40 px-5">
+        <div className="flex border-b border-[#E0E0E0] bg-[#F4F5F7] px-4 sm:px-5">
           <button
             onClick={() => setActiveTab('assign')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 min-h-[44px] ${
               activeTab === 'assign'
-                ? 'border-sky-500 text-sky-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
+                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-[#003B73]" />
             <span>Назначить сотрудникам</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 min-h-[44px] ${
               activeTab === 'list'
-                ? 'border-sky-500 text-sky-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
+                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
             }`}
           >
-            <UserCheck className="w-4 h-4" />
+            <UserCheck className="w-4 h-4 text-[#003B73]" />
             <span>Назначенные ({assignments.length})</span>
           </button>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mx-5 mt-4 p-3.5 rounded-lg bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs flex items-center gap-2">
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="mx-5 mt-4 p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs flex items-center gap-2">
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2.5">
             <Check className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
@@ -239,27 +240,27 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
         {/* Tab 1: Assign Form */}
         {activeTab === 'assign' && (
-          <div className="p-5 flex-1 flex flex-col min-h-0 space-y-4">
+          <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 space-y-4 overflow-hidden">
             {/* Filters & Search Grid */}
             <div className="space-y-3 shrink-0">
               <div className="flex flex-col sm:flex-row gap-2.5">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6C757D]" />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Поиск сотрудника по ФИО или Email..."
-                    className="input-field pl-9 text-xs"
+                    placeholder="Поиск по ФИО или Email..."
+                    className="input-field pl-10 text-xs sm:text-sm bg-white"
                   />
                 </div>
 
                 {/* AutoMall Branch Filter */}
-                <div className="w-full sm:w-56">
+                <div className="w-full sm:w-52">
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="input-field text-xs bg-slate-900"
+                    className="input-field text-xs sm:text-sm bg-white"
                   >
                     {branches.map((b) => (
                       <option key={b} value={b}>
@@ -274,7 +275,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                   <select
                     value={selectedDept}
                     onChange={(e) => setSelectedDept(e.target.value)}
-                    className="input-field text-xs bg-slate-900"
+                    className="input-field text-xs sm:text-sm bg-white"
                   >
                     {departments.map((d) => (
                       <option key={d} value={d}>
@@ -286,20 +287,20 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
               </div>
 
               {/* Deadline & Quick Select Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
-                <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="shrink-0 font-medium">Срок прохождения:</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F4F5F7] p-3 rounded-xl border border-[#E0E0E0]">
+                <div className="flex items-center gap-2 text-xs text-[#212529] flex-wrap">
+                  <Calendar className="w-4 h-4 text-[#003B73] shrink-0" />
+                  <span className="shrink-0 font-semibold">Срок сдачи:</span>
                   <input
                     type="datetime-local"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                    className="bg-white border border-[#E0E0E0] rounded-lg px-2.5 py-1 text-xs text-[#212529] focus:outline-none focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73]/20"
                   />
                   {dueDate && (
                     <button
                       onClick={() => setDueDate('')}
-                      className="text-slate-500 hover:text-slate-300 text-xs"
+                      className="text-[#6C757D] hover:text-[#212529] text-xs font-bold px-1"
                       title="Очистить дату"
                     >
                       ×
@@ -310,9 +311,9 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                 <button
                   type="button"
                   onClick={selectAllFiltered}
-                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 self-start sm:self-auto"
+                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 self-start sm:self-auto min-h-[38px]"
                 >
-                  <CheckSquare className="w-3.5 h-3.5 text-sky-400" />
+                  <CheckSquare className="w-4 h-4 text-[#003B73]" />
                   <span>
                     {filteredUsers.length > 0 &&
                     filteredUsers.every((u) => selectedUserIds.includes(u.id))
@@ -324,13 +325,13 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
             </div>
 
             {/* Employees List */}
-            <div className="flex-1 overflow-y-auto border border-slate-800 rounded-xl bg-slate-900/30 divide-y divide-slate-800/60 min-h-[220px]">
+            <div className="flex-1 overflow-y-auto border border-[#E0E0E0] rounded-xl bg-white divide-y divide-[#E0E0E0] min-h-[220px]">
               {loading ? (
-                <div className="p-8 text-center text-slate-400 text-xs">Загрузка списка сотрудников...</div>
+                <div className="p-8 text-center text-[#6C757D] text-xs">Загрузка списка сотрудников...</div>
               ) : filteredUsers.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-xs space-y-1">
-                  <div>Сотрудники по заданным критериям не найдены.</div>
-                  <div className="text-[11px] text-slate-600">Попробуйте изменить поисковый запрос или фильтр филиала.</div>
+                <div className="p-8 text-center text-[#6C757D] text-xs space-y-1">
+                  <div className="font-semibold text-[#212529]">Сотрудники по заданным критериям не найдены.</div>
+                  <div className="text-[11px] text-[#6C757D]">Попробуйте изменить поисковый запрос или фильтр филиала.</div>
                 </div>
               ) : (
                 filteredUsers.map((u) => {
@@ -343,38 +344,38 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                       onClick={() => toggleSelectUser(u.id)}
                       className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-sky-950/40 border-l-2 border-sky-400'
-                          : 'hover:bg-slate-800/40'
+                          ? 'bg-[#003B73]/5 border-l-4 border-[#003B73]'
+                          : 'hover:bg-[#F4F5F7]'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div className="text-slate-400">
+                        <div className="text-[#003B73]">
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-sky-400" />
+                            <CheckSquare className="w-4 h-4 text-[#003B73]" />
                           ) : (
-                            <Square className="w-4 h-4 text-slate-600" />
+                            <Square className="w-4 h-4 text-[#6C757D]" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-100 truncate flex items-center gap-2">
+                          <div className="font-semibold text-[#212529] truncate flex items-center gap-2">
                             <span>{u.full_name}</span>
                             {isAlreadyAssigned && (
-                              <span className="px-1.5 py-0.2 rounded bg-amber-950/60 border border-amber-800 text-[10px] font-medium text-amber-400">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
                                 Уже назначен
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-400 truncate flex items-center gap-2 mt-0.5">
+                          <div className="text-[11px] text-[#6C757D] truncate flex items-center gap-2 mt-0.5">
                             <span>{u.email}</span>
                             <span>•</span>
-                            <span className="text-slate-300">{u.branch || 'AutoMall Центральный'}</span>
+                            <span className="text-[#212529] font-medium">{u.branch || 'AutoMall Центральный'}</span>
                             <span>•</span>
-                            <span className="text-slate-400">{u.department || 'СТО'}</span>
+                            <span>{u.department || 'СТО'}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#6C757D] shrink-0">
                         {u.role === 'admin' ? 'Админ' : u.role === 'superadmin' ? 'Суперадмин' : 'Сотрудник'}
                       </div>
                     </div>
@@ -384,16 +385,16 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
             </div>
 
             {/* Footer Action */}
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
-              <div className="text-xs text-slate-400">
+            <div className="pt-3 border-t border-[#E0E0E0] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+              <div className="text-xs text-[#6C757D]">
                 Выбрано сотрудников:{' '}
-                <span className="font-bold text-sky-400">{selectedUserIds.length}</span>
+                <span className="font-bold text-[#003B73]">{selectedUserIds.length}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-end">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="btn-secondary text-xs py-2 px-4"
+                  className="btn-secondary text-xs py-2 px-4 flex-1 sm:flex-none"
                 >
                   Отмена
                 </button>
@@ -401,10 +402,10 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                   type="button"
                   onClick={handleAssign}
                   disabled={submitting || selectedUserIds.length === 0}
-                  className="btn-primary text-xs py-2 px-5 flex items-center gap-1.5 shadow-lg"
+                  className="btn-primary text-xs py-2.5 px-5 flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  {submitting ? 'Назначение...' : `Назначить курс (${selectedUserIds.length})`}
+                  <Check className="w-4 h-4" />
+                  <span>{submitting ? 'Назначение...' : `Назначить курс (${selectedUserIds.length})`}</span>
                 </button>
               </div>
             </div>
@@ -413,21 +414,21 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
         {/* Tab 2: Assigned Employees List */}
         {activeTab === 'list' && (
-          <div className="p-5 flex-1 flex flex-col min-h-0 space-y-4">
-            <div className="text-xs text-slate-400">
+          <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 space-y-4 overflow-hidden">
+            <div className="text-xs text-[#6C757D]">
               Сотрудники с активным доступом к курсу и мониторинг их прогресса:
             </div>
 
-            <div className="flex-1 overflow-y-auto border border-slate-800 rounded-xl bg-slate-900/30 divide-y divide-slate-800/60 min-h-[260px]">
+            <div className="flex-1 overflow-y-auto border border-[#E0E0E0] rounded-xl bg-white divide-y divide-[#E0E0E0] min-h-[260px]">
               {loading ? (
-                <div className="p-8 text-center text-slate-400 text-xs">Загрузка назначений...</div>
+                <div className="p-8 text-center text-[#6C757D] text-xs">Загрузка назначений...</div>
               ) : assignments.length === 0 ? (
-                <div className="p-12 text-center text-slate-500 text-xs space-y-2">
-                  <Users className="w-8 h-8 mx-auto text-slate-600" />
-                  <div>Курс пока не назначен ни одному сотруднику.</div>
+                <div className="p-12 text-center text-[#6C757D] text-xs space-y-2">
+                  <Users className="w-8 h-8 mx-auto text-[#6C757D]" />
+                  <div className="font-semibold text-[#212529]">Курс пока не назначен ни одному сотруднику.</div>
                   <button
                     onClick={() => setActiveTab('assign')}
-                    className="text-sky-400 hover:underline pt-1 text-xs"
+                    className="text-[#003B73] hover:underline pt-1 text-xs font-bold"
                   >
                     Перейти к назначению →
                   </button>
@@ -441,18 +442,18 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                   return (
                     <div
                       key={item.id || item.user_id}
-                      className="p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors"
+                      className="p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#F4F5F7] transition-colors"
                     >
                       <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-100">{item.full_name}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-[#212529]">{item.full_name}</span>
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
                               isFinished
-                                ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-400'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                 : item.progress_percent > 0
-                                ? 'bg-sky-950/80 border border-sky-800 text-sky-400'
-                                : 'bg-slate-800 text-slate-400'
+                                ? 'bg-blue-50 border-blue-200 text-[#003B73]'
+                                : 'bg-[#F4F5F7] border-[#E0E0E0] text-[#6C757D]'
                             }`}
                           >
                             {isFinished
@@ -463,43 +464,43 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                        <div className="text-[11px] text-[#6C757D] flex flex-wrap items-center gap-2">
                           <span>{item.email}</span>
                           <span>•</span>
-                          <span className="text-slate-300">{item.branch || 'AutoMall'}</span>
+                          <span className="text-[#212529] font-medium">{item.branch || 'AutoMall'}</span>
                           <span>•</span>
-                          <span className="text-slate-400">{item.department || 'СТО'}</span>
+                          <span>{item.department || 'СТО'}</span>
                         </div>
 
                         {/* Progress Bar */}
                         <div className="pt-1 flex items-center gap-3">
-                          <div className="flex-1 max-w-xs h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="flex-1 max-w-xs h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
                             <div
                               className={`h-full transition-all duration-300 ${
-                                isFinished ? 'bg-emerald-500' : 'bg-sky-500'
+                                isFinished ? 'bg-emerald-500' : 'bg-[#E30613]'
                               }`}
                               style={{ width: `${item.progress_percent || 0}%` }}
                             />
                           </div>
-                          <span className="text-[10px] font-bold text-slate-400">
+                          <span className="text-[10px] font-bold text-[#6C757D]">
                             {item.progress_percent || 0}%
                           </span>
                         </div>
                       </div>
 
                       {/* Deadline & Revoke */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E0E0E0]">
                         <div className="text-right">
-                          <div className="text-[10px] text-slate-500">
+                          <div className="text-[10px] text-[#6C757D]">
                             Назначен: {formatDate(item.assigned_at)}
                           </div>
                           <div
                             className={`text-[11px] font-medium ${
                               isDeadlinePassed
-                                ? 'text-rose-400'
+                                ? 'text-[#E30613] font-bold'
                                 : item.deadline
-                                ? 'text-amber-300'
-                                : 'text-slate-400'
+                                ? 'text-amber-800'
+                                : 'text-[#6C757D]'
                             }`}
                           >
                             Дедлайн: {formatDate(item.deadline)}
@@ -508,7 +509,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
                         <button
                           onClick={() => handleRevoke(item.user_id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                          className="p-2 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
                           title="Отозвать назначение"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -520,11 +521,11 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-3 border-t border-[#E0E0E0] flex justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-secondary text-xs py-2 px-5"
+                className="btn-secondary text-xs py-2 px-5 min-h-[44px]"
               >
                 Закрыть
               </button>

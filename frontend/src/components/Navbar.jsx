@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -10,8 +10,10 @@ import {
   LogOut,
   Menu,
   PlusCircle,
+  Shield,
   Users,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { RoleBadge } from './RoleBadge';
@@ -21,312 +23,444 @@ export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setAdminDropdownOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname.startsWith('/courses');
+    }
+    return location.pathname === path || location.pathname.startsWith(path);
+  };
+
+  const isAdminSectionActive =
+    location.pathname.startsWith('/admin') ||
+    location.pathname.includes('constructor') ||
+    location.pathname.includes('question-bank');
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-slate-900/95 backdrop-blur border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          {/* Brand AMG */}
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-100 group-hover:border-slate-500 transition-colors">
-                <span className="font-black text-sm tracking-wider">AMG</span>
+    <>
+      {/* Top Main Navigation Bar */}
+      <nav className="sticky top-0 z-40 w-full bg-[#003B73] text-white border-b border-[#002F5C] shadow-sm select-none">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Brand AMG */}
+            <div className="flex items-center gap-6 lg:gap-8">
+              <Link to="/" className="flex items-center gap-3 group focus:outline-none">
+                <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/15 transition-all relative">
+                  <span className="font-black text-sm tracking-wider">AMG</span>
+                  <span className="w-2 h-2 rounded-full bg-[#E30613] absolute -top-0.5 -right-0.5 ring-2 ring-[#003B73]" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base sm:text-lg font-black text-white tracking-tight leading-none">
+                      AMG
+                    </span>
+                    <span className="text-[10px] font-semibold text-white/90 bg-[#E30613] px-1.5 py-0.2 rounded leading-tight tracking-wider uppercase">
+                      LMS
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-white/70 font-medium tracking-wider uppercase mt-0.5 hidden xs:inline-block">
+                    Корпоративное обучение
+                  </span>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation Links */}
+              {user && (
+                <div className="hidden md:flex items-center gap-1">
+                  <Link
+                    to="/courses"
+                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                      isActive('/courses') || location.pathname === '/'
+                        ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <GraduationCap className="w-4 h-4 text-white/90" />
+                    Курсы
+                  </Link>
+
+                  <Link
+                    to="/tests"
+                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                      isActive('/tests')
+                        ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <FileQuestion className="w-4 h-4 text-white/90" />
+                    Тесты
+                  </Link>
+
+                  <Link
+                    to="/my-attempts"
+                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                      isActive('/my-attempts')
+                        ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <History className="w-4 h-4 text-white/90" />
+                    Мои результаты
+                  </Link>
+
+                  <Link
+                    to="/knowledge-base"
+                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                      isActive('/knowledge-base')
+                        ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <FolderArchive className="w-4 h-4 text-white/90" />
+                    База знаний
+                  </Link>
+
+                  {isAdmin && (
+                    <>
+                      <div className="w-px h-5 bg-white/20 mx-2" />
+
+                      {/* Admin Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
+                          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
+                            isAdminSectionActive
+                              ? 'bg-white/15 text-white font-semibold'
+                              : 'text-white/80 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <Shield className="w-4 h-4 text-amber-300" />
+                          <span>Управление</span>
+                          <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                        </button>
+
+                        {adminDropdownOpen && (
+                          <div
+                            className="absolute left-0 mt-2 w-56 rounded-xl bg-white text-[#212529] shadow-xl border border-[#E0E0E0] py-1.5 z-50 animate-fade-in"
+                            onMouseLeave={() => setAdminDropdownOpen(false)}
+                          >
+                            <div className="px-3 py-1.5 text-[10px] font-bold text-[#6C757D] uppercase tracking-wider border-b border-[#E0E0E0]">
+                              Администрирование AMG
+                            </div>
+                            <Link
+                              to="/admin/courses"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F4F5F7] hover:text-[#003B73] transition-colors"
+                            >
+                              <GraduationCap className="w-4 h-4 text-[#003B73]" />
+                              Управление курсами
+                            </Link>
+                            <Link
+                              to="/admin/tests"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F4F5F7] hover:text-[#003B73] transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-[#003B73]" />
+                              Управление тестами
+                            </Link>
+                            <Link
+                              to="/admin/question-bank"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F4F5F7] hover:text-[#003B73] transition-colors"
+                            >
+                              <BookOpen className="w-4 h-4 text-[#003B73]" />
+                              Банк вопросов
+                            </Link>
+                            <Link
+                              to="/admin/users"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F4F5F7] hover:text-[#003B73] transition-colors border-t border-[#E0E0E0]"
+                            >
+                              <Users className="w-4 h-4 text-[#003B73]" />
+                              Сотрудники и роли
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop User Profile & Actions */}
+            {user ? (
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex items-center gap-2.5 pr-2 border-r border-white/20">
+                  <div className="w-8 h-8 rounded-full bg-white/10 border border-white/25 flex items-center justify-center font-bold text-xs text-white">
+                    {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-white leading-tight">
+                        {user.full_name}
+                      </span>
+                      <RoleBadge role={user.role} />
+                    </div>
+                    <span className="text-[11px] text-white/70 truncate max-w-[170px]">
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  title="Выйти из системы"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex flex-col">
-                <span className="text-base font-bold text-slate-100 tracking-tight leading-none">
-                  AMG
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-0.5">
-                  Платформа тестирования
-                </span>
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
+                >
+                  Войти
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#E30613] hover:bg-[#C70510] transition-all shadow-sm"
+                >
+                  Регистрация
+                </Link>
               </div>
-            </Link>
+            )}
 
-            {/* Desktop Navigation Links */}
-            {user && (
-              <div className="hidden md:flex items-center gap-1">
-                <Link
-                  to="/"
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive('/') || isActive('/courses')
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4 text-sky-400" />
-                  Курсы
-                </Link>
+            {/* Mobile Menu Hamburger Button (44px touch target) */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="w-11 h-11 flex items-center justify-center rounded-lg text-white hover:bg-white/10 active:bg-white/20 transition-colors focus:outline-none"
+                aria-label="Открыть меню"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
+        </div>
 
-                <Link
-                  to="/tests"
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive('/tests')
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  <FileQuestion className="w-4 h-4" />
-                  Тесты
-                </Link>
+        {/* Mobile Full Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#002F5C] bg-[#003B73] text-white px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-xl">
+            {user ? (
+              <>
+                {/* User Info Card on Mobile */}
+                <div className="p-3.5 rounded-xl bg-white/10 border border-white/15 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                      {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-white truncate">
+                        {user.full_name}
+                      </div>
+                      <div className="text-xs text-white/70 truncate">{user.email}</div>
+                    </div>
+                  </div>
+                  <RoleBadge role={user.role} />
+                </div>
 
-                <Link
-                  to="/my-attempts"
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive('/my-attempts')
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  <History className="w-4 h-4" />
-                  Мои результаты
-                </Link>
+                {/* Main Navigation Links */}
+                <div className="space-y-1">
+                  <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider px-2 pt-1 pb-1">
+                    Обучение и аттестация
+                  </div>
+                  <Link
+                    to="/courses"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                      isActive('/courses')
+                        ? 'bg-white/20 text-white font-semibold'
+                        : 'text-white/90 hover:bg-white/10'
+                    }`}
+                  >
+                    <GraduationCap className="w-4 h-4 text-white/80" />
+                    <span>Курсы обучения</span>
+                  </Link>
+                  <Link
+                    to="/tests"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                      isActive('/tests')
+                        ? 'bg-white/20 text-white font-semibold'
+                        : 'text-white/90 hover:bg-white/10'
+                    }`}
+                  >
+                    <FileQuestion className="w-4 h-4 text-white/80" />
+                    <span>Каталог тестов</span>
+                  </Link>
+                  <Link
+                    to="/my-attempts"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                      isActive('/my-attempts')
+                        ? 'bg-white/20 text-white font-semibold'
+                        : 'text-white/90 hover:bg-white/10'
+                    }`}
+                  >
+                    <History className="w-4 h-4 text-white/80" />
+                    <span>Мои результаты</span>
+                  </Link>
+                  <Link
+                    to="/knowledge-base"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                      isActive('/knowledge-base')
+                        ? 'bg-white/20 text-white font-semibold'
+                        : 'text-white/90 hover:bg-white/10'
+                    }`}
+                  >
+                    <FolderArchive className="w-4 h-4 text-white/80" />
+                    <span>База знаний AMG</span>
+                  </Link>
+                </div>
 
-                <Link
-                  to="/knowledge-base"
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    isActive('/knowledge-base')
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  <FolderArchive className="w-4 h-4 text-emerald-400" />
-                  База знаний
-                </Link>
-
+                {/* Admin Links */}
                 {isAdmin && (
-                  <>
-                    <div className="w-px h-4 bg-slate-800 mx-2" />
-
+                  <div className="space-y-1 pt-2 border-t border-white/15">
+                    <div className="text-[10px] font-bold text-amber-300 uppercase tracking-wider px-2 pb-1">
+                      Администрирование AMG
+                    </div>
                     <Link
                       to="/admin/courses"
-                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/courses') || location.pathname.startsWith('/admin/courses')
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
-                      <GraduationCap className="w-4 h-4 text-sky-400" />
-                      Управление курсами
+                      <GraduationCap className="w-4 h-4 text-amber-300" />
+                      <span>Управление курсами</span>
                     </Link>
-
                     <Link
                       to="/admin/tests"
-                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/tests') || location.pathname.startsWith('/admin/tests')
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Управление тестами
+                      <LayoutDashboard className="w-4 h-4 text-amber-300" />
+                      <span>Управление тестами</span>
                     </Link>
-
                     <Link
                       to="/admin/question-bank"
-                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/question-bank')
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
-                      <BookOpen className="w-4 h-4 text-sky-400" />
-                      Банк вопросов
+                      <BookOpen className="w-4 h-4 text-amber-300" />
+                      <span>Банк вопросов</span>
                     </Link>
-
                     <Link
                       to="/admin/users"
-                      className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                        isActive('/admin/users')
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
-                      <Users className="w-4 h-4" />
-                      Сотрудники и роли
+                      <Users className="w-4 h-4 text-amber-300" />
+                      <span>Сотрудники и роли</span>
                     </Link>
-                  </>
+                  </div>
                 )}
+
+                <div className="pt-2 border-t border-white/15">
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-white bg-[#E30613] hover:bg-[#C70510] transition-colors min-h-[44px]"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Выйти из системы</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-2 pt-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-lg font-semibold text-xs text-white bg-white/10 border border-white/20 min-h-[44px] flex items-center justify-center"
+                >
+                  Войти в систему
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-lg font-semibold text-xs text-white bg-[#E30613] hover:bg-[#C70510] min-h-[44px] flex items-center justify-center"
+                >
+                  Зарегистрироваться
+                </Link>
               </div>
             )}
           </div>
+        )}
+      </nav>
 
-          {/* User Profile & Actions */}
-          {user ? (
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-2.5 pr-2 border-r border-slate-800">
-                <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-slate-300">
-                  {user.full_name?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <div className="flex flex-col text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-200">{user.full_name}</span>
-                    <RoleBadge role={user.role} />
-                  </div>
-                  <span className="text-[11px] text-slate-400 truncate max-w-[160px]">{user.email}</span>
-                </div>
-              </div>
+      {/* Mobile Bottom Dock for Quick Thumb Navigation */}
+      {user && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E0E0E0] shadow-lg flex items-center justify-around px-1 py-1 safe-area-bottom select-none">
+          <Link
+            to="/courses"
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+              isActive('/courses') || location.pathname === '/'
+                ? 'text-[#003B73] font-bold'
+                : 'text-[#6C757D] hover:text-[#212529]'
+            }`}
+          >
+            <GraduationCap className={`w-5 h-5 ${isActive('/courses') || location.pathname === '/' ? 'text-[#E30613]' : 'currentColor'}`} />
+            <span className="text-[10px] mt-0.5 leading-tight">Курсы</span>
+          </Link>
 
-              <button
-                onClick={handleLogout}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 transition-colors"
-                title="Выйти из системы"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center gap-2">
-              <Link to="/login" className="btn-secondary text-xs py-1.5">
-                Войти
-              </Link>
-              <Link to="/register" className="btn-primary text-xs py-1.5">
-                Регистрация
-              </Link>
-            </div>
-          )}
+          <Link
+            to="/tests"
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+              isActive('/tests')
+                ? 'text-[#003B73] font-bold'
+                : 'text-[#6C757D] hover:text-[#212529]'
+            }`}
+          >
+            <FileQuestion className={`w-5 h-5 ${isActive('/tests') ? 'text-[#E30613]' : 'currentColor'}`} />
+            <span className="text-[10px] mt-0.5 leading-tight">Тесты</span>
+          </Link>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-      </div>
+          <Link
+            to="/my-attempts"
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+              isActive('/my-attempts')
+                ? 'text-[#003B73] font-bold'
+                : 'text-[#6C757D] hover:text-[#212529]'
+            }`}
+          >
+            <History className={`w-5 h-5 ${isActive('/my-attempts') ? 'text-[#E30613]' : 'currentColor'}`} />
+            <span className="text-[10px] mt-0.5 leading-tight">Результаты</span>
+          </Link>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-2">
-          {user ? (
-            <>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div>
-                  <div className="font-semibold text-sm text-slate-200">{user.full_name}</div>
-                  <div className="text-xs text-slate-400">{user.email}</div>
-                </div>
-                <RoleBadge role={user.role} />
-              </div>
+          <Link
+            to="/knowledge-base"
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+              isActive('/knowledge-base')
+                ? 'text-[#003B73] font-bold'
+                : 'text-[#6C757D] hover:text-[#212529]'
+            }`}
+          >
+            <FolderArchive className={`w-5 h-5 ${isActive('/knowledge-base') ? 'text-[#E30613]' : 'currentColor'}`} />
+            <span className="text-[10px] mt-0.5 leading-tight">База знаний</span>
+          </Link>
 
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-              >
-                Курсы обучения
-              </Link>
-              <Link
-                to="/tests"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-              >
-                Каталог тестов
-              </Link>
-              <Link
-                to="/my-attempts"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-              >
-                Мои результаты
-              </Link>
-              <Link
-                to="/knowledge-base"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-xs font-medium text-emerald-300 hover:bg-slate-800"
-              >
-                База знаний
-              </Link>
-
-              {isAdmin && (
-                <>
-                  <div className="pt-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                    Администрирование
-                  </div>
-                  <Link
-                    to="/admin/courses"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Управление курсами
-                  </Link>
-                  <Link
-                    to="/admin/courses/new"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Конструктор курсов
-                  </Link>
-                  <Link
-                    to="/admin/tests"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Управление тестами
-                  </Link>
-
-                  <Link
-                    to="/admin/tests/new"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Конструктор тестов
-                  </Link>
-                  <Link
-                    to="/admin/question-bank"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Банк вопросов
-                  </Link>
-                  <Link
-                    to="/admin/users"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Сотрудники и роли
-                  </Link>
-                </>
-              )}
-
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-rose-400 hover:bg-rose-950/20"
-              >
-                Выйти из системы
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col gap-2 pt-2">
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn-secondary w-full text-center text-xs py-2"
-              >
-                Войти
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="btn-primary w-full text-center text-xs py-2"
-              >
-                Регистрация
-              </Link>
-            </div>
-          )}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center text-[#6C757D] hover:text-[#003B73] transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5 leading-tight">Меню</span>
+          </button>
         </div>
       )}
-    </nav>
+    </>
   );
 };

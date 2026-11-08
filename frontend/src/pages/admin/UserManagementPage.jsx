@@ -32,7 +32,7 @@ export const UserManagementPage = () => {
     try {
       setLoading(true);
       const res = await api.get('/users');
-      setUsers(res.data);
+      setUsers(res.data || []);
     } catch (err) {
       console.error('Ошибка загрузки сотрудников:', err);
       setError('Не удалось загрузить список пользователей.');
@@ -101,65 +101,75 @@ export const UserManagementPage = () => {
 
   const formatDate = (isoString) => {
     if (!isoString) return '—';
-    const date = new Date(isoString);
-    return date.toLocaleDateString('ru-RU', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('ru-RU', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return isoString;
+    }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-slate-400" />
-            Сотрудники и права доступа
-          </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
-            Управление участниками организации AMG, назначение прав администраторов и аудит учетных записей.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+                Сотрудники и права доступа AMG
+              </h1>
+              <p className="text-xs text-[#6C757D] mt-0.5">
+                Управление участниками организации, назначение ролей и аудит учетных записей
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <span className="text-slate-400">Всего в системе: </span>
-            <span className="font-bold text-white">{users.length}</span>
+          <div className="px-3.5 py-1.5 rounded-lg bg-white border border-[#E0E0E0] text-xs shadow-2xs">
+            <span className="text-[#6C757D]">Всего сотрудников: </span>
+            <span className="font-bold text-[#003B73]">{users.length}</span>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="mb-5 p-3 rounded-lg bg-rose-950/40 border border-rose-900/60 flex items-start gap-2.5 text-rose-300 text-xs">
+        <div className="p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-start gap-2.5 text-[#E30613] text-xs">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="mb-5 p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/60 flex items-start gap-2.5 text-emerald-300 text-xs">
-          <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-emerald-700 text-xs font-semibold">
+          <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-600" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
           <input
             type="text"
             placeholder="Поиск по ФИО или корпоративному email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field pl-9 text-xs py-1.5"
+            className="input-field pl-10 text-xs sm:text-sm"
           />
         </div>
 
         {/* Role filters */}
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#E0E0E0] shadow-2xs overflow-x-auto scrollbar-none">
           {[
             { id: 'all', label: 'Все' },
             { id: 'employee', label: 'Сотрудники' },
@@ -169,10 +179,10 @@ export const UserManagementPage = () => {
             <button
               key={tab.id}
               onClick={() => setFilterRole(tab.id)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                 filterRole === tab.id
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#003B73] text-white shadow-sm'
+                  : 'text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7]'
               }`}
             >
               {tab.label}
@@ -182,74 +192,74 @@ export const UserManagementPage = () => {
       </div>
 
       {/* Users Table */}
-      <div className="glass-panel rounded-xl overflow-hidden border border-slate-800 shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-xl overflow-hidden border border-[#E0E0E0] shadow-card">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <table className="w-full text-left border-collapse min-w-[650px]">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="py-3 px-5">Сотрудник</th>
-                <th className="py-3 px-5">Email</th>
-                <th className="py-3 px-5">Текущая роль</th>
-                <th className="py-3 px-5">Дата регистрации</th>
-                <th className="py-3 px-5">Изменить роль</th>
-                {isSuperAdmin && <th className="py-3 px-5 text-right">Удаление</th>}
+              <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                <th className="py-3.5 px-5">Сотрудник</th>
+                <th className="py-3.5 px-5">Email</th>
+                <th className="py-3.5 px-5">Текущая роль</th>
+                <th className="py-3.5 px-5">Дата регистрации</th>
+                <th className="py-3.5 px-5">Изменить роль</th>
+                {isSuperAdmin && <th className="py-3.5 px-5 text-right">Удаление</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80 text-xs text-slate-300">
+            <tbody className="divide-y divide-[#E0E0E0] text-xs text-[#212529]">
               {filteredUsers.map((u) => {
                 const isSelf = u.id === currentUser?.id;
                 const canEdit =
                   isSuperAdmin || (currentUser?.role === 'admin' && u.role !== 'superadmin');
 
                 return (
-                  <tr key={u.id} className="hover:bg-slate-900/60 transition-colors">
-                    <td className="py-3 px-5">
-                      <div className="font-semibold text-slate-100 flex items-center gap-2">
+                  <tr key={u.id} className="hover:bg-[#F8F9FA] transition-colors">
+                    <td className="py-3.5 px-5">
+                      <div className="font-bold text-[#212529] text-sm flex items-center gap-2">
                         <span>{u.full_name}</span>
                         {isSelf && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0] font-semibold">
                             Вы
                           </span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-3 px-5 text-slate-400 font-mono">
+                    <td className="py-3.5 px-5 text-[#6C757D] font-mono">
                       {u.email}
                     </td>
 
-                    <td className="py-3 px-5">
+                    <td className="py-3.5 px-5">
                       <RoleBadge role={u.role} />
                     </td>
 
-                    <td className="py-3 px-5 text-slate-400">
+                    <td className="py-3.5 px-5 text-[#6C757D]">
                       {formatDate(u.created_at)}
                     </td>
 
-                    <td className="py-3 px-5">
+                    <td className="py-3.5 px-5">
                       {canEdit ? (
                         <select
                           value={u.role}
                           disabled={updatingId === u.id}
                           onChange={(e) => handleRoleChange(u, e.target.value)}
-                          className="bg-slate-950 text-slate-200 text-xs rounded-md border border-slate-800 py-1 px-2 focus:ring-1 focus:ring-slate-400"
+                          className="bg-white text-[#212529] text-xs rounded-lg border border-[#E0E0E0] py-1.5 px-2.5 focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73]"
                         >
                           <option value="employee">Сотрудник</option>
                           <option value="admin">Администратор</option>
                           {isSuperAdmin && <option value="superadmin">Суперадмин</option>}
                         </select>
                       ) : (
-                        <span className="text-slate-500 text-xs italic">Нет прав</span>
+                        <span className="text-[#6C757D] text-xs italic">Нет прав</span>
                       )}
                     </td>
 
                     {isSuperAdmin && (
-                      <td className="py-3 px-5 text-right">
+                      <td className="py-3.5 px-5 text-right">
                         {!isSelf && (
                           <button
                             onClick={() => handleDeleteUser(u)}
                             disabled={updatingId === u.id}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                            className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-[#FEF2F2] transition-colors"
                             title="Удалить аккаунт"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

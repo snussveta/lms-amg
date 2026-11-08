@@ -27,7 +27,7 @@ export const MyAttemptsPage = () => {
       setLoading(true);
       setError('');
       const res = await api.get('/attempts/my');
-      setAttempts(res.data);
+      setAttempts(res.data || []);
     } catch (err) {
       console.error('Ошибка загрузки истории попыток:', err);
       setError(getErrorMessage(err, 'Не удалось загрузить историю попыток.'));
@@ -62,26 +62,28 @@ export const MyAttemptsPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Шапка */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <History className="w-6 h-6 text-slate-400" />
-            История моих тестирований
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#212529] flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+              <History className="w-5 h-5" />
+            </div>
+            <span>История моих тестирований</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-[#6C757D] text-xs sm:text-sm mt-1">
             Просмотр всех пройденных тестов платформы AMG, набранных баллов и статусов проверки.
           </p>
         </div>
 
-        <Link to="/" className="btn-primary text-sm self-start sm:self-auto">
+        <Link to="/tests" className="btn-primary text-xs sm:text-sm self-start sm:self-auto">
           Каталог тестов
         </Link>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-3">
+        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs sm:text-sm flex items-center gap-2.5">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -91,35 +93,35 @@ export const MyAttemptsPage = () => {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl h-16 animate-pulse bg-slate-900 border border-slate-800" />
+            <div key={i} className="rounded-xl h-16 animate-pulse bg-white border border-[#E0E0E0]" />
           ))}
         </div>
       ) : attempts.length === 0 ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-md mx-auto my-8">
-          <FileQuestion className="w-12 h-12 mx-auto text-slate-500 mb-3" />
-          <h3 className="text-lg font-semibold text-slate-200">Попыток не найдено</h3>
-          <p className="text-sm text-slate-400 mt-1 mb-6">
+        <div className="bg-white border border-[#E0E0E0] rounded-2xl p-12 text-center max-w-md mx-auto my-8 shadow-card">
+          <FileQuestion className="w-12 h-12 mx-auto text-[#ADB5BD] mb-3" />
+          <h3 className="text-base font-bold text-[#212529]">Попыток не найдено</h3>
+          <p className="text-xs sm:text-sm text-[#6C757D] mt-1 mb-6">
             Вы пока еще не проходили ни одного теста в корпоративной системе.
           </p>
-          <Link to="/" className="btn-primary text-sm">
+          <Link to="/tests" className="btn-primary text-xs sm:text-sm">
             Выбрать первый тест
           </Link>
         </div>
       ) : (
-        <div className="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className="bg-white rounded-xl overflow-hidden border border-[#E0E0E0] shadow-card">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-left border-collapse min-w-[640px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/60 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
                   <th className="py-3.5 px-5">Название теста</th>
                   <th className="py-3.5 px-5">Статус</th>
                   <th className="py-3.5 px-5">Баллы</th>
                   <th className="py-3.5 px-5">Результат</th>
-                  <th className="py-3.5 px-5">Дата завершения</th>
+                  <th className="py-3.5 px-5">Дата</th>
                   <th className="py-3.5 px-5 text-right">Действие</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-sm text-slate-300">
+              <tbody className="divide-y divide-[#E0E0E0] text-sm text-[#212529]">
                 {attempts.map((att) => {
                   const isNeedsReview = att.status === 'needs_review';
                   const isPassed = att.is_passed && !isNeedsReview;
@@ -130,58 +132,58 @@ export const MyAttemptsPage = () => {
                     <tr
                       key={att.id}
                       onClick={() => handleRowClick(att)}
-                      className="hover:bg-slate-850/60 transition-colors cursor-pointer group"
+                      className="hover:bg-[#F8F9FA] transition-colors cursor-pointer group"
                     >
-                      <td className="py-4 px-5 font-medium text-white group-hover:text-sky-300 transition-colors">
+                      <td className="py-4 px-5 font-bold text-[#212529] group-hover:text-[#003B73] transition-colors">
                         <div className="flex items-center gap-2">
                           <span>{att.test_title}</span>
-                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-70 transition-opacity text-[#003B73]" />
                         </div>
                       </td>
 
                       <td className="py-4 px-5">
                         {isNeedsReview ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             <Clock className="w-3.5 h-3.5" />
-                            На проверке администратором
+                            На проверке
                           </span>
                         ) : isPassed ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             Сдано
                           </span>
                         ) : isInProgress ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                            <Clock className="w-3.5 h-3.5 animate-spin" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F5FA] text-[#003B73] border border-[#B8D5ED]">
+                            <Clock className="w-3.5 h-3.5 animate-spin text-[#003B73]" />
                             В процессе
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                            <XCircle className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3]">
+                            <XCircle className="w-3.5 h-3.5 text-[#E30613]" />
                             Не сдано
                           </span>
                         )}
                       </td>
 
                       <td className="py-4 px-5 font-mono text-xs">
-                        <span className="font-semibold text-white text-sm">{att.score}</span> / {att.max_score} б.
+                        <span className="font-bold text-[#212529] text-sm">{att.score}</span> / {att.max_score} б.
                       </td>
 
                       <td className="py-4 px-5">
                         <span
-                          className={`font-semibold ${
+                          className={`font-bold ${
                             isNeedsReview
-                              ? 'text-amber-400'
+                              ? 'text-amber-700'
                               : isPassed
-                              ? 'text-emerald-400'
-                              : 'text-rose-400'
+                              ? 'text-emerald-700'
+                              : 'text-[#E30613]'
                           }`}
                         >
                           {att.percentage}%
                         </span>
                       </td>
 
-                      <td className="py-4 px-5 text-xs text-slate-400">
+                      <td className="py-4 px-5 text-xs text-[#6C757D]">
                         {formatDate(att.submitted_at || att.started_at)}
                       </td>
 
@@ -189,17 +191,17 @@ export const MyAttemptsPage = () => {
                         {isCompleted ? (
                           <Link
                             to={`/test/${att.id}/result`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+                            className="btn-secondary text-xs py-1.5 px-3"
                           >
-                            <span>Разбор ответов</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Разбор</span>
+                            <ExternalLink className="w-3 h-3 ml-1 text-[#003B73]" />
                           </Link>
                         ) : (
                           <Link
                             to={`/test/${att.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-white text-slate-900 text-xs font-medium transition-colors"
+                            className="btn-primary text-xs py-1.5 px-3"
                           >
-                            <Play className="w-3 h-3" />
+                            <Play className="w-3 h-3 mr-1" />
                             <span>Продолжить</span>
                           </Link>
                         )}

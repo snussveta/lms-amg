@@ -3,54 +3,130 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-accent: #E30613;
+    --color-navy: #003B73;
+    --color-main: #212529;
+    --color-secondary: #6C757D;
+    --color-divider: #E0E0E0;
+    --color-surface: #F4F5F7;
+    --color-card: #FFFFFF;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-slate-950 text-slate-100 font-sans min-h-screen antialiased;
-    background-color: #090d16;
-    background-attachment: fixed;
+    background-color: #F4F5F7;
+    color: #212529;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Heading and text helpers for light surfaces */
+  h1, h2, h3, h4, h5, h6 {
+    color: #212529;
+  }
+  
+  /* Retain white text specifically on navy bars and accent buttons */
+  header h1, header h2, header h3,
+  nav h1, nav h2, nav h3,
+  .btn-primary, .btn-accent {
+    color: #FFFFFF;
   }
 }
 
 @layer components {
-  /* Minimalist Corporate Panels */
+  /* Corporate White Panels */
   .glass-panel {
-    @apply bg-slate-900/90 border border-slate-800 shadow-sm rounded-xl transition-all duration-200;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    border-radius: 0.75rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
+  /* Corporate Interactive Cards (taste-skill lift & hover) */
   .glass-card {
-    @apply bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-lg rounded-xl;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    border-radius: 0.75rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Strict Corporate Buttons */
+  .glass-card:hover {
+    border-color: #CED4DA;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Primary Accent Button (#E30613 Red) */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-950 
-           bg-slate-100 hover:bg-white active:bg-slate-200 shadow-sm
-           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm text-white 
+           bg-[#E30613] hover:bg-[#C70510] active:bg-[#A8040E] shadow-sm
+           transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
   }
 
+  /* Secondary Button (Crisp White + Border) */
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-slate-300 
-           bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:text-white hover:border-slate-700
-           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-[#212529] 
+           bg-white hover:bg-[#F4F5F7] border border-[#E0E0E0] hover:border-[#CED4DA] hover:text-[#003B73]
+           transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.98] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
   }
 
+  /* Navy Accent Button (#003B73 Dark Blue) */
   .btn-accent {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-white 
-           bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600
-           transition-all duration-200 ease-in-out hover:scale-[1.01] hover:shadow-md disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm text-white 
+           bg-[#003B73] hover:bg-[#002F5C] active:bg-[#002040] shadow-sm
+           transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
   }
 
+  /* Danger Button (Subtle Red Tint) */
   .btn-danger {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-xs sm:text-sm text-rose-300 
-           bg-rose-950/40 hover:bg-rose-900/50 border border-rose-900/60 active:scale-[0.99] transition-all duration-200 ease-in-out hover:scale-[1.01];
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-[#E30613] 
+           bg-[#FEF2F2] hover:bg-[#FDE8E9] border border-[#FBD0D3] hover:border-[#F8A1A7]
+           active:scale-[0.98] transition-all duration-150 ease-in-out hover:-translate-y-0.5 min-h-[42px] sm:min-h-[38px];
   }
 
+  /* Touch-friendly Form Inputs (44px min height on touch devices) */
   .input-field {
-    @apply w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 
-           text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 
-           transition-all duration-200;
+    @apply w-full px-3.5 py-2.5 rounded-lg bg-white border border-[#E0E0E0] 
+           text-[#212529] placeholder-[#6C757D] text-sm focus:outline-none focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73] 
+           transition-all duration-150 min-h-[44px];
+  }
+
+  /* Custom Status Badges */
+  .badge-accent {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3];
+  }
+
+  .badge-navy {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F5FA] text-[#003B73] border border-[#B8D5ED];
+  }
+
+  .badge-neutral {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0];
+  }
+
+  .badge-success {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200;
   }
 }
 
+/* Animations */
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -63,21 +139,35 @@
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom minimal scrollbar */
+/* Clean Corporate Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #F4F5F7;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #CED4DA;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #ADB5BD;
+}
+
+/* Hide scrollbar utility for horizontally scrolling tabs */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area insets for mobile devices with home bars (iOS) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

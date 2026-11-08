@@ -33,7 +33,7 @@ export const AdminTestsPage = () => {
     try {
       setLoading(true);
       const res = await api.get('/tests');
-      setTests(res.data);
+      setTests(res.data || []);
     } catch (err) {
       console.error('Ошибка загрузки тестов:', err);
     } finally {
@@ -84,21 +84,28 @@ export const AdminTestsPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">
-            Управление корпоративными тестами
-          </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
-            Создание, редактирование, публикация, назначение сотрудникам и аудит результатов AMG.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+              <FileQuestion className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+                Управление тестами AMG
+              </h1>
+              <p className="text-xs text-[#6C757D] mt-0.5">
+                Создание, редактирование, публикация, назначение сотрудникам и аудит результатов аттестации
+              </p>
+            </div>
+          </div>
         </div>
 
         <Link
           to="/admin/tests/new"
-          className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 self-start sm:self-auto"
+          className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 self-start sm:self-auto shadow-sm"
         >
           <Plus className="w-4 h-4" />
           <span>Создать новый тест</span>
@@ -109,26 +116,26 @@ export const AdminTestsPage = () => {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="glass-card rounded-xl h-20 animate-pulse bg-slate-900/60" />
+            <div key={i} className="rounded-xl h-20 animate-pulse bg-white border border-[#E0E0E0]" />
           ))}
         </div>
       ) : tests.length === 0 ? (
-        <div className="glass-panel rounded-xl p-12 text-center max-w-md mx-auto my-8 border border-slate-800">
-          <FileQuestion className="w-10 h-10 mx-auto text-slate-600 mb-3" />
-          <h3 className="text-base font-semibold text-slate-200">Тесты еще не созданы</h3>
-          <p className="text-xs text-slate-400 mt-1 mb-5">
-            Начните с создания первого теста для сотрудников или кандидатов.
+        <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto my-8 border border-[#E0E0E0] shadow-card">
+          <FileQuestion className="w-10 h-10 mx-auto text-[#CED4DA] mb-3" />
+          <h3 className="text-base font-bold text-[#212529]">Тесты еще не созданы</h3>
+          <p className="text-xs sm:text-sm text-[#6C757D] mt-1 mb-5">
+            Начните с создания первого теста для сотрудников или кандидатов компании.
           </p>
-          <Link to="/admin/tests/new" className="btn-primary text-xs">
+          <Link to="/admin/tests/new" className="btn-primary text-xs sm:text-sm">
             Создать тест
           </Link>
         </div>
       ) : (
-        <div className="glass-panel rounded-xl overflow-hidden border border-slate-800 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className="bg-white rounded-xl overflow-hidden border border-[#E0E0E0] shadow-card">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
                   <th className="py-3 px-5">Название и описание</th>
                   <th className="py-3 px-5">Статус</th>
                   <th className="py-3 px-5">Вопросы</th>
@@ -138,12 +145,12 @@ export const AdminTestsPage = () => {
                   <th className="py-3 px-5 text-right">Действия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-xs text-slate-300">
+              <tbody className="divide-y divide-[#E0E0E0] text-xs text-[#212529]">
                 {tests.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-900/60 transition-colors">
+                  <tr key={t.id} className="hover:bg-[#F8F9FA] transition-colors">
                     <td className="py-3.5 px-5 max-w-sm">
-                      <div className="font-semibold text-slate-100 text-sm">{t.title}</div>
-                      <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                      <div className="font-bold text-[#212529] text-sm">{t.title}</div>
+                      <div className="text-[11px] text-[#6C757D] truncate mt-0.5">
                         {t.description || 'Описание отсутствует'}
                       </div>
                     </td>
@@ -152,31 +159,31 @@ export const AdminTestsPage = () => {
                       <div className="flex flex-col gap-1.5 items-start">
                         <button
                           onClick={() => handleTogglePublish(t)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all ${
                             t.is_published
-                              ? 'bg-emerald-950/40 text-emerald-300 border-emerald-900/60 hover:bg-emerald-900/50'
-                              : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-800'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                           }`}
                           title="Нажмите для переключения статуса"
                         >
                           {t.is_published ? (
                             <>
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                               Опубликован
                             </>
                           ) : (
                             <>
-                              <XCircle className="w-3 h-3" />
+                              <XCircle className="w-3 h-3 text-amber-600" />
                               Черновик
                             </>
                           )}
                         </button>
 
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
                             t.is_assigned_only
-                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                              : 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                              ? 'bg-[#FEF2F2] text-[#E30613] border-[#FBD0D3]'
+                              : 'bg-[#F0F5FA] text-[#003B73] border-[#B8D5ED]'
                           }`}
                         >
                           {t.is_assigned_only ? 'Только назначенные' : 'Общий доступ'}
@@ -185,15 +192,15 @@ export const AdminTestsPage = () => {
                     </td>
 
                     <td className="py-3.5 px-5">
-                      <div className="font-semibold text-slate-200">{t.question_count} вопр.</div>
-                      <div className="text-[11px] text-slate-400">{t.total_points} макс. б.</div>
+                      <div className="font-bold text-[#212529]">{t.question_count} вопр.</div>
+                      <div className="text-[11px] text-[#6C757D]">{t.total_points} макс. б.</div>
                     </td>
 
-                    <td className="py-3.5 px-5 font-semibold text-slate-200">
+                    <td className="py-3.5 px-5 font-bold text-[#003B73]">
                       {t.passing_score}%
                     </td>
 
-                    <td className="py-3.5 px-5 text-slate-300 text-[11px]">
+                    <td className="py-3.5 px-5 text-[#212529] text-[11px]">
                       {t.time_limit_minutes ? `${t.time_limit_minutes} мин` : 'Без лимита'}
                     </td>
 
@@ -201,65 +208,61 @@ export const AdminTestsPage = () => {
                       {t.allow_guest && t.public_token ? (
                         <button
                           onClick={() => handleCopyPublicLink(t.public_token)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
                             copiedToken === t.public_token
-                              ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
-                              : 'bg-slate-800/70 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                              : 'bg-white border-[#E0E0E0] text-[#003B73] hover:bg-[#F4F5F7]'
                           }`}
                           title="Скопировать ссылку для гостей"
                         >
                           {copiedToken === t.public_token ? (
                             <>
-                              <Check className="w-3 h-3 text-emerald-400" />
+                              <Check className="w-3 h-3 text-emerald-600" />
                               <span>Скопировано!</span>
                             </>
                           ) : (
                             <>
-                              <Globe className="w-3 h-3 text-slate-400" />
+                              <Globe className="w-3 h-3 text-[#003B73]" />
                               <span>Ссылка гостя</span>
-                              <Copy className="w-3 h-3 text-slate-500" />
+                              <Copy className="w-3 h-3 text-[#6C757D]" />
                             </>
                           )}
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-500 italic">Отключена</span>
+                        <span className="text-[11px] text-[#6C757D] italic">Отключена</span>
                       )}
                     </td>
 
                     <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5">
-                        {/* Назначить сотрудникам */}
                         <button
                           onClick={() => setAssigningTest(t)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                          className="p-2 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[#003B73] border border-[#E0E0E0] transition-colors"
                           title="Назначить сотрудникам"
                         >
                           <UserPlus className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Аналитика */}
                         <Link
                           to={`/admin/tests/${t.id}/analytics`}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                          className="p-2 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[#003B73] border border-[#E0E0E0] transition-colors"
                           title="Аналитика и попытки"
                         >
                           <BarChart3 className="w-3.5 h-3.5" />
                         </Link>
 
-                        {/* Редактировать в конструкторе */}
                         <Link
                           to={`/admin/tests/${t.id}/edit`}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                          className="p-2 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[#003B73] border border-[#E0E0E0] transition-colors"
                           title="Редактировать тест"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </Link>
 
-                        {/* Удалить */}
                         <button
                           onClick={() => handleDelete(t.id)}
                           disabled={deletingId === t.id}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-700 transition-colors"
+                          className="p-2 rounded-lg bg-[#FEF2F2] hover:bg-[#FDE8E9] text-[#E30613] border border-[#FBD0D3] transition-colors"
                           title="Удалить тест"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

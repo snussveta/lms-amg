@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginPage = () => {
@@ -40,25 +40,26 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-sm">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-md">
         {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-white font-black text-xl mb-3 shadow-sm">
-            AMG
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#003B73] text-white font-black text-2xl mb-3 shadow-md relative">
+            <span>AMG</span>
+            <span className="w-3 h-3 rounded-full bg-[#E30613] absolute -top-1 -right-1 ring-2 ring-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#212529]">
             Вход в систему AMG
           </h1>
-          <p className="text-slate-400 text-xs mt-1.5">
-            Корпоративная платформа тестирования и оценки компетенций
+          <p className="text-[#6C757D] text-xs sm:text-sm mt-1.5 max-w-sm mx-auto">
+            Корпоративная платформа тестирования, курсов и аттестации сотрудников
           </p>
         </div>
 
         {/* Card */}
-        <div className="glass-panel p-6 sm:p-7 rounded-xl border border-slate-800 shadow-xl">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E0E0E0] shadow-card">
           {error && (
-            <div className="mb-5 p-3.5 rounded-lg bg-rose-950/40 border border-rose-900/60 flex items-start gap-2.5 text-rose-300 text-xs">
+            <div className="mb-5 p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-start gap-2.5 text-[#E30613] text-xs sm:text-sm animate-fade-in">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -66,35 +67,37 @@ export const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#6C757D] mb-1.5">
                 Корпоративный Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="input-field pl-9"
+                  className="input-field pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Пароль
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#6C757D]">
+                  Пароль
+                </label>
+              </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-field pl-9"
+                  className="input-field pl-10"
                 />
               </div>
             </div>
@@ -102,14 +105,14 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-2.5 mt-2 font-semibold flex items-center justify-center gap-2"
+              className="btn-primary w-full py-3 mt-3 font-semibold flex items-center justify-center gap-2 text-sm shadow-md"
             >
               {loading ? (
-                <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>Войти</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Войти в систему</span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
@@ -117,9 +120,12 @@ export const LoginPage = () => {
         </div>
 
         {/* Footer info */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs sm:text-sm text-[#6C757D] mt-6">
           Нет учетной записи?{' '}
-          <Link to="/register" className="text-slate-200 hover:text-white font-semibold underline underline-offset-4">
+          <Link
+            to="/register"
+            className="text-[#003B73] hover:text-[#E30613] font-semibold underline underline-offset-4 transition-colors"
+          >
             Зарегистрироваться
           </Link>
         </p>
