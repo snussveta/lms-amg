@@ -55,14 +55,13 @@ async def get_tests(
     )
 
     if current_user.role == "employee":
-        # Сотруднику доступны только опубликованные тесты, которые:
-        # либо имеют общий доступ (is_assigned_only == False),
-        # либо персонально назначены данному сотруднику через TestAssignment
+        # Сотруднику доступны:
+        # 1. Любые назначенные ему тесты (даже если черновик)
+        # 2. Опубликованные тесты общего доступа (is_assigned_only == False)
         assigned_ids = list(assigned_map.keys())
         if assigned_ids:
             stmt = stmt.where(
-                Test.is_published.is_(True),
-                (Test.is_assigned_only.is_(False)) | (Test.id.in_(assigned_ids)),
+                (Test.id.in_(assigned_ids)) | (Test.is_published.is_(True) & Test.is_assigned_only.is_(False))
             )
         else:
             stmt = stmt.where(
@@ -238,17 +237,18 @@ async def get_test(
 
     # Если сотрудник: проверка статуса публикации и персонального назначения
     if current_user.role == "employee":
-        if not test.is_published:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
-        if test.is_assigned_only:
-            assign_check = await db.execute(
-                select(TestAssignment).where(
-                    TestAssignment.test_id == test_id,
-                    TestAssignment.user_id == current_user.id,
-                )
+        assign_check = await db.execute(
+            select(TestAssignment).where(
+                TestAssignment.test_id == test_id,
+                TestAssignment.user_id == current_user.id,
             )
-            if not assign_check.scalar_one_or_none():
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест вам не назначен")
+        )
+        is_assigned = assign_check.scalar_one_or_none() is not None
+
+        if not test.is_published and not is_assigned:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+        if test.is_assigned_only and not is_assigned:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест вам не назначен")
 
     tot_points = sum(q.points for q in test.questions)
 
@@ -420,6 +420,9 @@ async def assign_test_to_users(
                 status="pending",
             )
             db.add(new_assignment)
+
+    # При назначении тест автоматически помечается опубликованным
+    test.is_published = True
 
     await db.commit()
     return {"message": f"Тест успешно назначен {len(target_list)} сотрудникам"}

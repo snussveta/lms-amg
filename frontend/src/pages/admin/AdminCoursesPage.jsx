@@ -27,8 +27,23 @@ export const AdminCoursesPage = () => {
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [assigningCourse, setAssigningCourse] = useState(null);
+  const [departments, setDepartments] = useState(['Все', 'СТО', 'Склад', 'Продажи', 'Общий']);
 
-  const departments = ['Все', 'СТО', 'Склад', 'Продажи', 'Общий'];
+  useEffect(() => {
+    const loadDepts = async () => {
+      try {
+        const res = await api.get('/departments');
+        if (res.data && res.data.length > 0) {
+          const names = res.data.map((d) => d.name);
+          const uniqueNames = Array.from(new Set(['Все', ...names, 'Общий']));
+          setDepartments(uniqueNames);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки подразделений:', err);
+      }
+    };
+    loadDepts();
+  }, []);
 
   useEffect(() => {
     fetchCourses();
@@ -47,6 +62,21 @@ export const AdminCoursesPage = () => {
       setError(getErrorMessage(err, 'Не удалось загрузить список курсов.'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTogglePublish = async (course, e) => {
+    if (e) e.stopPropagation();
+    const nextState = !course.is_published;
+    try {
+      await api.put(`/courses/${course.id}`, {
+        is_published: nextState,
+      });
+      setCourses((prev) =>
+        prev.map((c) => (c.id === course.id ? { ...c, is_published: nextState } : c))
+      );
+    } catch (err) {
+      alert(getErrorMessage(err, 'Не удалось изменить статус публикации курса.'));
     }
   };
 
@@ -179,15 +209,27 @@ export const AdminCoursesPage = () => {
                   </span>
                 </div>
                 <div className="absolute top-2.5 right-2.5">
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur shadow-2xs ${
+                  <button
+                    type="button"
+                    onClick={(e) => handleTogglePublish(course, e)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur shadow-2xs transition-all flex items-center gap-1 cursor-pointer hover:scale-105 active:scale-95 ${
                       course.is_published
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                        : 'bg-amber-50 border border-amber-200 text-amber-700'
+                        ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                        : 'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100'
                     }`}
+                    title={
+                      course.is_published
+                        ? 'Курс опубликован. Нажмите, чтобы скрыть в черновик'
+                        : 'Черновик. Нажмите, чтобы опубликовать для сотрудников'
+                    }
                   >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        course.is_published ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}
+                    />
                     {course.is_published ? 'Опубликован' : 'Черновик'}
-                  </span>
+                  </button>
                 </div>
               </div>
 

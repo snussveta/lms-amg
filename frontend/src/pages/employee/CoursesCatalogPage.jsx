@@ -19,8 +19,23 @@ export const CoursesCatalogPage = () => {
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
+  const [departments, setDepartments] = useState(['Все', 'СТО', 'Склад', 'Продажи', 'Общий']);
 
-  const departments = ['Все', 'СТО', 'Склад', 'Продажи', 'Общий'];
+  useEffect(() => {
+    const loadDepts = async () => {
+      try {
+        const res = await api.get('/departments');
+        if (res.data && res.data.length > 0) {
+          const names = res.data.map((d) => d.name);
+          const uniqueNames = Array.from(new Set(['Все', ...names, 'Общий']));
+          setDepartments(uniqueNames);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки подразделений:', err);
+      }
+    };
+    loadDepts();
+  }, []);
 
   useEffect(() => {
     fetchCourses();
@@ -113,6 +128,29 @@ export const CoursesCatalogPage = () => {
         </div>
       )}
 
+      {/* Assigned Alert Banner */}
+      {!loading && courses.some((c) => c.is_assigned && c.user_status !== 'completed') && (
+        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#212529] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-[#E30613]">
+                Вам назначены обязательные курсы!
+              </span>{' '}
+              <span className="text-[#6C757D]">
+                (Курсов к прохождению:{' '}
+                {courses.filter((c) => c.is_assigned && c.user_status !== 'completed').length})
+              </span>
+            </div>
+          </div>
+          <span className="text-[11px] font-bold text-[#E30613] uppercase tracking-wider bg-white px-2.5 py-1 rounded border border-[#FBD0D3]">
+            Приоритет обучения
+          </span>
+        </div>
+      )}
+
       {/* Courses Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
@@ -166,8 +204,8 @@ export const CoursesCatalogPage = () => {
                       {course.department_tag || 'Общий'}
                     </span>
                     {course.is_assigned && (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] shadow-2xs">
-                        Назначен вам
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] shadow-2xs">
+                        Обязательный • Назначен вам
                       </span>
                     )}
                   </div>

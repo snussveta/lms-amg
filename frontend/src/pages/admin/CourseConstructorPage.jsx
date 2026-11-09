@@ -45,8 +45,26 @@ export const CourseConstructorPage = () => {
   const [description, setDescription] = useState('');
   const [departmentTag, setDepartmentTag] = useState('СТО');
   const [coverImageUrl, setCoverImageUrl] = useState('');
-  const [isPublished, setIsPublished] = useState(false);
+  const [isPublished, setIsPublished] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [departmentsList, setDepartmentsList] = useState(['СТО', 'Склад', 'Продажи', 'Общий']);
+
+  // Fetch departments list
+  useEffect(() => {
+    const loadDepts = async () => {
+      try {
+        const res = await api.get('/departments');
+        if (res.data && res.data.length > 0) {
+          const names = res.data.map((d) => d.name);
+          const unique = Array.from(new Set([...names, 'СТО', 'Склад', 'Продажи', 'Общий']));
+          setDepartmentsList(unique);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки отделов в конструкторе:', err);
+      }
+    };
+    loadDepts();
+  }, []);
 
   // Modules and Lessons Tree
   const [modules, setModules] = useState([]);
@@ -867,6 +885,25 @@ export const CourseConstructorPage = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Quick Publish Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsPublished(!isPublished)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs min-h-[40px] cursor-pointer ${
+              isPublished
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+            }`}
+            title="Переключить доступность курса для сотрудников"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isPublished ? 'bg-emerald-500' : 'bg-amber-500'
+              }`}
+            />
+            <span>{isPublished ? 'Опубликован' : 'Черновик (Скрыт)'}</span>
+          </button>
+
           {isEditing && (
             <>
               <button
@@ -937,10 +974,11 @@ export const CourseConstructorPage = () => {
               value={departmentTag}
               onChange={(e) => setDepartmentTag(e.target.value)}
             >
-              <option value="СТО">СТО (Слесарный цех / Мастера)</option>
-              <option value="Склад">Склад (Логистика / Запчасти)</option>
-              <option value="Продажи">Продажи (Мастера-консультанты)</option>
-              <option value="Общий">Общий регламент компании</option>
+              {departmentsList.map((deptName) => (
+                <option key={deptName} value={deptName}>
+                  {deptName}
+                </option>
+              ))}
             </select>
           </div>
         </div>

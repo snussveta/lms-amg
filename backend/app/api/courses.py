@@ -54,44 +54,72 @@ async def get_courses(
 ):
     """
     List courses:
-    - Employees see only published courses (with their enrollment/progress state).
+    - Employees see courses assigned to them + published public courses / department courses.
     - Admins see all courses (published & drafts) across departments.
     """
+    # If employee, fetch personal assignments and enrollments
+    assigned_course_ids = []
+    assignments_map = {}
+    enrollments_map = {}
+    if current_user.role == "employee":
+        assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
+        assign_res = await db.execute(assign_stmt)
+        for a in assign_res.scalars().all():
+            assignments_map[a.course_id] = a
+        assigned_course_ids = list(assignments_map.keys())
+
+        enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
+        enr_res = await db.execute(enr_stmt)
+        for enr in enr_res.scalars().all():
+            enrollments_map[enr.course_id] = enr
+
     stmt = (
         select(Course)
         .options(
             selectinload(Course.modules).selectinload(CourseModule.lessons),
             selectinload(Course.author),
         )
-        .order_by(Course.created_at.desc())
     )
 
     if current_user.role == "employee":
-        stmt = stmt.where(Course.is_published == True)
+        user_dept = (current_user.department or "").strip()
+        # Employee visibility rules:
+        # 1. Any course explicitly assigned to the employee is ALWAYS visible (even if marked draft)
+        # 2. Any published course that is either:
+        #    - Open to all (is_public == True)
+        #    - Tagged with employee's department or 'Общий'
+        visibility_clauses = []
+        if assigned_course_ids:
+            visibility_clauses.append(Course.id.in_(assigned_course_ids))
+
+        published_dept_clause = (Course.is_published.is_(True)) & (
+            (Course.is_public.is_(True))
+            | (Course.department_tag == user_dept)
+            | (Course.department_tag == "Общий")
+        )
+        visibility_clauses.append(published_dept_clause)
+
+        stmt = stmt.where(or_(*visibility_clauses))
+
         if department and department != "Все":
-            stmt = stmt.where(
-                (Course.department_tag == department) | (Course.department_tag == "Общий")
-            )
+            # Department filter tab: keep courses matching department/Общий, OR explicitly assigned
+            if assigned_course_ids:
+                stmt = stmt.where(
+                    (Course.department_tag == department)
+                    | (Course.department_tag == "Общий")
+                    | (Course.id.in_(assigned_course_ids))
+                )
+            else:
+                stmt = stmt.where(
+                    (Course.department_tag == department) | (Course.department_tag == "Общий")
+                )
     else:
         if department and department != "Все":
             stmt = stmt.where(Course.department_tag == department)
 
+    stmt = stmt.order_by(Course.created_at.desc())
     result = await db.execute(stmt)
     courses = result.scalars().all()
-
-    # If employee, fetch enrollments and personal assignments
-    enrollments_map = {}
-    assignments_map = {}
-    if current_user.role == "employee":
-        enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
-        enr_res = await db.execute(enr_stmt)
-        for enr in enr_res.scalars().all():
-            enrollments_map[enr.course_id] = enr
-
-        assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
-        assign_res = await db.execute(assign_stmt)
-        for a in assign_res.scalars().all():
-            assignments_map[a.course_id] = a
 
     response_items = []
     for c in courses:
@@ -127,6 +155,15 @@ async def get_courses(
                 user_progress_percent=user_progress_percent,
                 is_assigned=is_assigned,
                 assignment_deadline=deadline,
+            )
+        )
+
+    if current_user.role == "employee":
+        # Sort assigned courses first, then by deadline
+        response_items.sort(
+            key=lambda x: (
+                not x.is_assigned,
+                x.assignment_deadline or datetime.max.replace(tzinfo=timezone.utc),
             )
         )
 
@@ -141,85 +178,10 @@ async def get_my_courses(
 ):
     """
     Returns courses available to the employee:
-    Only published courses that are either:
-    1. Assigned personally to this employee in course_assignments, OR
-    2. Open/public courses where is_public == True.
+    1. Assigned personally to this employee in course_assignments (always visible), OR
+    2. Open/public or department-matching published courses.
     """
-    # 1. Fetch personal assignments
-    assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
-    assign_res = await db.execute(assign_stmt)
-    assignments = assign_res.scalars().all()
-    assignments_map = {a.course_id: a for a in assignments}
-    assigned_course_ids = list(assignments_map.keys())
-
-    # 2. Build course filter: must be published and (is_public OR id in assigned_course_ids)
-    stmt = (
-        select(Course)
-        .options(
-            selectinload(Course.modules).selectinload(CourseModule.lessons),
-            selectinload(Course.author),
-        )
-        .where(Course.is_published == True)
-    )
-
-    if assigned_course_ids:
-        stmt = stmt.where((Course.is_public == True) | (Course.id.in_(assigned_course_ids)))
-    else:
-        stmt = stmt.where(Course.is_public == True)
-
-    if department and department != "Все":
-        stmt = stmt.where((Course.department_tag == department) | (Course.department_tag == "Общий"))
-
-    stmt = stmt.order_by(Course.created_at.desc())
-    result = await db.execute(stmt)
-    courses = result.scalars().all()
-
-    # 3. Load enrollments for progress
-    enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
-    enr_res = await db.execute(enr_stmt)
-    enrollments_map = {e.course_id: e for e in enr_res.scalars().all()}
-
-    response_items = []
-    for c in courses:
-        modules_cnt = len(c.modules)
-        lessons_cnt = sum(len(m.lessons) for m in c.modules)
-        
-        user_status = "not_started"
-        user_progress_percent = 0
-        if c.id in enrollments_map:
-            user_status = enrollments_map[c.id].status
-            user_progress_percent = enrollments_map[c.id].progress_percent
-
-        assignment = assignments_map.get(c.id)
-        is_assigned = assignment is not None
-        deadline = assignment.deadline if assignment else None
-
-        response_items.append(
-            CourseListItemResponse(
-                id=c.id,
-                title=c.title,
-                description=c.description or "",
-                department_tag=c.department_tag,
-                cover_image_url=c.cover_image_url,
-                is_published=c.is_published,
-                is_public=c.is_public,
-                author_id=c.author_id,
-                author_name=c.author.full_name if c.author else None,
-                modules_count=modules_cnt,
-                lessons_count=lessons_cnt,
-                created_at=c.created_at,
-                updated_at=c.updated_at,
-                user_status=user_status,
-                user_progress_percent=user_progress_percent,
-                is_assigned=is_assigned,
-                assignment_deadline=deadline,
-            )
-        )
-
-    # Sort: assigned first, then by deadline
-    response_items.sort(key=lambda x: (not x.is_assigned, x.assignment_deadline or datetime.max.replace(tzinfo=timezone.utc)))
-
-    return response_items
+    return await get_courses(department=department, db=db, current_user=current_user)
 
 
 @router.post("", response_model=CourseDetailResponse, status_code=status.HTTP_201_CREATED)
@@ -1039,6 +1001,9 @@ async def assign_course_to_users(
                 progress_percent=0,
             )
             db.add(new_enr)
+
+    # When assigning to users/departments, automatically mark the course as published
+    course.is_published = True
 
     await db.commit()
     return {

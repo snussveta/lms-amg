@@ -149,6 +149,9 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     );""",
                     "CREATE INDEX IF NOT EXISTS ix_knowledge_file_assignments_file_id ON knowledge_file_assignments(file_id);",
                     "CREATE INDEX IF NOT EXISTS ix_knowledge_file_assignments_user_id ON knowledge_file_assignments(user_id);",
+                    # Auto-publish any courses or tests that have active assignments
+                    "UPDATE courses SET is_published = TRUE WHERE id IN (SELECT DISTINCT course_id FROM course_assignments);",
+                    "UPDATE tests SET is_published = TRUE WHERE id IN (SELECT DISTINCT test_id FROM test_assignments);",
                 ]
                 for stmt in migration_sqls:
                     try:
