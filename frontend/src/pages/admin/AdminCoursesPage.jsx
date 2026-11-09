@@ -80,6 +80,21 @@ export const AdminCoursesPage = () => {
     }
   };
 
+  const handleTogglePublic = async (course, e) => {
+    if (e) e.stopPropagation();
+    const nextPublic = !course.is_public;
+    try {
+      await api.put(`/courses/${course.id}`, {
+        is_public: nextPublic,
+      });
+      setCourses((prev) =>
+        prev.map((c) => (c.id === course.id ? { ...c, is_public: nextPublic } : c))
+      );
+    } catch (err) {
+      alert(getErrorMessage(err, 'Не удалось изменить режим доступа к курсу.'));
+    }
+  };
+
   const handleDeleteCourse = async (courseId, title) => {
     if (!window.confirm(`Вы уверены, что хотите удалить курс «${title}» со всеми материалами?`)) {
       return;
@@ -203,10 +218,26 @@ export const AdminCoursesPage = () => {
                     <GraduationCap className="w-12 h-12 text-white/30" />
                   </div>
                 )}
-                <div className="absolute top-2.5 left-2.5">
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
                   <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-white/95 backdrop-blur border border-[#E0E0E0] text-[#003B73] uppercase tracking-wider shadow-2xs">
                     {course.department_tag || 'Общий'}
                   </span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleTogglePublic(course, e)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur shadow-2xs transition-all flex items-center gap-1 cursor-pointer hover:scale-105 active:scale-95 ${
+                      course.is_public
+                        ? 'bg-blue-50 border border-blue-200 text-[#003B73]'
+                        : 'bg-purple-50 border border-purple-200 text-purple-700'
+                    }`}
+                    title={
+                      course.is_public
+                        ? 'Общий доступ (виден всем в каталоге). Нажмите, чтобы ограничить доступ'
+                        : 'Только назначенным (виден только выбранным). Нажмите, чтобы открыть для всех'
+                    }
+                  >
+                    {course.is_public ? '🌐 Для всех' : '🔒 Назначенным'}
+                  </button>
                 </div>
                 <div className="absolute top-2.5 right-2.5">
                   <button

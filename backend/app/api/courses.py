@@ -82,37 +82,22 @@ async def get_courses(
     )
 
     if current_user.role == "employee":
-        user_dept = (current_user.department or "").strip()
         # Employee visibility rules:
-        # 1. Any course explicitly assigned to the employee is ALWAYS visible (even if marked draft)
-        # 2. Any published course that is either:
-        #    - Open to all (is_public == True)
-        #    - Tagged with employee's department or 'Общий'
+        # 1. Any course explicitly assigned to the employee in course_assignments (Course.id.in_(assigned_course_ids))
+        # 2. OR any course explicitly marked as public for all employees (is_public == True and is_published == True)
         visibility_clauses = []
         if assigned_course_ids:
             visibility_clauses.append(Course.id.in_(assigned_course_ids))
 
-        published_dept_clause = (Course.is_published.is_(True)) & (
-            (Course.is_public.is_(True))
-            | (Course.department_tag == user_dept)
-            | (Course.department_tag == "Общий")
-        )
-        visibility_clauses.append(published_dept_clause)
+        public_clause = (Course.is_published.is_(True)) & (Course.is_public.is_(True))
+        visibility_clauses.append(public_clause)
 
         stmt = stmt.where(or_(*visibility_clauses))
 
         if department and department != "Все":
-            # Department filter tab: keep courses matching department/Общий, OR explicitly assigned
-            if assigned_course_ids:
-                stmt = stmt.where(
-                    (Course.department_tag == department)
-                    | (Course.department_tag == "Общий")
-                    | (Course.id.in_(assigned_course_ids))
-                )
-            else:
-                stmt = stmt.where(
-                    (Course.department_tag == department) | (Course.department_tag == "Общий")
-                )
+            stmt = stmt.where(
+                (Course.department_tag == department) | (Course.department_tag == "Общий")
+            )
     else:
         if department and department != "Все":
             stmt = stmt.where(Course.department_tag == department)
@@ -197,7 +182,7 @@ async def create_course(
         department_tag=payload.department_tag,
         cover_image_url=payload.cover_image_url,
         is_published=payload.is_published,
-        is_public=payload.is_public if payload.is_public is not None else True,
+        is_public=payload.is_public if payload.is_public is not None else False,
         author_id=current_user.id,
     )
     db.add(new_course)
@@ -248,6 +233,20 @@ async def get_course_detail(
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if current_user.role == "employee":
+        assign_stmt = select(CourseAssignment).where(
+            CourseAssignment.course_id == course_id,
+            CourseAssignment.user_id == current_user.id,
+        )
+        assign_res = await db.execute(assign_stmt)
+        is_assigned = assign_res.scalar_one_or_none() is not None
+
+        if not is_assigned and not course.is_public:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="У вас нет доступа к данному курсу",
+            )
 
     # Serialize modules and lessons with quiz details
     modules_out = []
@@ -622,6 +621,21 @@ async def get_course_learn_state(
     course = res.scalar_one_or_none()
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    # Check access for employee: must be assigned or course must be public
+    if current_user.role == "employee":
+        assign_stmt = select(CourseAssignment).where(
+            CourseAssignment.course_id == course_id,
+            CourseAssignment.user_id == current_user.id,
+        )
+        assign_res = await db.execute(assign_stmt)
+        is_assigned = assign_res.scalar_one_or_none() is not None
+
+        if not is_assigned and not course.is_public:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="У вас нет доступа к данному курсу. Он назначен персонально другим сотрудникам.",
+            )
 
     # Ensure enrollment exists for user
     enr_stmt = select(UserCourseEnrollment).where(
@@ -1034,6 +1048,18 @@ async def revoke_course_assignment(
         )
 
     await db.delete(assignment)
+
+    # Clean up non-completed enrollment so progress doesn't keep course lingering
+    enr_res = await db.execute(
+        select(UserCourseEnrollment).where(
+            UserCourseEnrollment.course_id == course_id,
+            UserCourseEnrollment.user_id == user_id,
+        )
+    )
+    enr = enr_res.scalar_one_or_none()
+    if enr and enr.status != "completed":
+        await db.delete(enr)
+
     await db.commit()
     return {"status": "revoked", "course_id": course_id, "user_id": user_id}
 

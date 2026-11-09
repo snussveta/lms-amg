@@ -69,7 +69,7 @@ class CourseBase(BaseModel):
     department_tag: str = Field(default="СТО")
     cover_image_url: Optional[str] = None
     is_published: bool = False
-    is_public: bool = True
+    is_public: bool = False
 
 
 class CourseCreate(CourseBase):

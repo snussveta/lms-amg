@@ -46,6 +46,7 @@ export const CourseConstructorPage = () => {
   const [departmentTag, setDepartmentTag] = useState('СТО');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isPublished, setIsPublished] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [departmentsList, setDepartmentsList] = useState(['СТО', 'Склад', 'Продажи', 'Общий']);
 
@@ -158,6 +159,7 @@ export const CourseConstructorPage = () => {
       setDepartmentTag(data.department_tag || 'СТО');
       setCoverImageUrl(data.cover_image_url || '');
       setIsPublished(Boolean(data.is_published));
+      setIsPublic(Boolean(data.is_public));
       setModules(data.modules || []);
 
       if (data.modules?.length > 0 && data.modules[0].lessons?.length > 0) {
@@ -202,6 +204,7 @@ export const CourseConstructorPage = () => {
           department_tag: departmentTag,
           cover_image_url: coverImageUrl,
           is_published: isPublished,
+          is_public: isPublic,
         };
         const res = await api.post('/courses', payload);
         currentCId = res.data.id;
@@ -236,6 +239,7 @@ export const CourseConstructorPage = () => {
           department_tag: departmentTag,
           cover_image_url: coverImageUrl,
           is_published: isPublished,
+          is_public: isPublic,
         });
 
         // Persist all modules and lessons across all sections
@@ -1007,7 +1011,24 @@ export const CourseConstructorPage = () => {
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="space-y-1.5 pt-1">
+              <label className="text-xs font-bold text-[#212529]">Режим доступа</label>
+              <select
+                className="input-field text-xs bg-white"
+                value={isPublic ? 'public' : 'assigned'}
+                onChange={(e) => setIsPublic(e.target.value === 'public')}
+              >
+                <option value="assigned">🔒 Только назначенным (сотрудникам и отделам)</option>
+                <option value="public">🌐 Общий доступ (виден всем сотрудникам компании)</option>
+              </select>
+              <p className="text-[10px] text-[#6C757D]">
+                {isPublic
+                  ? 'Курс открыт в каталоге для всех зарегистрированных сотрудников.'
+                  : 'Курс увидят ТОЛЬКО те, кому он назначен через кнопку «Назначить курс».'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
               <input
                 type="checkbox"
                 id="isPublished"
@@ -1016,7 +1037,7 @@ export const CourseConstructorPage = () => {
                 className="w-4 h-4 rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] cursor-pointer"
               />
               <label htmlFor="isPublished" className="text-xs font-bold text-[#212529] cursor-pointer">
-                Опубликовать курс для сотрудников
+                Опубликовать курс
               </label>
             </div>
           </div>

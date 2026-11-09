@@ -18,7 +18,7 @@ class Course(Base):
     department_tag: Mapped[str] = mapped_column(String(100), default="СТО", index=True, nullable=False)
     cover_image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
-    is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     author_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(

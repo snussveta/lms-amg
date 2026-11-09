@@ -152,6 +152,9 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     # Auto-publish any courses or tests that have active assignments
                     "UPDATE courses SET is_published = TRUE WHERE id IN (SELECT DISTINCT course_id FROM course_assignments);",
                     "UPDATE tests SET is_published = TRUE WHERE id IN (SELECT DISTINCT test_id FROM test_assignments);",
+                    # Default courses to assigned-only (is_public = FALSE) so unassigned employees do not see them
+                    "ALTER TABLE courses ALTER COLUMN is_public SET DEFAULT FALSE;",
+                    "UPDATE courses SET is_public = FALSE WHERE is_public IS NULL OR is_public = TRUE;",
                 ]
                 for stmt in migration_sqls:
                     try:
