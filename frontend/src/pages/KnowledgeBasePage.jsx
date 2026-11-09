@@ -47,6 +47,216 @@ import confetti from 'canvas-confetti';
 import api, { getErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
+// Format bytes helper
+const formatBytes = (bytes, decimals = 1) => {
+  if (!bytes || bytes === 0) return '0 Б';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+// Format date helper
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  return d.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const FileCardPreview = ({ file, catInfo, isVideo, isPresentation }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const videoRef = useRef(null);
+
+  const isImage =
+    file.file_type === 'image' ||
+    (file.file_name && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(file.file_name));
+  const isPdf =
+    isPresentation ||
+    (file.file_name && /\.pdf$/i.test(file.file_name)) ||
+    file.file_type === 'presentation';
+
+  const handleMouseEnter = () => {
+    if (isVideo && videoRef.current) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(() => {});
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isVideo && videoRef.current) {
+      videoRef.current.pause();
+      try {
+        videoRef.current.currentTime = 1;
+      } catch {}
+      setIsPlaying(false);
+    }
+  };
+
+  return (
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="h-44 sm:h-48 bg-[#001830] p-3.5 flex flex-col justify-between relative border-b border-[#E0E0E0] overflow-hidden select-none group/thumb"
+    >
+      {/* Fallback gradient background */}
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${catInfo.gradient} opacity-90 pointer-events-none`}
+      />
+
+      {/* 1. REAL VIDEO PREVIEW */}
+      {isVideo && (
+        <>
+          <video
+            ref={videoRef}
+            src={`${file.file_url}#t=1`}
+            preload="metadata"
+            muted
+            playsInline
+            loop
+            onLoadedMetadata={(e) => {
+              try {
+                if (e.target.duration > 1) {
+                  e.target.currentTime = 1;
+                }
+                setIsLoaded(true);
+              } catch {}
+            }}
+            onSeeked={() => setIsLoaded(true)}
+            className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300 pointer-events-none ${
+              isLoaded ? 'opacity-100' : 'opacity-70'
+            }`}
+          />
+          {/* Dark gradient overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/50 pointer-events-none" />
+
+          {/* Centered Play Button Icon */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-200 ${
+              isPlaying ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
+            }`}
+          >
+            <div className="w-13 h-13 rounded-full bg-black/50 backdrop-blur-md border border-white/30 text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-[#E30613] group-hover:border-[#E30613] transition-all shadow-2xl">
+              <Play className="w-5 h-5 fill-current ml-0.5 text-white" />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 2. REAL IMAGE PREVIEW */}
+      {isImage && (
+        <>
+          <img
+            src={file.file_url}
+            alt={file.title}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/45 pointer-events-none" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center shadow-lg">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 3. PRESENTATION / PDF PREVIEW */}
+      {!isVideo && !isImage && isPdf && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#002447] via-[#003B73] to-[#001830] flex items-center justify-center p-4 pointer-events-none">
+            {/* Visual presentation slide card mockup */}
+            <div className="w-full h-full border border-white/20 rounded-xl bg-white/10 backdrop-blur-sm p-3 flex flex-col justify-between shadow-inner group-hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#E30613] text-white shadow-2xs">
+                  PDF Презентация
+                </span>
+                <FileCode className="w-4 h-4 text-white/70" />
+              </div>
+              <div className="space-y-1.5 py-1">
+                <div className="h-2 w-3/4 bg-white/70 rounded" />
+                <div className="h-1.5 w-1/2 bg-white/40 rounded" />
+                <div className="h-1.5 w-2/3 bg-white/30 rounded" />
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-white/70 pt-1 border-t border-white/10">
+                <span className="truncate max-w-[130px] font-medium">{file.title}</span>
+                <span className="text-[#E30613] font-bold">Смотреть</span>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/40 pointer-events-none" />
+        </>
+      )}
+
+      {/* 4. OTHER DOCUMENT PREVIEW */}
+      {!isVideo && !isImage && !isPdf && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#212529] to-[#001830] flex items-center justify-center pointer-events-none">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white/80 group-hover:scale-110 transition-transform">
+              <FileText className="w-7 h-7" />
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
+        </>
+      )}
+
+      {/* Top Badges (z-10 on top of preview) */}
+      <div className="flex items-center justify-between gap-2 z-10">
+        <span
+          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1.5 shadow-2xs backdrop-blur-md ${
+            isVideo || isImage || isPdf
+              ? 'bg-black/60 text-white border-white/20'
+              : catInfo.badgeColor
+          }`}
+        >
+          {catInfo.icon}
+          <span>{catInfo.label}</span>
+        </span>
+
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/95 backdrop-blur border border-[#E0E0E0] text-[#003B73] shadow-2xs">
+            {file.department}
+          </span>
+          {file.access_type === 'department' && (
+            <span
+              className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#003B73] text-white shadow-2xs"
+              title={`Доступ отделу: ${file.accessible_departments || file.department}`}
+            >
+              🏢 Отдел
+            </span>
+          )}
+          {file.access_type === 'users' && (
+            <span
+              className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-700 text-white shadow-2xs"
+              title={`Персональный доступ (${file.assigned_user_ids?.length || 0} сотр.)`}
+            >
+              👤 {file.assigned_user_ids?.length || 0}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom File Metadata (z-10 on top of preview) */}
+      <div className="flex items-center justify-between text-[11px] font-semibold z-10">
+        <span className="bg-black/65 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 text-white shadow-2xs text-[10px]">
+          {formatBytes(file.file_size_bytes)}
+        </span>
+        <span className="bg-black/65 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 text-white shadow-2xs truncate max-w-[160px] text-[10px]">
+          {file.file_name}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const KnowledgeBasePage = () => {
   const { user, isAdmin } = useAuth();
 
@@ -650,69 +860,13 @@ export const KnowledgeBasePage = () => {
                   onClick={() => handleOpenMedia(file)}
                   className="bg-white group rounded-2xl border border-[#E0E0E0] shadow-sm hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col cursor-pointer"
                 >
-                  {/* Card Header / Preview Area */}
-                  <div
-                    className={`h-40 bg-gradient-to-br ${catInfo.gradient} p-4 flex flex-col justify-between relative border-b border-[#E0E0E0] overflow-hidden`}
-                  >
-                    {/* Top Badges */}
-                    <div className="flex items-center justify-between gap-2 z-10">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1.5 shadow-2xs ${catInfo.badgeColor}`}
-                      >
-                        {catInfo.icon}
-                        <span>{catInfo.label}</span>
-                      </span>
-
-                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 border border-[#E0E0E0] text-[#212529] shadow-2xs">
-                          {file.department}
-                        </span>
-                        {file.access_type === 'department' && (
-                          <span
-                            className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#003B73] text-white shadow-2xs"
-                            title={`Доступ отделу: ${file.accessible_departments || file.department}`}
-                          >
-                            🏢 Отдел
-                          </span>
-                        )}
-                        {file.access_type === 'users' && (
-                          <span
-                            className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-700 text-white shadow-2xs"
-                            title={`Персональный доступ (${file.assigned_user_ids?.length || 0} сотр.)`}
-                          >
-                            👤 {file.assigned_user_ids?.length || 0}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Centered Action Hover Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      {isVideo ? (
-                        <div className="w-14 h-14 rounded-2xl bg-white/95 border border-[#E0E0E0] text-[#003B73] flex items-center justify-center group-hover:scale-110 group-hover:bg-[#003B73] group-hover:text-white transition-all shadow-md">
-                          <Play className="w-6 h-6 fill-current ml-0.5" />
-                        </div>
-                      ) : isPresentation ? (
-                        <div className="w-14 h-14 rounded-2xl bg-white/95 border border-[#E0E0E0] text-amber-700 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#003B73] group-hover:text-white transition-all shadow-md">
-                          <FileCode className="w-6 h-6" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-white/95 border border-[#E0E0E0] text-emerald-700 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#003B73] group-hover:text-white transition-all shadow-md">
-                          <FileText className="w-6 h-6" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom File Metadata in preview */}
-                    <div className="flex items-center justify-between text-[11px] text-[#6C757D] font-semibold z-10">
-                      <span className="bg-white/90 px-2 py-0.5 rounded-md border border-[#E0E0E0] shadow-2xs text-[#212529]">
-                        {formatBytes(file.file_size_bytes)}
-                      </span>
-                      <span className="bg-white/90 px-2 py-0.5 rounded-md border border-[#E0E0E0] shadow-2xs truncate max-w-[150px] text-[#212529]">
-                        {file.file_name}
-                      </span>
-                    </div>
-                  </div>
+                  {/* Card Header / Real Preview Area */}
+                  <FileCardPreview
+                    file={file}
+                    catInfo={catInfo}
+                    isVideo={isVideo}
+                    isPresentation={isPresentation}
+                  />
 
                   {/* Card Content Body */}
                   <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
@@ -832,13 +986,40 @@ export const KnowledgeBasePage = () => {
                         onClick={() => handleOpenMedia(file)}
                         className="hover:bg-[#F4F5F7]/70 transition-colors cursor-pointer"
                       >
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1 ${catInfo.badgeColor}`}
-                          >
-                            {catInfo.icon}
-                            <span>{catInfo.label}</span>
-                          </span>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            {/* Mini Thumbnail */}
+                            <div className="w-11 h-8 rounded-lg overflow-hidden bg-slate-900 border border-[#E0E0E0] shrink-0 relative flex items-center justify-center shadow-2xs">
+                              {file.file_type === 'video' ? (
+                                <>
+                                  <video
+                                    src={`${file.file_url}#t=1`}
+                                    preload="metadata"
+                                    muted
+                                    className="w-full h-full object-cover pointer-events-none"
+                                  />
+                                  <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                                    <Play className="w-3 h-3 fill-white text-white ml-0.5" />
+                                  </div>
+                                </>
+                              ) : file.file_type === 'image' ||
+                                (file.file_name && /\.(jpg|jpeg|png|webp|gif)$/i.test(file.file_name)) ? (
+                                <img
+                                  src={file.file_url}
+                                  alt={file.title}
+                                  className="w-full h-full object-cover pointer-events-none"
+                                />
+                              ) : (
+                                <div className="text-white/80 scale-90">{catInfo.icon}</div>
+                              )}
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1 shrink-0 ${catInfo.badgeColor}`}
+                            >
+                              {catInfo.icon}
+                              <span>{catInfo.label}</span>
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-[#212529] line-clamp-1">{file.title}</div>
