@@ -34,6 +34,7 @@ import {
   PlayCircle,
   Plus,
   Search,
+  Shield,
   SlidersHorizontal,
   Trash2,
   Upload,

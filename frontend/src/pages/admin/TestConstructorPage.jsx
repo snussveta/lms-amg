@@ -15,6 +15,7 @@ import {
   Percent,
   Plus,
   Save,
+  Search,
   ShieldCheck,
   Trash2,
   Users,

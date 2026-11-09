@@ -48,20 +48,18 @@ async def create_user_by_admin(
             detail="Только суперадминистратор может создавать учетные записи суперадминистратора",
         )
 
-    # Sync department name if department_id provided
-    dept_name = payload.department or "СТО"
-    dept_id = payload.department_id
-    if dept_id:
-        dept_res = await db.execute(select(Department).where(Department.id == dept_id))
+    # Department sync: check both department_id and department string
+    dept_obj = None
+    if payload.department_id is not None and payload.department_id > 0:
+        dept_res = await db.execute(select(Department).where(Department.id == payload.department_id))
         dept_obj = dept_res.scalar_one_or_none()
-        if dept_obj:
-            dept_name = dept_obj.name
-    elif payload.department:
+
+    if not dept_obj and payload.department is not None and payload.department.strip():
         dept_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
         dept_obj = dept_res.scalar_one_or_none()
-        if dept_obj:
-            dept_id = dept_obj.id
-            dept_name = dept_obj.name
+
+    dept_name = dept_obj.name if dept_obj else (payload.department.strip() if payload.department else "СТО")
+    dept_id = dept_obj.id if dept_obj else None
 
     new_user = User(
         email=email_clean,
@@ -124,18 +122,22 @@ async def update_user(
     if payload.branch is not None:
         target_user.branch = payload.branch.strip()
 
-    if payload.department_id is not None:
-        target_user.department_id = payload.department_id
-        dept_res = await db.execute(select(Department).where(Department.id == payload.department_id))
-        dept_obj = dept_res.scalar_one_or_none()
-        if dept_obj:
-            target_user.department = dept_obj.name
-    elif payload.department is not None:
+    # Department update: resolve department object by ID or by name
+    target_dept_obj = None
+    if payload.department_id is not None and payload.department_id > 0:
+        d_res = await db.execute(select(Department).where(Department.id == payload.department_id))
+        target_dept_obj = d_res.scalar_one_or_none()
+
+    if not target_dept_obj and payload.department is not None and payload.department.strip():
+        d_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
+        target_dept_obj = d_res.scalar_one_or_none()
+
+    if target_dept_obj:
+        target_user.department_id = target_dept_obj.id
+        target_user.department = target_dept_obj.name
+    elif payload.department is not None and payload.department.strip():
         target_user.department = payload.department.strip()
-        dept_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
-        dept_obj = dept_res.scalar_one_or_none()
-        if dept_obj:
-            target_user.department_id = dept_obj.id
+        target_user.department_id = None
 
     if payload.password is not None and payload.password.strip():
         target_user.hashed_password = get_password_hash(payload.password.strip())

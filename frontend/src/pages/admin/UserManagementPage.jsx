@@ -135,7 +135,17 @@ export const UserManagementPage = () => {
     try {
       setIsSubmittingUser(true);
       setError('');
-      const res = await api.post('/users', registerForm);
+      const matchedDept = departments.find(
+        (d) => d.name === registerForm.department || d.id === registerForm.department_id
+      );
+      const payload = {
+        ...registerForm,
+        branch: registerForm.branch.trim(),
+        department: matchedDept ? matchedDept.name : registerForm.department,
+        department_id: matchedDept ? matchedDept.id : registerForm.department_id,
+      };
+
+      const res = await api.post('/users', payload);
       setUsers((prev) => [res.data, ...prev]);
       setIsRegisterModalOpen(false);
       setSuccessMsg(`Сотрудник ${res.data.full_name} успешно зарегистрирован. Логин: ${res.data.email}`);
@@ -154,13 +164,23 @@ export const UserManagementPage = () => {
   // Open Edit Employee Modal
   const openEditModal = (targetUser) => {
     setEditingUser(targetUser);
+    const matchedDept = departments.find(
+      (d) =>
+        (targetUser.department_id && d.id === targetUser.department_id) ||
+        (targetUser.department && d.name.toLowerCase() === targetUser.department.toLowerCase())
+    );
+    const resolvedDeptName = matchedDept
+      ? matchedDept.name
+      : (targetUser.department || (departments[0]?.name || 'Общий'));
+    const resolvedDeptId = matchedDept ? matchedDept.id : (departments[0]?.id || null);
+
     setEditForm({
       full_name: targetUser.full_name || '',
       email: targetUser.email || '',
       password: '',
       branch: targetUser.branch || 'AutoMall Центральный',
-      department: targetUser.department || 'СТО',
-      department_id: targetUser.department_id || null,
+      department: resolvedDeptName,
+      department_id: resolvedDeptId,
       role: targetUser.role || 'employee',
     });
     setIsSubmittingEdit(false);
@@ -173,12 +193,15 @@ export const UserManagementPage = () => {
     try {
       setIsSubmittingEdit(true);
       setError('');
+      const matchedDept = departments.find(
+        (d) => d.name === editForm.department || d.id === editForm.department_id
+      );
       const payload = {
         full_name: editForm.full_name.trim(),
         email: editForm.email.trim(),
-        branch: editForm.branch,
-        department: editForm.department,
-        department_id: editForm.department_id,
+        branch: editForm.branch.trim(),
+        department: matchedDept ? matchedDept.name : editForm.department,
+        department_id: matchedDept ? matchedDept.id : editForm.department_id,
         role: editForm.role,
       };
       if (editForm.password && editForm.password.trim()) {
@@ -790,40 +813,52 @@ export const UserManagementPage = () => {
                     Отдел компании
                   </label>
                   <select
-                    value={registerForm.department_id || ''}
+                    value={registerForm.department || ''}
                     onChange={(e) => {
-                      const id = e.target.value ? parseInt(e.target.value, 10) : null;
-                      const d = departments.find((dept) => dept.id === id);
+                      const selectedName = e.target.value;
+                      const d = departments.find((dept) => dept.name === selectedName);
                       setRegisterForm({
                         ...registerForm,
-                        department_id: id,
-                        department: d ? d.name : 'СТО',
+                        department: selectedName,
+                        department_id: d ? d.id : null,
                       });
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
                     {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
+                      <option key={d.id} value={d.name}>
                         {d.name}
                       </option>
                     ))}
+                    {registerForm.department &&
+                      !departments.some((d) => d.name === registerForm.department) && (
+                        <option value={registerForm.department}>
+                          {registerForm.department}
+                        </option>
+                      )}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
-                    Филиал AutoMall
+                    Филиал компании
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    list="branch-list-reg"
                     value={registerForm.branch}
                     onChange={(e) => setRegisterForm({ ...registerForm, branch: e.target.value })}
+                    placeholder="Например: AutoMall Центральный или КСМ"
                     className="input-field text-xs w-full bg-white"
-                  >
-                    <option value="AutoMall Центральный">AutoMall Центральный</option>
-                    <option value="AutoMall Север">AutoMall Север</option>
-                    <option value="AutoMall Юг">AutoMall Юг</option>
-                    <option value="AutoMall Восток">AutoMall Восток</option>
-                  </select>
+                  />
+                  <datalist id="branch-list-reg">
+                    <option value="AutoMall Центральный" />
+                    <option value="AutoMall Север" />
+                    <option value="AutoMall Юг" />
+                    <option value="AutoMall Восток" />
+                    <option value="AutoMall Петриканы" />
+                    <option value="AutoMall Рышкановка" />
+                  </datalist>
                 </div>
               </div>
 
@@ -978,40 +1013,52 @@ export const UserManagementPage = () => {
                     Отдел компании
                   </label>
                   <select
-                    value={editForm.department_id || ''}
+                    value={editForm.department || ''}
                     onChange={(e) => {
-                      const id = e.target.value ? parseInt(e.target.value, 10) : null;
-                      const d = departments.find((dept) => dept.id === id);
+                      const selectedName = e.target.value;
+                      const d = departments.find((dept) => dept.name === selectedName);
                       setEditForm({
                         ...editForm,
-                        department_id: id,
-                        department: d ? d.name : editForm.department,
+                        department: selectedName,
+                        department_id: d ? d.id : null,
                       });
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
                     {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
+                      <option key={d.id} value={d.name}>
                         {d.name}
                       </option>
                     ))}
+                    {editForm.department &&
+                      !departments.some((d) => d.name === editForm.department) && (
+                        <option value={editForm.department}>
+                          {editForm.department}
+                        </option>
+                      )}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
-                    Филиал AutoMall
+                    Филиал компании
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    list="branch-list-edit"
                     value={editForm.branch}
                     onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                    placeholder="Например: AutoMall Центральный или КСМ"
                     className="input-field text-xs w-full bg-white"
-                  >
-                    <option value="AutoMall Центральный">AutoMall Центральный</option>
-                    <option value="AutoMall Север">AutoMall Север</option>
-                    <option value="AutoMall Юг">AutoMall Юг</option>
-                    <option value="AutoMall Восток">AutoMall Восток</option>
-                  </select>
+                  />
+                  <datalist id="branch-list-edit">
+                    <option value="AutoMall Центральный" />
+                    <option value="AutoMall Север" />
+                    <option value="AutoMall Юг" />
+                    <option value="AutoMall Восток" />
+                    <option value="AutoMall Петриканы" />
+                    <option value="AutoMall Рышкановка" />
+                  </datalist>
                 </div>
               </div>
 
