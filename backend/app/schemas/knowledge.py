@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -8,6 +8,8 @@ class KnowledgeFileBase(BaseModel):
     description: Optional[str] = ""
     file_type: str = Field(default="video")  # video, presentation, document, image, other
     department: str = Field(default="Общий")
+    access_type: str = Field(default="all")  # all, department, users
+    accessible_departments: Optional[str] = ""
 
 
 class KnowledgeFileCreate(KnowledgeFileBase):
@@ -15,6 +17,7 @@ class KnowledgeFileCreate(KnowledgeFileBase):
     file_url: str
     file_size_bytes: int = 0
     mime_type: Optional[str] = None
+    assigned_user_ids: Optional[List[int]] = []
 
 
 class KnowledgeFileUpdate(BaseModel):
@@ -22,6 +25,9 @@ class KnowledgeFileUpdate(BaseModel):
     description: Optional[str] = None
     department: Optional[str] = None
     file_type: Optional[str] = None
+    access_type: Optional[str] = None
+    accessible_departments: Optional[str] = None
+    assigned_user_ids: Optional[List[int]] = None
 
 
 class KnowledgeFileResponse(BaseModel):
@@ -34,6 +40,9 @@ class KnowledgeFileResponse(BaseModel):
     file_size_bytes: int
     mime_type: Optional[str] = None
     department: str
+    access_type: str = "all"
+    accessible_departments: Optional[str] = ""
+    assigned_user_ids: List[int] = []
     uploaded_by_id: Optional[int] = None
     uploaded_by_name: Optional[str] = None
     downloads_count: int = 0

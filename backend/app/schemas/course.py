@@ -117,7 +117,9 @@ class CourseDetailResponse(CourseBase):
 
 # --- Course Assignment Schemas ---
 class CourseAssignRequest(BaseModel):
-    user_ids: List[int]
+    user_ids: List[int] = []
+    department_ids: List[int] = []
+    departments: List[str] = []
     deadline: Optional[datetime] = None
 
 

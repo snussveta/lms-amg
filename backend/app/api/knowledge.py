@@ -8,14 +8,14 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
-from sqlalchemy import func, select, desc, or_
+from sqlalchemy import func, select, desc, or_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
-from app.models.knowledge import KnowledgeFile
+from app.models.knowledge import KnowledgeFile, KnowledgeFileAssignment
 from app.models.user import User
 from app.schemas.knowledge import (
     KnowledgeFileResponse,
@@ -78,8 +78,43 @@ async def get_knowledge_files(
     """
     Get all Knowledge Base files with search and filtering.
     Available to all authenticated users (employees, methodists, admins).
+    Employees only see files granted to them (all, their department, or explicit assignments).
     """
-    stmt = select(KnowledgeFile).options(selectinload(KnowledgeFile.uploaded_by))
+    stmt = (
+        select(KnowledgeFile)
+        .options(
+            selectinload(KnowledgeFile.uploaded_by),
+            selectinload(KnowledgeFile.assigned_users),
+        )
+    )
+
+    # Access control for employees
+    if current_user.role == "employee":
+        user_dept = (current_user.department or "").strip()
+        assigned_file_ids_res = await db.execute(
+            select(KnowledgeFileAssignment.file_id).where(
+                KnowledgeFileAssignment.user_id == current_user.id
+            )
+        )
+        assigned_ids = [fid for (fid,) in assigned_file_ids_res.fetchall()]
+
+        access_conds = [
+            KnowledgeFile.access_type == "all",
+            KnowledgeFile.access_type.is_(None),
+        ]
+        if user_dept:
+            access_conds.append(
+                (KnowledgeFile.access_type == "department")
+                & (
+                    KnowledgeFile.accessible_departments.ilike(f"%{user_dept}%")
+                    | (KnowledgeFile.department == user_dept)
+                )
+            )
+        if assigned_ids:
+            access_conds.append(
+                (KnowledgeFile.access_type == "users") & (KnowledgeFile.id.in_(assigned_ids))
+            )
+        stmt = stmt.where(or_(*access_conds))
 
     # Search filter
     if search and search.strip():
@@ -113,6 +148,7 @@ async def get_knowledge_files(
 
     out = []
     for f in files:
+        uids = [a.user_id for a in f.assigned_users] if f.assigned_users else []
         out.append(
             KnowledgeFileResponse(
                 id=f.id,
@@ -124,6 +160,9 @@ async def get_knowledge_files(
                 file_size_bytes=f.file_size_bytes,
                 mime_type=f.mime_type,
                 department=f.department,
+                access_type=getattr(f, "access_type", "all") or "all",
+                accessible_departments=getattr(f, "accessible_departments", "") or "",
+                assigned_user_ids=uids,
                 uploaded_by_id=f.uploaded_by_id,
                 uploaded_by_name=f.uploaded_by.full_name if f.uploaded_by else None,
                 downloads_count=f.downloads_count,
@@ -177,6 +216,9 @@ async def upload_knowledge_file(
     description: Optional[str] = Form(""),
     department: Optional[str] = Form("Общий"),
     file_type: Optional[str] = Form(None),
+    access_type: Optional[str] = Form("all"),
+    accessible_departments: Optional[str] = Form(""),
+    assigned_user_ids: Optional[str] = Form(""),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):
@@ -220,9 +262,22 @@ async def upload_knowledge_file(
         file_size_bytes=total_size,
         mime_type=mime_type,
         department=department or "Общий",
+        access_type=access_type or "all",
+        accessible_departments=accessible_departments or "",
         uploaded_by_id=current_user.id,
     )
     db.add(new_file)
+    await db.flush()
+
+    parsed_uids = []
+    if assigned_user_ids:
+        for x in str(assigned_user_ids).replace("[", "").replace("]", "").split(","):
+            x = x.strip()
+            if x.isdigit():
+                uid = int(x)
+                parsed_uids.append(uid)
+                db.add(KnowledgeFileAssignment(file_id=new_file.id, user_id=uid))
+
     await db.commit()
     await db.refresh(new_file)
 
@@ -236,6 +291,9 @@ async def upload_knowledge_file(
         file_size_bytes=new_file.file_size_bytes,
         mime_type=new_file.mime_type,
         department=new_file.department,
+        access_type=new_file.access_type or "all",
+        accessible_departments=new_file.accessible_departments or "",
+        assigned_user_ids=parsed_uids,
         uploaded_by_id=new_file.uploaded_by_id,
         uploaded_by_name=current_user.full_name,
         downloads_count=0,
@@ -332,7 +390,10 @@ async def update_knowledge_file(
     """Edit metadata of a knowledge file."""
     stmt = (
         select(KnowledgeFile)
-        .options(selectinload(KnowledgeFile.uploaded_by))
+        .options(
+            selectinload(KnowledgeFile.uploaded_by),
+            selectinload(KnowledgeFile.assigned_users),
+        )
         .where(KnowledgeFile.id == file_id)
     )
     res = await db.execute(stmt)
@@ -348,10 +409,25 @@ async def update_knowledge_file(
         kfile.department = payload.department
     if payload.file_type is not None:
         kfile.file_type = payload.file_type
+    if payload.access_type is not None:
+        kfile.access_type = payload.access_type
+    if payload.accessible_departments is not None:
+        kfile.accessible_departments = payload.accessible_departments
+    if payload.assigned_user_ids is not None:
+        await db.execute(
+            delete(KnowledgeFileAssignment).where(KnowledgeFileAssignment.file_id == file_id)
+        )
+        for uid in payload.assigned_user_ids:
+            db.add(KnowledgeFileAssignment(file_id=file_id, user_id=uid))
 
     kfile.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(kfile)
+
+    assigned_res = await db.execute(
+        select(KnowledgeFileAssignment.user_id).where(KnowledgeFileAssignment.file_id == file_id)
+    )
+    current_uids = [uid for (uid,) in assigned_res.fetchall()]
 
     return KnowledgeFileResponse(
         id=kfile.id,
@@ -363,6 +439,9 @@ async def update_knowledge_file(
         file_size_bytes=kfile.file_size_bytes,
         mime_type=kfile.mime_type,
         department=kfile.department,
+        access_type=getattr(kfile, "access_type", "all") or "all",
+        accessible_departments=getattr(kfile, "accessible_departments", "") or "",
+        assigned_user_ids=current_uids,
         uploaded_by_id=kfile.uploaded_by_id,
         uploaded_by_name=kfile.uploaded_by.full_name if kfile.uploaded_by else None,
         downloads_count=kfile.downloads_count,

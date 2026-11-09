@@ -1,7 +1,7 @@
 import secrets
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -371,26 +371,43 @@ async def assign_test_to_users(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    target_user_ids = []
+    target_user_ids = set()
     if assign_req.assign_all:
         users_res = await db.execute(select(User.id).where(User.is_active.is_(True)))
-        target_user_ids = [uid for (uid,) in users_res.fetchall()]
+        target_user_ids = {uid for (uid,) in users_res.fetchall()}
     else:
-        target_user_ids = assign_req.user_ids
+        target_user_ids.update(assign_req.user_ids or [])
+        if assign_req.department_ids or assign_req.departments:
+            dept_conditions = []
+            if assign_req.department_ids:
+                dept_conditions.append(User.department_id.in_(assign_req.department_ids))
+            if assign_req.departments:
+                dept_conditions.append(User.department.in_(assign_req.departments))
+            if dept_conditions:
+                dept_users_res = await db.execute(
+                    select(User.id).where(User.is_active.is_(True), or_(*dept_conditions))
+                )
+                for (uid,) in dept_users_res.fetchall():
+                    target_user_ids.add(uid)
 
     if not target_user_ids:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Не выбраны сотрудники для назначения")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Не выбраны сотрудники или отделы для назначения",
+        )
+
+    target_list = list(target_user_ids)
 
     # Получаем уже существующие назначения для данного теста
     existing_res = await db.execute(
         select(TestAssignment).where(
             TestAssignment.test_id == test_id,
-            TestAssignment.user_id.in_(target_user_ids),
+            TestAssignment.user_id.in_(target_list),
         )
     )
     existing_assignments = {a.user_id: a for a in existing_res.scalars().all()}
 
-    for uid in target_user_ids:
+    for uid in target_list:
         if uid in existing_assignments:
             # Обновляем дедлайн
             existing_assignments[uid].due_date = assign_req.due_date
@@ -405,7 +422,7 @@ async def assign_test_to_users(
             db.add(new_assignment)
 
     await db.commit()
-    return {"message": f"Тест успешно назначен {len(target_user_ids)} сотрудникам"}
+    return {"message": f"Тест успешно назначен {len(target_list)} сотрудникам"}
 
 
 @router.get("/{test_id}/assignments", response_model=TestAssignmentListResponse)

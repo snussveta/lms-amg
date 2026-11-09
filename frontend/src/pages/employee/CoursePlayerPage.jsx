@@ -514,9 +514,8 @@ export const CoursePlayerPage = () => {
 
         {/* LEFT COLUMN: Navigation Sidebar */}
         <div
-          className={`${
-            sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-0'
-          } shrink-0 transition-all duration-200 ease-in-out border-r border-[#E0E0E0] bg-white overflow-y-auto flex flex-col fixed md:static inset-y-0 left-0 z-50 md:z-auto shadow-2xl md:shadow-none`}
+          className={`${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-0'
+            } shrink-0 transition-all duration-200 ease-in-out border-r border-[#E0E0E0] bg-white overflow-y-auto flex flex-col fixed md:static inset-y-0 left-0 z-50 md:z-auto shadow-2xl md:shadow-none`}
         >
           {sidebarOpen && (
             <div className="p-4 space-y-4">
@@ -550,9 +549,8 @@ export const CoursePlayerPage = () => {
                       </button>
 
                       <div
-                        className={`space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
-                          isCollapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[1000px] opacity-100'
-                        }`}
+                        className={`space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[1000px] opacity-100'
+                          }`}
                       >
                         {(mod.lessons || []).map((les) => {
                           const isCurrent = activeLesson?.id === les.id;
@@ -570,13 +568,12 @@ export const CoursePlayerPage = () => {
                             <div
                               key={les.id}
                               onClick={() => handleSelectLesson(les)}
-                              className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all select-none min-h-[38px] ${
-                                isCurrent
-                                  ? 'bg-[#F0F5FA] border border-[#B8D5ED] text-[#003B73] font-bold shadow-2xs'
-                                  : isLocked
+                              className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all select-none min-h-[38px] ${isCurrent
+                                ? 'bg-[#F0F5FA] border border-[#B8D5ED] text-[#003B73] font-bold shadow-2xs'
+                                : isLocked
                                   ? 'opacity-40 text-[#6C757D] hover:bg-[#F4F5F7] cursor-not-allowed'
                                   : 'text-[#212529] hover:bg-[#F4F5F7]'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-2 min-w-0 pr-2">
                                 {isCompleted ? (
@@ -683,9 +680,8 @@ export const CoursePlayerPage = () => {
                         return (
                           <div
                             key={idx}
-                            className={`p-4 rounded-xl border flex items-start gap-3.5 my-4 ${
-                              calloutColors[variant] || calloutColors.info
-                            }`}
+                            className={`p-4 rounded-xl border flex items-start gap-3.5 my-4 ${calloutColors[variant] || calloutColors.info
+                              }`}
                           >
                             {calloutIcons[variant] || calloutIcons.info}
                             <div className="space-y-1">
@@ -800,11 +796,10 @@ export const CoursePlayerPage = () => {
                           key={rate}
                           type="button"
                           onClick={() => handleSpeedChange(rate)}
-                          className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${
-                            videoSpeed === rate
-                              ? 'bg-[#003B73] text-white'
-                              : 'bg-[#F4F5F7] text-[#495057] hover:bg-[#E0E0E0]'
-                          }`}
+                          className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${videoSpeed === rate
+                            ? 'bg-[#003B73] text-white'
+                            : 'bg-[#F4F5F7] text-[#495057] hover:bg-[#E0E0E0]'
+                            }`}
                         >
                           {rate}x
                         </button>
@@ -914,11 +909,10 @@ export const CoursePlayerPage = () => {
                         </div>
 
                         {quizTimeLeft !== null && (
-                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs shrink-0 ${
-                            quizTimeLeft < 180
-                              ? 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613] animate-pulse'
-                              : 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]'
-                          }`}>
+                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs shrink-0 ${quizTimeLeft < 180
+                            ? 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613] animate-pulse'
+                            : 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]'
+                            }`}>
                             <Clock className="w-3.5 h-3.5" />
                             <span>{formatTime(quizTimeLeft)}</span>
                           </div>
@@ -971,18 +965,15 @@ export const CoursePlayerPage = () => {
                                       <div
                                         key={opt.id}
                                         onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
-                                        className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center gap-3 min-h-[44px] ${
-                                          isChecked
-                                            ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
-                                            : 'bg-white border-[#E0E0E0] text-[#212529] hover:bg-[#F8F9FA]'
-                                        }`}
+                                        className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center gap-3 min-h-[44px] ${isChecked
+                                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
+                                          : 'bg-white border-[#E0E0E0] text-[#212529] hover:bg-[#F8F9FA]'
+                                          }`}
                                       >
                                         <div
-                                          className={`w-4 h-4 rounded flex items-center justify-center ${
-                                            isMultiple ? 'rounded' : 'rounded-full'
-                                          } border ${
-                                            isChecked ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
-                                          }`}
+                                          className={`w-4 h-4 rounded flex items-center justify-center ${isMultiple ? 'rounded' : 'rounded-full'
+                                            } border ${isChecked ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
+                                            }`}
                                         >
                                           {isChecked && <Check className="w-3 h-3 text-white stroke-[3]" />}
                                         </div>

@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 class TestAssignRequest(BaseModel):
     user_ids: List[int] = Field(default_factory=list)
+    department_ids: List[int] = Field(default_factory=list)
+    departments: List[str] = Field(default_factory=list)
     assign_all: bool = False
     due_date: Optional[datetime] = None
 

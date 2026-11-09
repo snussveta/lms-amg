@@ -84,9 +84,19 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1;",
                     "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_assigned_only BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE bank_questions ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Общий';",
-                    # Users branch & department
+                    # Departments table
+                    """CREATE TABLE IF NOT EXISTS departments (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(100) UNIQUE NOT NULL,
+                        description TEXT DEFAULT '',
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_departments_name ON departments(name);",
+                    # Users branch, department & department_id
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(100) DEFAULT 'AutoMall Центральный';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'СТО';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id) ON DELETE SET NULL;",
+                    "CREATE INDEX IF NOT EXISTS ix_users_department_id ON users(department_id);",
                     # Courses schema checks
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS cover_image_url VARCHAR(500);",
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS department_tag VARCHAR(100) DEFAULT 'СТО';",
@@ -126,6 +136,19 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "CREATE INDEX IF NOT EXISTS ix_knowledge_files_title ON knowledge_files(title);",
                     "CREATE INDEX IF NOT EXISTS ix_knowledge_files_file_type ON knowledge_files(file_type);",
                     "CREATE INDEX IF NOT EXISTS ix_knowledge_files_department ON knowledge_files(department);",
+                    "ALTER TABLE knowledge_files ADD COLUMN IF NOT EXISTS access_type VARCHAR(50) DEFAULT 'all';",
+                    "ALTER TABLE knowledge_files ADD COLUMN IF NOT EXISTS accessible_departments TEXT DEFAULT '';",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_files_access_type ON knowledge_files(access_type);",
+                    # Knowledge File User Assignments table
+                    """CREATE TABLE IF NOT EXISTS knowledge_file_assignments (
+                        id SERIAL PRIMARY KEY,
+                        file_id INTEGER NOT NULL REFERENCES knowledge_files(id) ON DELETE CASCADE,
+                        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        CONSTRAINT uq_knowledge_file_user UNIQUE (file_id, user_id)
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_file_assignments_file_id ON knowledge_file_assignments(file_id);",
+                    "CREATE INDEX IF NOT EXISTS ix_knowledge_file_assignments_user_id ON knowledge_file_assignments(user_id);",
                 ]
                 for stmt in migration_sqls:
                     try:

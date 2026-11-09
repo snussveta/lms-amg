@@ -7,19 +7,24 @@ import {
   Search,
   Square,
   Trash2,
+  User,
   UserCheck,
   Users,
   X,
   XCircle,
   AlertCircle,
+  Building2,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 
 export const TestAssignmentModal = ({ test, onClose }) => {
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
+  const [targetMode, setTargetMode] = useState('users'); // 'users' | 'department'
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectedDeptIds, setSelectedDeptIds] = useState([]);
   const [dueDate, setDueDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -35,11 +40,13 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     try {
       setLoading(true);
       setError('');
-      const [usersRes, assignRes] = await Promise.all([
+      const [usersRes, deptsRes, assignRes] = await Promise.all([
         api.get('/users'),
+        api.get('/departments'),
         api.get(`/tests/${test.id}/assignments`),
       ]);
       setUsers(usersRes.data || []);
+      setDepartments(deptsRes.data || []);
       setAssignments(assignRes.data.assignments || []);
     } catch (err) {
       console.error('Ошибка загрузки данных назначения:', err);
@@ -56,7 +63,8 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     const term = searchTerm.toLowerCase();
     return (
       u.full_name?.toLowerCase().includes(term) ||
-      u.email?.toLowerCase().includes(term)
+      u.email?.toLowerCase().includes(term) ||
+      u.department?.toLowerCase().includes(term)
     );
   });
 
@@ -76,26 +84,62 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     }
   };
 
-  const handleAssign = async () => {
-    if (selectedUserIds.length === 0) {
-      setError('Пожалуйста, выберите хотя бы одного сотрудника для назначения.');
-      return;
-    }
+  const toggleSelectDept = (deptId) => {
+    setSelectedDeptIds((prev) =>
+      prev.includes(deptId) ? prev.filter((id) => id !== deptId) : [...prev, deptId]
+    );
+  };
 
+  const selectAllDepts = () => {
+    const allIds = departments.map((d) => d.id);
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedDeptIds.includes(id));
+    if (allSelected) {
+      setSelectedDeptIds([]);
+    } else {
+      setSelectedDeptIds(allIds);
+    }
+  };
+
+  const handleAssign = async () => {
     try {
       setSubmitting(true);
       setError('');
       setSuccessMsg('');
 
-      const payload = {
-        user_ids: selectedUserIds,
-        assign_all: false,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
-      };
+      if (targetMode === 'department') {
+        if (selectedDeptIds.length === 0) {
+          setError('Пожалуйста, выберите хотя бы один отдел для назначения теста.');
+          setSubmitting(false);
+          return;
+        }
 
-      await api.post(`/tests/${test.id}/assign`, payload);
-      setSuccessMsg(`Тест успешно назначен выбранным сотрудникам (${selectedUserIds.length}).`);
-      setSelectedUserIds([]);
+        const payload = {
+          department_ids: selectedDeptIds,
+          assign_all: false,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const res = await api.post(`/tests/${test.id}/assign`, payload);
+        setSuccessMsg(res.data.message || 'Тест успешно назначен выбранным отделам.');
+        setSelectedDeptIds([]);
+      } else {
+        if (selectedUserIds.length === 0) {
+          setError('Пожалуйста, выберите хотя бы одного сотрудника для назначения.');
+          setSubmitting(false);
+          return;
+        }
+
+        const payload = {
+          user_ids: selectedUserIds,
+          assign_all: false,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const res = await api.post(`/tests/${test.id}/assign`, payload);
+        setSuccessMsg(res.data.message || 'Тест успешно назначен сотрудникам.');
+        setSelectedUserIds([]);
+      }
+
       setDueDate('');
 
       // Перезагружаем список
@@ -138,6 +182,10 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     });
   };
 
+  const deptEmployeesCount = departments
+    .filter((d) => selectedDeptIds.includes(d.id))
+    .reduce((sum, d) => sum + (d.users_count || 0), 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden">
@@ -146,7 +194,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
           <div className="min-w-0 pr-3">
             <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
               <Users className="w-5 h-5 text-[#003B73] shrink-0" />
-              <span>Назначение теста сотрудникам</span>
+              <span>Назначение теста</span>
             </h2>
             <p className="text-xs text-[#003B73] font-semibold mt-0.5 truncate max-w-md">
               «{test.title}»
@@ -173,7 +221,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
             }`}
           >
             <Users className="w-4 h-4 text-[#003B73]" />
-            <span>Назначить сотрудникам</span>
+            <span>Назначить</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
@@ -210,6 +258,34 @@ export const TestAssignmentModal = ({ test, onClose }) => {
             </div>
           ) : activeTab === 'assign' ? (
             <div className="space-y-4">
+              {/* Target mode toggle: [По сотрудникам] | [Целому отделу] */}
+              <div className="flex items-center gap-2 bg-[#F4F5F7] p-1 rounded-xl border border-[#E0E0E0]">
+                <button
+                  type="button"
+                  onClick={() => setTargetMode('users')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
+                    targetMode === 'users'
+                      ? 'bg-[#003B73] text-white shadow-xs'
+                      : 'text-[#6C757D] hover:text-[#212529]'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>По сотрудникам</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTargetMode('department')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
+                    targetMode === 'department'
+                      ? 'bg-[#003B73] text-white shadow-xs'
+                      : 'text-[#6C757D] hover:text-[#212529]'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Целому отделу</span>
+                </button>
+              </div>
+
               {/* Optional Deadline */}
               <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs text-[#212529] font-semibold">
@@ -224,165 +300,221 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                 />
               </div>
 
-              {/* Search & Select All */}
-              <div className="flex items-center justify-between gap-3">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
-                  <input
-                    type="text"
-                    placeholder="Поиск по ФИО или email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-field pl-9 text-xs sm:text-sm py-2 bg-white"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={selectAll}
-                  className="btn-secondary text-xs py-2 px-3 whitespace-nowrap min-h-[44px]"
-                >
-                  Выбрать всех
-                </button>
-              </div>
-
-              {/* Users list with checkboxes */}
-              <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-64 overflow-y-auto bg-white">
-                {filteredUsers.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#6C757D]">
-                    Пользователи не найдены
+              {/* MODE A: BY DEPARTMENT */}
+              {targetMode === 'department' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[#6C757D]">
+                      Выберите отделы для назначения теста:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={selectAllDepts}
+                      className="text-xs font-bold text-[#003B73] hover:underline"
+                    >
+                      {departments.length > 0 && selectedDeptIds.length === departments.length
+                        ? 'Снять выбор'
+                        : 'Выбрать все отделы'}
+                    </button>
                   </div>
-                ) : (
-                  filteredUsers.map((u) => {
-                    const isSelected = selectedUserIds.includes(u.id);
-                    const isAlreadyAssigned = assignedUserIds.has(u.id);
 
-                    return (
-                      <div
-                        key={u.id}
-                        onClick={() => toggleSelectUser(u.id)}
-                        className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-[#003B73]/5 border-l-4 border-[#003B73]'
-                            : 'hover:bg-[#F4F5F7] text-[#212529]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                          <div className="text-[#003B73]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">
+                    {departments.map((d) => {
+                      const isSelected = selectedDeptIds.includes(d.id);
+                      return (
+                        <div
+                          key={d.id}
+                          onClick={() => toggleSelectDept(d.id)}
+                          className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
+                            isSelected
+                              ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
+                              : 'bg-white border-[#E0E0E0] hover:bg-[#F4F5F7] text-[#212529]'
+                          }`}
+                        >
+                          <div className="mt-0.5">
                             {isSelected ? (
                               <CheckSquare className="w-4 h-4 text-[#003B73]" />
                             ) : (
                               <Square className="w-4 h-4 text-[#6C757D]" />
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-semibold text-[#212529] truncate">{u.full_name}</div>
-                            <div className="text-[11px] text-[#6C757D] truncate">{u.email}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-xs truncate">{d.name}</span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#E0E0E0] text-[#003B73] font-semibold">
+                                {d.users_count || 0} сотр.
+                              </span>
+                            </div>
+                            {d.description && (
+                              <p className="text-[11px] text-[#6C757D] truncate mt-0.5">
+                                {d.description}
+                              </p>
+                            )}
                           </div>
                         </div>
+                      );
+                    })}
+                  </div>
 
-                        {isAlreadyAssigned && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-medium">
-                            Уже назначен
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          ) : (
-            /* Assigned list tab */
-            <div className="space-y-3">
-              {assignments.length === 0 ? (
-                <div className="py-12 text-center text-xs text-[#6C757D]">
-                  Тест пока никому не назначен. Перейдите во вкладку «Назначить сотрудникам».
+                  {/* Summary & Assign Button */}
+                  <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs">
+                    <span className="text-[#6C757D]">
+                      Выбрано отделов:{' '}
+                      <strong className="text-[#212529]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотр.)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAssign}
+                      disabled={submitting || selectedDeptIds.length === 0}
+                      className="btn-primary text-xs py-2 px-5 min-h-[44px]"
+                    >
+                      {submitting ? 'Назначение...' : `Назначить ${selectedDeptIds.length} отдел(ам)`}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-80 overflow-y-auto bg-white">
-                  {assignments.map((a) => (
-                    <div
-                      key={a.id}
-                      className="p-3 flex items-center justify-between text-xs gap-3 hover:bg-[#F4F5F7] transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-[#212529] truncate">
-                          {a.user_name}
-                        </div>
-                        <div className="text-[11px] text-[#6C757D] truncate">
-                          {a.user_email} • Дедлайн: {formatDate(a.due_date)}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5">
-                        {a.attempt_status === 'passed' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Сдан ({a.score} б.)
-                          </span>
-                        ) : a.attempt_status === 'needs_review' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                            На проверке
-                          </span>
-                        ) : a.attempt_status === 'failed' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-[#E30613] border border-red-200">
-                            Не сдан ({a.score} б.)
-                          </span>
-                        ) : a.attempt_status === 'in_progress' ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-[#003B73] border border-blue-200">
-                            В процессе
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0]">
-                            Ожидает сдачи
-                          </span>
-                        )}
-
-                        <button
-                          onClick={() => handleRevoke(a.user_id)}
-                          className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
-                          title="Отозвать назначение"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                /* MODE B: BY INDIVIDUAL USERS */
+                <div className="space-y-4">
+                  {/* Search & Select All */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+                      <input
+                        type="text"
+                        placeholder="Поиск по ФИО, логину или отделу..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="input-field pl-9 text-xs sm:text-sm py-2 bg-white"
+                      />
                     </div>
-                  ))}
+
+                    <button
+                      type="button"
+                      onClick={selectAll}
+                      className="btn-secondary text-xs py-2 px-3 whitespace-nowrap min-h-[44px]"
+                    >
+                      Выбрать всех
+                    </button>
+                  </div>
+
+                  {/* Users list with checkboxes */}
+                  <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-64 overflow-y-auto bg-white">
+                    {filteredUsers.length === 0 ? (
+                      <div className="p-8 text-center text-xs text-[#6C757D]">
+                        Сотрудники не найдены
+                      </div>
+                    ) : (
+                      filteredUsers.map((u) => {
+                        const isSelected = selectedUserIds.includes(u.id);
+                        const isAlreadyAssigned = assignedUserIds.has(u.id);
+
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => toggleSelectUser(u.id)}
+                            className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
+                              isSelected ? 'bg-[#003B73]/5' : 'hover:bg-[#F4F5F7]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 pr-2">
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-[#003B73] shrink-0" />
+                              ) : (
+                                <Square className="w-4 h-4 text-[#6C757D] shrink-0" />
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-bold text-[#212529] truncate flex items-center gap-2">
+                                  <span>{u.full_name}</span>
+                                  {isAlreadyAssigned && (
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                      Уже назначен
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                                  <span>{u.email}</span>
+                                  <span>•</span>
+                                  <span>{u.department || 'СТО'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Action button */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-[#6C757D]">
+                      Выбрано: <strong className="text-[#212529]">{selectedUserIds.length}</strong> сотр.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAssign}
+                      disabled={submitting || selectedUserIds.length === 0}
+                      className="btn-primary text-xs py-2 px-5 min-h-[44px]"
+                    >
+                      {submitting ? 'Назначение...' : `Назначить выбранным (${selectedUserIds.length})`}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
+          ) : (
+            /* TAB 2: LIST */
+            <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-80 overflow-y-auto bg-white">
+              {assignments.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#6C757D]">
+                  На данный момент тест еще никому не назначен.
+                </div>
+              ) : (
+                assignments.map((a) => (
+                  <div
+                    key={a.id}
+                    className="p-3.5 flex items-center justify-between text-xs hover:bg-[#F8F9FA] transition-colors"
+                  >
+                    <div className="min-w-0 pr-3">
+                      <div className="font-bold text-[#212529] text-sm">
+                        {a.user_name}
+                      </div>
+                      <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                        <span>{a.user_email}</span>
+                        <span>•</span>
+                        <span>Дедлайн: {formatDate(a.due_date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          a.status === 'completed'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : a.status === 'in_progress'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-[#F4F5F7] text-[#6C757D]'
+                        }`}
+                      >
+                        {a.status === 'completed'
+                          ? 'Сдан'
+                          : a.status === 'in_progress'
+                          ? 'Проходит'
+                          : 'Ожидает'}
+                      </span>
+
+                      <button
+                        onClick={() => handleRevoke(a.user_id)}
+                        className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                        title="Отозвать назначение"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-[#E0E0E0] flex items-center justify-between bg-white">
-          <div className="text-xs text-[#6C757D]">
-            {activeTab === 'assign' && (
-              <span>
-                Выбрано: <strong className="text-[#003B73] font-bold">{selectedUserIds.length}</strong>
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-secondary text-xs min-h-[44px] px-4"
-            >
-              Закрыть
-            </button>
-            {activeTab === 'assign' && (
-              <button
-                type="button"
-                onClick={handleAssign}
-                disabled={submitting || selectedUserIds.length === 0}
-                className="btn-primary text-xs min-h-[44px] px-5"
-              >
-                {submitting ? 'Назначение...' : `Подтвердить назначение (${selectedUserIds.length})`}
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>

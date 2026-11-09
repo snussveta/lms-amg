@@ -229,11 +229,10 @@ export const TakeTestPage = () => {
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {timeLeft !== null && (
               <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs sm:text-sm font-bold border transition-colors ${
-                  isUrgentTimer
-                    ? 'bg-[#FEF2F2] text-[#E30613] border-[#FBD0D3] animate-pulse'
-                    : 'bg-[#F0F5FA] text-[#003B73] border-[#B8D5ED]'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs sm:text-sm font-bold border transition-colors ${isUrgentTimer
+                  ? 'bg-[#FEF2F2] text-[#E30613] border-[#FBD0D3] animate-pulse'
+                  : 'bg-[#F0F5FA] text-[#003B73] border-[#B8D5ED]'
+                  }`}
               >
                 <Clock className="w-4 h-4 shrink-0" />
                 <span>{formatTimer(timeLeft)}</span>
@@ -282,13 +281,12 @@ export const TakeTestPage = () => {
               <button
                 key={q.id}
                 onClick={() => setCurrentQIndex(idx)}
-                className={`flex-shrink-0 w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all select-none relative ${
-                  isCurrent
-                    ? 'bg-[#003B73] text-white shadow-sm ring-2 ring-[#003B73]/20'
-                    : isAnswered
+                className={`flex-shrink-0 w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all select-none relative ${isCurrent
+                  ? 'bg-[#003B73] text-white shadow-sm ring-2 ring-[#003B73]/20'
+                  : isAnswered
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
                     : 'bg-white text-[#6C757D] border border-[#E0E0E0] hover:text-[#212529] hover:bg-[#F4F5F7]'
-                }`}
+                  }`}
               >
                 {idx + 1}
                 {isAnswered && !isCurrent && (
@@ -335,18 +333,16 @@ export const TakeTestPage = () => {
                       <div
                         key={option.id}
                         onClick={() => handleSingleChoiceSelect(currentQuestion.id, option.id)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${
-                          isSelected
-                            ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
-                            : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
-                        }`}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${isSelected
+                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
+                          : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
+                          }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                            isSelected
-                              ? 'border-[#003B73] bg-[#003B73] text-white'
-                              : 'border-[#ADB5BD] bg-white'
-                          }`}
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isSelected
+                            ? 'border-[#003B73] bg-[#003B73] text-white'
+                            : 'border-[#ADB5BD] bg-white'
+                            }`}
                         >
                           {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
@@ -373,18 +369,16 @@ export const TakeTestPage = () => {
                       <div
                         key={option.id}
                         onClick={() => handleMultipleChoiceToggle(currentQuestion.id, option.id)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${
-                          isSelected
-                            ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
-                            : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
-                        }`}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${isSelected
+                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
+                          : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
+                          }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                            isSelected
-                              ? 'border-[#003B73] bg-[#003B73] text-white'
-                              : 'border-[#ADB5BD] bg-white'
-                          }`}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isSelected
+                            ? 'border-[#003B73] bg-[#003B73] text-white'
+                            : 'border-[#ADB5BD] bg-white'
+                            }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                         </div>

@@ -1,4 +1,5 @@
 from app.core.database import Base
+from app.models.department import Department
 from app.models.user import User
 from app.models.test import Test
 from app.models.question import Question, QuestionOption
@@ -14,10 +15,11 @@ from app.models.course import (
     UserLessonProgress,
     CourseAssignment,
 )
-from app.models.knowledge import KnowledgeFile
+from app.models.knowledge import KnowledgeFile, KnowledgeFileAssignment
 
 __all__ = [
     "Base",
+    "Department",
     "User",
     "Test",
     "Question",
@@ -34,5 +36,5 @@ __all__ = [
     "UserLessonProgress",
     "CourseAssignment",
     "KnowledgeFile",
+    "KnowledgeFileAssignment",
 ]
-

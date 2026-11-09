@@ -3,6 +3,7 @@ import {
   AlertCircle,
   AlertTriangle,
   BookOpen,
+  Building2,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -19,6 +20,7 @@ import {
   FileText,
   Filter,
   FolderArchive,
+  Globe,
   Grid,
   HardDrive,
   ImageIcon,
@@ -35,6 +37,7 @@ import {
   SlidersHorizontal,
   Trash2,
   Upload,
+  User,
   Video,
   Volume2,
   X,
@@ -70,6 +73,9 @@ export const KnowledgeBasePage = () => {
   const [uploadDesc, setUploadDesc] = useState('');
   const [uploadDept, setUploadDept] = useState('Общий');
   const [uploadCategory, setUploadCategory] = useState('video');
+  const [uploadAccessType, setUploadAccessType] = useState('all'); // 'all' | 'department' | 'users'
+  const [uploadAccessDept, setUploadAccessDept] = useState('СТО');
+  const [uploadAssignedUserIds, setUploadAssignedUserIds] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -81,7 +87,21 @@ export const KnowledgeBasePage = () => {
   const [editDesc, setEditDesc] = useState('');
   const [editDept, setEditDept] = useState('Общий');
   const [editCategory, setEditCategory] = useState('video');
+  const [editAccessType, setEditAccessType] = useState('all');
+  const [editAccessDept, setEditAccessDept] = useState('СТО');
+  const [editAssignedUserIds, setEditAssignedUserIds] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Organization data for access controls
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
+
+  useEffect(() => {
+    api.get('/departments').then((r) => setAllDepartments(r.data || [])).catch(() => {});
+    if (isAdmin) {
+      api.get('/users').then((r) => setAllEmployees(r.data || [])).catch(() => {});
+    }
+  }, [isAdmin]);
 
   // Delete Confirm Modal
   const [deletingFile, setDeletingFile] = useState(null);
@@ -197,6 +217,12 @@ export const KnowledgeBasePage = () => {
       formData.append('description', uploadDesc.trim());
       formData.append('department', uploadDept);
       formData.append('file_type', uploadCategory);
+      formData.append('access_type', uploadAccessType);
+      formData.append('accessible_departments', uploadAccessType === 'department' ? uploadAccessDept : '');
+      formData.append(
+        'assigned_user_ids',
+        uploadAccessType === 'users' ? uploadAssignedUserIds.join(',') : ''
+      );
 
       await api.post('/knowledge/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -219,6 +245,8 @@ export const KnowledgeBasePage = () => {
       setUploadFile(null);
       setUploadTitle('');
       setUploadDesc('');
+      setUploadAccessType('all');
+      setUploadAssignedUserIds([]);
       setUploadProgress(0);
 
       fetchKnowledgeData();
@@ -274,6 +302,9 @@ export const KnowledgeBasePage = () => {
     setEditDesc(file.description || '');
     setEditDept(file.department || 'Общий');
     setEditCategory(file.file_type || 'video');
+    setEditAccessType(file.access_type || 'all');
+    setEditAccessDept(file.accessible_departments || file.department || 'СТО');
+    setEditAssignedUserIds(file.assigned_user_ids || []);
   };
 
   // Save Edit
@@ -287,6 +318,9 @@ export const KnowledgeBasePage = () => {
         description: editDesc.trim(),
         department: editDept,
         file_type: editCategory,
+        access_type: editAccessType,
+        accessible_departments: editAccessType === 'department' ? editAccessDept : '',
+        assigned_user_ids: editAccessType === 'users' ? editAssignedUserIds : [],
       });
 
       setFiles((prev) => prev.map((f) => (f.id === editingFile.id ? res.data : f)));
@@ -628,9 +662,27 @@ export const KnowledgeBasePage = () => {
                         <span>{catInfo.label}</span>
                       </span>
 
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-white/90 border border-[#E0E0E0] text-[#212529] shadow-2xs">
-                        {file.department}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 border border-[#E0E0E0] text-[#212529] shadow-2xs">
+                          {file.department}
+                        </span>
+                        {file.access_type === 'department' && (
+                          <span
+                            className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#003B73] text-white shadow-2xs"
+                            title={`Доступ отделу: ${file.accessible_departments || file.department}`}
+                          >
+                            🏢 Отдел
+                          </span>
+                        )}
+                        {file.access_type === 'users' && (
+                          <span
+                            className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-700 text-white shadow-2xs"
+                            title={`Персональный доступ (${file.assigned_user_ids?.length || 0} сотр.)`}
+                          >
+                            👤 {file.assigned_user_ids?.length || 0}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Centered Action Hover Icon */}
@@ -794,9 +846,21 @@ export const KnowledgeBasePage = () => {
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] font-bold text-[#212529]">
-                            {file.department}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] font-bold text-[#212529]">
+                              {file.department}
+                            </span>
+                            {file.access_type === 'department' && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#003B73]/10 text-[#003B73] border border-[#003B73]/20">
+                                🏢 {file.accessible_departments || 'Отдел'}
+                              </span>
+                            )}
+                            {file.access_type === 'users' && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                👤 {file.assigned_user_ids?.length || 0} сотр.
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 text-[#6C757D] font-mono">
                           {formatBytes(file.file_size_bytes)}
@@ -1089,12 +1153,22 @@ export const KnowledgeBasePage = () => {
                   onChange={(e) => setUploadDept(e.target.value)}
                   className="input-field text-xs sm:text-sm py-2 bg-white"
                 >
-                  <option value="СТО">СТО (Слесарный цех)</option>
-                  <option value="IT">IT и Информационная безопасность</option>
-                  <option value="Продажи">Отдел продаж</option>
-                  <option value="Бухгалтерия">Бухгалтерия</option>
-                  <option value="Логистика">Логистика</option>
-                  <option value="Общий">Общие регламенты</option>
+                  {allDepartments.length > 0 ? (
+                    allDepartments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="СТО">СТО (Слесарный цех)</option>
+                      <option value="IT">IT и Информационная безопасность</option>
+                      <option value="Продажи">Отдел продаж</option>
+                      <option value="Бухгалтерия">Бухгалтерия</option>
+                      <option value="Логистика">Логистика</option>
+                      <option value="Общий">Общие регламенты</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -1102,12 +1176,116 @@ export const KnowledgeBasePage = () => {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#212529]">Описание / Аннотация</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={uploadDesc}
                   onChange={(e) => setUploadDesc(e.target.value)}
                   placeholder="Кратко опишите, какие навыки и стандарты рассматриваются..."
                   className="input-field text-xs sm:text-sm py-2 bg-white"
                 />
+              </div>
+
+              {/* Access Control Settings */}
+              <div className="space-y-2.5 p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0]">
+                <label className="text-xs font-bold text-[#003B73] flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-[#003B73]" />
+                  <span>Настройки доступа к материалу</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUploadAccessType('all')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      uploadAccessType === 'all'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    🌐 Всем
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadAccessType('department')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      uploadAccessType === 'department'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    🏢 Отделу
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadAccessType('users')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      uploadAccessType === 'users'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    👤 Сотрудникам
+                  </button>
+                </div>
+
+                {uploadAccessType === 'department' && (
+                  <div className="pt-2">
+                    <label className="text-[11px] font-semibold text-[#6C757D] block mb-1">
+                      Выберите отдел с доступом:
+                    </label>
+                    <select
+                      value={uploadAccessDept}
+                      onChange={(e) => setUploadAccessDept(e.target.value)}
+                      className="input-field text-xs bg-white w-full"
+                    >
+                      {allDepartments.length > 0 ? (
+                        allDepartments.map((d) => (
+                          <option key={d.id} value={d.name}>
+                            {d.name}
+                          </option>
+                        ))
+                      ) : (
+                        ['СТО', 'Склад', 'Продажи', 'Бухгалтерия', 'Логистика', 'IT', 'Общий'].map(
+                          (dept) => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          )
+                        )
+                      )}
+                    </select>
+                  </div>
+                )}
+
+                {uploadAccessType === 'users' && (
+                  <div className="pt-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#6C757D]">
+                      <span>Выберите сотрудников:</span>
+                      <span>Выбрано: {uploadAssignedUserIds.length}</span>
+                    </div>
+                    <div className="max-h-36 overflow-y-auto divide-y divide-[#E0E0E0] rounded-lg border border-[#E0E0E0] bg-white">
+                      {allEmployees.map((emp) => {
+                        const isSelected = uploadAssignedUserIds.includes(emp.id);
+                        return (
+                          <div
+                            key={emp.id}
+                            onClick={() => {
+                              setUploadAssignedUserIds((prev) =>
+                                prev.includes(emp.id)
+                                  ? prev.filter((id) => id !== emp.id)
+                                  : [...prev, emp.id]
+                              );
+                            }}
+                            className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
+                              isSelected ? 'bg-[#003B73]/10 font-bold' : 'hover:bg-[#F4F5F7]'
+                            }`}
+                          >
+                            <span className="truncate">{emp.full_name}</span>
+                            <span className="text-[10px] text-[#6C757D]">{emp.department || 'СТО'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Upload Progress Bar */}
@@ -1226,11 +1404,115 @@ export const KnowledgeBasePage = () => {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#212529]">Описание</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   className="input-field text-xs sm:text-sm py-2 bg-white"
                 />
+              </div>
+
+              {/* Access Control Settings */}
+              <div className="space-y-2.5 p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0]">
+                <label className="text-xs font-bold text-[#003B73] flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-[#003B73]" />
+                  <span>Настройки доступа к материалу</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditAccessType('all')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      editAccessType === 'all'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    🌐 Всем
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditAccessType('department')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      editAccessType === 'department'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    🏢 Отделу
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditAccessType('users')}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                      editAccessType === 'users'
+                        ? 'bg-[#003B73] text-white border-[#003B73] shadow-xs'
+                        : 'bg-white text-[#6C757D] border-[#E0E0E0] hover:text-[#212529]'
+                    }`}
+                  >
+                    👤 Сотрудникам
+                  </button>
+                </div>
+
+                {editAccessType === 'department' && (
+                  <div className="pt-2">
+                    <label className="text-[11px] font-semibold text-[#6C757D] block mb-1">
+                      Выберите отдел с доступом:
+                    </label>
+                    <select
+                      value={editAccessDept}
+                      onChange={(e) => setEditAccessDept(e.target.value)}
+                      className="input-field text-xs bg-white w-full"
+                    >
+                      {allDepartments.length > 0 ? (
+                        allDepartments.map((d) => (
+                          <option key={d.id} value={d.name}>
+                            {d.name}
+                          </option>
+                        ))
+                      ) : (
+                        ['СТО', 'Склад', 'Продажи', 'Бухгалтерия', 'Логистика', 'IT', 'Общий'].map(
+                          (dept) => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          )
+                        )
+                      )}
+                    </select>
+                  </div>
+                )}
+
+                {editAccessType === 'users' && (
+                  <div className="pt-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#6C757D]">
+                      <span>Выберите сотрудников:</span>
+                      <span>Выбрано: {editAssignedUserIds.length}</span>
+                    </div>
+                    <div className="max-h-36 overflow-y-auto divide-y divide-[#E0E0E0] rounded-lg border border-[#E0E0E0] bg-white">
+                      {allEmployees.map((emp) => {
+                        const isSelected = editAssignedUserIds.includes(emp.id);
+                        return (
+                          <div
+                            key={emp.id}
+                            onClick={() => {
+                              setEditAssignedUserIds((prev) =>
+                                prev.includes(emp.id)
+                                  ? prev.filter((id) => id !== emp.id)
+                                  : [...prev, emp.id]
+                              );
+                            }}
+                            className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
+                              isSelected ? 'bg-[#003B73]/10 font-bold' : 'hover:bg-[#F4F5F7]'
+                            }`}
+                          >
+                            <span className="truncate">{emp.full_name}</span>
+                            <span className="text-[10px] text-[#6C757D]">{emp.department || 'СТО'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#E0E0E0]">

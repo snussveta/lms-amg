@@ -7,6 +7,7 @@ import {
   Search,
   Square,
   Trash2,
+  User,
   UserCheck,
   Users,
   X,
@@ -20,9 +21,12 @@ import api, { getErrorMessage } from '../../api/client';
 
 export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
+  const [targetMode, setTargetMode] = useState('users'); // 'users' | 'department'
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [selectedDeptIds, setSelectedDeptIds] = useState([]);
   const [dueDate, setDueDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('Все филиалы');
@@ -40,8 +44,6 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     'AutoMall Восток',
   ];
 
-  const departments = ['Все отделы', 'СТО', 'Склад', 'Продажи', 'Общий'];
-
   useEffect(() => {
     if (course?.id) {
       loadData();
@@ -52,11 +54,13 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     try {
       setLoading(true);
       setError('');
-      const [usersRes, assignRes] = await Promise.all([
+      const [usersRes, deptsRes, assignRes] = await Promise.all([
         api.get('/users'),
+        api.get('/departments'),
         api.get(`/courses/${course.id}/assigned-users`),
       ]);
       setUsers(usersRes.data || []);
+      setDepartments(deptsRes.data || []);
       setAssignments(assignRes.data.assigned_users || []);
     } catch (err) {
       console.error('Ошибка загрузки данных назначения курса:', err);
@@ -103,25 +107,60 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     }
   };
 
-  const handleAssign = async () => {
-    if (selectedUserIds.length === 0) {
-      setError('Пожалуйста, выберите хотя бы одного сотрудника для назначения курса.');
-      return;
-    }
+  const toggleSelectDept = (deptId) => {
+    setSelectedDeptIds((prev) =>
+      prev.includes(deptId) ? prev.filter((id) => id !== deptId) : [...prev, deptId]
+    );
+  };
 
+  const selectAllDepts = () => {
+    const allIds = departments.map((d) => d.id);
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedDeptIds.includes(id));
+    if (allSelected) {
+      setSelectedDeptIds([]);
+    } else {
+      setSelectedDeptIds(allIds);
+    }
+  };
+
+  const handleAssign = async () => {
     try {
       setSubmitting(true);
       setError('');
       setSuccessMsg('');
 
-      const payload = {
-        user_ids: selectedUserIds,
-        deadline: dueDate ? new Date(dueDate).toISOString() : null,
-      };
+      if (targetMode === 'department') {
+        if (selectedDeptIds.length === 0) {
+          setError('Пожалуйста, выберите хотя бы один отдел для назначения.');
+          setSubmitting(false);
+          return;
+        }
 
-      await api.post(`/courses/${course.id}/assign`, payload);
-      setSuccessMsg(`Курс успешно назначен выбранным сотрудникам (${selectedUserIds.length}).`);
-      setSelectedUserIds([]);
+        const payload = {
+          department_ids: selectedDeptIds,
+          deadline: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const res = await api.post(`/courses/${course.id}/assign`, payload);
+        setSuccessMsg(`Курс успешно назначен сотрудникам выбранных отделов (назначено: ${res.data.assigned_count}).`);
+        setSelectedDeptIds([]);
+      } else {
+        if (selectedUserIds.length === 0) {
+          setError('Пожалуйста, выберите хотя бы одного сотрудника для назначения курса.');
+          setSubmitting(false);
+          return;
+        }
+
+        const payload = {
+          user_ids: selectedUserIds,
+          deadline: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const res = await api.post(`/courses/${course.id}/assign`, payload);
+        setSuccessMsg(`Курс успешно назначен выбранным сотрудникам (${res.data.assigned_count}).`);
+        setSelectedUserIds([]);
+      }
+
       setDueDate('');
 
       // Reload assignments list
@@ -171,6 +210,11 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     });
   };
 
+  // Calculate approximate employees in selected depts
+  const deptEmployeesCount = departments
+    .filter((d) => selectedDeptIds.includes(d.id))
+    .reduce((sum, d) => sum + (d.users_count || 0), 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
@@ -179,7 +223,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
           <div className="min-w-0 pr-3">
             <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-[#003B73] shrink-0" />
-              <span>Назначение курса сотрудникам</span>
+              <span>Назначение курса</span>
             </h2>
             <div className="text-xs text-[#6C757D] mt-1 flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-[#003B73] truncate">«{course.title}»</span>
@@ -208,7 +252,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
             }`}
           >
             <Users className="w-4 h-4 text-[#003B73]" />
-            <span>Назначить сотрудникам</span>
+            <span>Назначить</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
@@ -241,294 +285,315 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
         {/* Tab 1: Assign Form */}
         {activeTab === 'assign' && (
           <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 space-y-4 overflow-hidden">
-            {/* Filters & Search Grid */}
-            <div className="space-y-3 shrink-0">
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6C757D]" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Поиск по ФИО или Email..."
-                    className="input-field pl-10 text-xs sm:text-sm bg-white"
-                  />
-                </div>
+            {/* Target mode toggle: [По сотрудникам] | [Целому отделу] */}
+            <div className="flex items-center gap-2 bg-[#F4F5F7] p-1 rounded-xl border border-[#E0E0E0] shrink-0">
+              <button
+                type="button"
+                onClick={() => setTargetMode('users')}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
+                  targetMode === 'users'
+                    ? 'bg-[#003B73] text-white shadow-xs'
+                    : 'text-[#6C757D] hover:text-[#212529]'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>По сотрудникам</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetMode('department')}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
+                  targetMode === 'department'
+                    ? 'bg-[#003B73] text-white shadow-xs'
+                    : 'text-[#6C757D] hover:text-[#212529]'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Целому отделу</span>
+              </button>
+            </div>
 
-                {/* AutoMall Branch Filter */}
-                <div className="w-full sm:w-52">
-                  <select
-                    value={selectedBranch}
-                    onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="input-field text-xs sm:text-sm bg-white"
+            {/* Deadline Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F4F5F7] p-3 rounded-xl border border-[#E0E0E0] shrink-0">
+              <div className="flex items-center gap-2 text-xs text-[#212529] flex-wrap">
+                <Calendar className="w-4 h-4 text-[#003B73] shrink-0" />
+                <span className="shrink-0 font-semibold">Срок сдачи курса:</span>
+                <input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="bg-white border border-[#E0E0E0] rounded-lg px-2.5 py-1 text-xs text-[#212529] focus:outline-none focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73]/20"
+                />
+                {dueDate && (
+                  <button
+                    type="button"
+                    onClick={() => setDueDate('')}
+                    className="text-[11px] text-[#6C757D] hover:text-[#E30613] underline ml-1"
                   >
-                    {branches.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Department Filter */}
-                <div className="w-full sm:w-40">
-                  <select
-                    value={selectedDept}
-                    onChange={(e) => setSelectedDept(e.target.value)}
-                    className="input-field text-xs sm:text-sm bg-white"
-                  >
-                    {departments.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Deadline & Quick Select Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F4F5F7] p-3 rounded-xl border border-[#E0E0E0]">
-                <div className="flex items-center gap-2 text-xs text-[#212529] flex-wrap">
-                  <Calendar className="w-4 h-4 text-[#003B73] shrink-0" />
-                  <span className="shrink-0 font-semibold">Срок сдачи:</span>
-                  <input
-                    type="datetime-local"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="bg-white border border-[#E0E0E0] rounded-lg px-2.5 py-1 text-xs text-[#212529] focus:outline-none focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73]/20"
-                  />
-                  {dueDate && (
-                    <button
-                      onClick={() => setDueDate('')}
-                      className="text-[#6C757D] hover:text-[#212529] text-xs font-bold px-1"
-                      title="Очистить дату"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={selectAllFiltered}
-                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 self-start sm:self-auto min-h-[38px]"
-                >
-                  <CheckSquare className="w-4 h-4 text-[#003B73]" />
-                  <span>
-                    {filteredUsers.length > 0 &&
-                    filteredUsers.every((u) => selectedUserIds.includes(u.id))
-                      ? 'Снять выбор со всех'
-                      : `Выбрать всех (${filteredUsers.length})`}
-                  </span>
-                </button>
+                    Сбросить срок
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Employees List */}
-            <div className="flex-1 overflow-y-auto border border-[#E0E0E0] rounded-xl bg-white divide-y divide-[#E0E0E0] min-h-[220px]">
-              {loading ? (
-                <div className="p-8 text-center text-[#6C757D] text-xs">Загрузка списка сотрудников...</div>
-              ) : filteredUsers.length === 0 ? (
-                <div className="p-8 text-center text-[#6C757D] text-xs space-y-1">
-                  <div className="font-semibold text-[#212529]">Сотрудники по заданным критериям не найдены.</div>
-                  <div className="text-[11px] text-[#6C757D]">Попробуйте изменить поисковый запрос или фильтр филиала.</div>
+            {/* MODE A: BY DEPARTMENT */}
+            {targetMode === 'department' ? (
+              <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                <div className="flex items-center justify-between gap-2 shrink-0">
+                  <span className="text-xs font-semibold text-[#6C757D]">
+                    Выберите отделы компании для массового назначения:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={selectAllDepts}
+                    className="text-xs font-bold text-[#003B73] hover:underline"
+                  >
+                    {departments.length > 0 && selectedDeptIds.length === departments.length
+                      ? 'Снять выбор'
+                      : 'Выбрать все отделы'}
+                  </button>
                 </div>
-              ) : (
-                filteredUsers.map((u) => {
-                  const isSelected = selectedUserIds.includes(u.id);
-                  const isAlreadyAssigned = assignedUserIds.has(u.id);
 
-                  return (
-                    <div
-                      key={u.id}
-                      onClick={() => toggleSelectUser(u.id)}
-                      className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-[#003B73]/5 border-l-4 border-[#003B73]'
-                          : 'hover:bg-[#F4F5F7]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div className="text-[#003B73]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto flex-1 p-1">
+                  {departments.map((d) => {
+                    const isSelected = selectedDeptIds.includes(d.id);
+                    return (
+                      <div
+                        key={d.id}
+                        onClick={() => toggleSelectDept(d.id)}
+                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
+                            : 'bg-white border-[#E0E0E0] hover:bg-[#F4F5F7] text-[#212529]'
+                        }`}
+                      >
+                        <div className="mt-0.5">
                           {isSelected ? (
                             <CheckSquare className="w-4 h-4 text-[#003B73]" />
                           ) : (
                             <Square className="w-4 h-4 text-[#6C757D]" />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <div className="font-semibold text-[#212529] truncate flex items-center gap-2">
-                            <span>{u.full_name}</span>
-                            {isAlreadyAssigned && (
-                              <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
-                                Уже назначен
-                              </span>
-                            )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-xs truncate">{d.name}</span>
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-[#E0E0E0] text-[#003B73] font-semibold">
+                              {d.users_count || 0} сотр.
+                            </span>
                           </div>
-                          <div className="text-[11px] text-[#6C757D] truncate flex items-center gap-2 mt-0.5">
-                            <span>{u.email}</span>
-                            <span>•</span>
-                            <span className="text-[#212529] font-medium">{u.branch || 'AutoMall Центральный'}</span>
-                            <span>•</span>
-                            <span>{u.department || 'СТО'}</span>
-                          </div>
+                          {d.description && (
+                            <p className="text-[11px] text-[#6C757D] truncate mt-0.5">
+                              {d.description}
+                            </p>
+                          )}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#6C757D] shrink-0">
-                        {u.role === 'admin' ? 'Админ' : u.role === 'superadmin' ? 'Суперадмин' : 'Сотрудник'}
-                      </div>
+                {/* Dept Selection Summary */}
+                <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs shrink-0">
+                  <span className="text-[#6C757D]">
+                    Выбрано отделов:{' '}
+                    <strong className="text-[#212529]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотрудников)
+                  </span>
+                  <button
+                    onClick={handleAssign}
+                    disabled={submitting || selectedDeptIds.length === 0}
+                    className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+                  >
+                    {submitting ? 'Назначение...' : `Назначить ${selectedDeptIds.length} отдел(ам)`}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* MODE B: BY INDIVIDUAL USERS */
+              <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6C757D]" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Поиск по ФИО или Email..."
+                      className="input-field pl-9 text-xs bg-white w-full"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-44">
+                    <select
+                      value={selectedBranch}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                      className="input-field text-xs bg-white w-full"
+                    >
+                      {branches.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full sm:w-36">
+                    <select
+                      value={selectedDept}
+                      onChange={(e) => setSelectedDept(e.target.value)}
+                      className="input-field text-xs bg-white w-full"
+                    >
+                      <option value="Все отделы">Все отделы</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-[#6C757D] shrink-0">
+                  <span>
+                    Найдено: <strong className="text-[#212529]">{filteredUsers.length}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={selectAllFiltered}
+                    className="font-bold text-[#003B73] hover:underline"
+                  >
+                    {filteredUsers.length > 0 &&
+                    filteredUsers.every((u) => selectedUserIds.includes(u.id))
+                      ? 'Снять выбор со всех'
+                      : 'Выбрать всех отфильтрованных'}
+                  </button>
+                </div>
+
+                {/* Users List with Checkboxes */}
+                <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] flex-1 overflow-y-auto bg-white min-h-[160px]">
+                  {loading ? (
+                    <div className="p-8 text-center text-xs text-[#6C757D]">
+                      Загрузка сотрудников...
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-[#6C757D]">
+                      Сотрудники не найдены
+                    </div>
+                  ) : (
+                    filteredUsers.map((u) => {
+                      const isSelected = selectedUserIds.includes(u.id);
+                      const isAlreadyAssigned = assignedUserIds.has(u.id);
 
-            {/* Footer Action */}
-            <div className="pt-3 border-t border-[#E0E0E0] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
-              <div className="text-xs text-[#6C757D]">
-                Выбрано сотрудников:{' '}
-                <span className="font-bold text-[#003B73]">{selectedUserIds.length}</span>
+                      return (
+                        <div
+                          key={u.id}
+                          onClick={() => toggleSelectUser(u.id)}
+                          className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-[#003B73]/5'
+                              : 'hover:bg-[#F4F5F7]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-[#003B73] shrink-0" />
+                            ) : (
+                              <Square className="w-4 h-4 text-[#6C757D] shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <div className="font-bold text-[#212529] truncate flex items-center gap-2">
+                                <span>{u.full_name}</span>
+                                {isAlreadyAssigned && (
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                    Уже назначен
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                                <span>{u.email}</span>
+                                <span>•</span>
+                                <span>{u.department || 'СТО'}</span>
+                                <span>•</span>
+                                <span>{u.branch || 'AutoMall Центральный'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Users Selection Summary */}
+                <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs shrink-0">
+                  <span className="text-[#6C757D]">
+                    Выбрано сотрудников:{' '}
+                    <strong className="text-[#212529]">{selectedUserIds.length}</strong>
+                  </span>
+                  <button
+                    onClick={handleAssign}
+                    disabled={submitting || selectedUserIds.length === 0}
+                    className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+                  >
+                    {submitting ? 'Назначение...' : `Назначить курс (${selectedUserIds.length})`}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="btn-secondary text-xs py-2 px-4 flex-1 sm:flex-none"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAssign}
-                  disabled={submitting || selectedUserIds.length === 0}
-                  className="btn-primary text-xs py-2.5 px-5 flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{submitting ? 'Назначение...' : `Назначить курс (${selectedUserIds.length})`}</span>
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
-        {/* Tab 2: Assigned Employees List */}
+        {/* Tab 2: Assigned List */}
         {activeTab === 'list' && (
-          <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 space-y-4 overflow-hidden">
-            <div className="text-xs text-[#6C757D]">
-              Сотрудники с активным доступом к курсу и мониторинг их прогресса:
-            </div>
-
-            <div className="flex-1 overflow-y-auto border border-[#E0E0E0] rounded-xl bg-white divide-y divide-[#E0E0E0] min-h-[260px]">
-              {loading ? (
-                <div className="p-8 text-center text-[#6C757D] text-xs">Загрузка назначений...</div>
-              ) : assignments.length === 0 ? (
-                <div className="p-12 text-center text-[#6C757D] text-xs space-y-2">
-                  <Users className="w-8 h-8 mx-auto text-[#6C757D]" />
-                  <div className="font-semibold text-[#212529]">Курс пока не назначен ни одному сотруднику.</div>
-                  <button
-                    onClick={() => setActiveTab('assign')}
-                    className="text-[#003B73] hover:underline pt-1 text-xs font-bold"
-                  >
-                    Перейти к назначению →
-                  </button>
+          <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] flex-1 overflow-y-auto bg-white">
+              {assignments.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#6C757D]">
+                  На данный момент курс еще никому не назначен.
                 </div>
               ) : (
-                assignments.map((item) => {
-                  const isFinished = item.is_completed || item.progress_percent >= 100;
-                  const isDeadlinePassed =
-                    item.deadline && new Date(item.deadline) < new Date() && !isFinished;
-
-                  return (
-                    <div
-                      key={item.id || item.user_id}
-                      className="p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#F4F5F7] transition-colors"
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-[#212529]">{item.full_name}</span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                              isFinished
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                : item.progress_percent > 0
-                                ? 'bg-blue-50 border-blue-200 text-[#003B73]'
-                                : 'bg-[#F4F5F7] border-[#E0E0E0] text-[#6C757D]'
-                            }`}
-                          >
-                            {isFinished
-                              ? 'Пройден'
-                              : item.progress_percent > 0
-                              ? 'В процессе'
-                              : 'Не начат'}
-                          </span>
-                        </div>
-
-                        <div className="text-[11px] text-[#6C757D] flex flex-wrap items-center gap-2">
-                          <span>{item.email}</span>
-                          <span>•</span>
-                          <span className="text-[#212529] font-medium">{item.branch || 'AutoMall'}</span>
-                          <span>•</span>
-                          <span>{item.department || 'СТО'}</span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="pt-1 flex items-center gap-3">
-                          <div className="flex-1 max-w-xs h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-300 ${
-                                isFinished ? 'bg-emerald-500' : 'bg-[#E30613]'
-                              }`}
-                              style={{ width: `${item.progress_percent || 0}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-bold text-[#6C757D]">
-                            {item.progress_percent || 0}%
-                          </span>
-                        </div>
+                assignments.map((a) => (
+                  <div
+                    key={a.id}
+                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-[#F8F9FA] transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-[#212529] text-sm">
+                        {a.full_name}
                       </div>
-
-                      {/* Deadline & Revoke */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E0E0E0]">
-                        <div className="text-right">
-                          <div className="text-[10px] text-[#6C757D]">
-                            Назначен: {formatDate(item.assigned_at)}
-                          </div>
-                          <div
-                            className={`text-[11px] font-medium ${
-                              isDeadlinePassed
-                                ? 'text-[#E30613] font-bold'
-                                : item.deadline
-                                ? 'text-amber-800'
-                                : 'text-[#6C757D]'
-                            }`}
-                          >
-                            Дедлайн: {formatDate(item.deadline)}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleRevoke(item.user_id)}
-                          className="p-2 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
-                          title="Отозвать назначение"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span>{a.email}</span>
+                        <span>•</span>
+                        <span className="text-[#003B73] font-semibold">{a.department || 'СТО'}</span>
+                        <span>•</span>
+                        <span>Дедлайн: {formatDate(a.deadline)}</span>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
 
-            <div className="pt-3 border-t border-[#E0E0E0] flex justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary text-xs py-2 px-5 min-h-[44px]"
-              >
-                Закрыть
-              </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <div className="text-xs font-bold text-[#003B73]">
+                          {a.progress_percent}%
+                        </div>
+                        <div className="text-[10px] text-[#6C757D]">
+                          {a.status === 'completed'
+                            ? 'Пройден'
+                            : a.status === 'in_progress'
+                            ? 'В процессе'
+                            : 'Не начат'}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleRevoke(a.user_id)}
+                        className="p-2 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                        title="Отозвать назначение"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

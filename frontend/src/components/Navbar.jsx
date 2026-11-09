@@ -57,22 +57,12 @@ export const Navbar = () => {
             {/* Brand AMG */}
             <div className="flex items-center gap-6 lg:gap-8">
               <Link to="/" className="flex items-center gap-3 group focus:outline-none">
-                <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/15 transition-all relative">
-                  <span className="font-black text-sm tracking-wider">AMG</span>
-                  <span className="w-2 h-2 rounded-full bg-[#E30613] absolute -top-0.5 -right-0.5 ring-2 ring-[#003B73]" />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base sm:text-lg font-black text-white tracking-tight leading-none">
-                      AMG
-                    </span>
-                    <span className="text-[10px] font-semibold text-white/90 bg-[#E30613] px-1.5 py-0.2 rounded leading-tight tracking-wider uppercase">
-                      LMS
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-white/70 font-medium tracking-wider uppercase mt-0.5 hidden xs:inline-block">
-                    Корпоративное обучение
-                  </span>
+                <div className="bg-white rounded-lg px-2 sm:px-2.5 py-1 flex items-center shadow-sm border border-white/20 group-hover:bg-white/95 transition-all">
+                  <img
+                    src="/logo.png"
+                    alt="AMG"
+                    className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[170px] object-contain"
+                  />
                 </div>
               </Link>
 
@@ -92,9 +82,9 @@ export const Navbar = () => {
                   </Link>
 
                   <Link
-                    to="/tests"
+                    to={isAdmin ? '/admin/tests' : '/tests'}
                     className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
-                      isActive('/tests')
+                      isActive('/tests') || isActive('/admin/tests')
                         ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
                         : 'text-white/80 hover:text-white hover:bg-white/10'
                     }`}
@@ -103,17 +93,19 @@ export const Navbar = () => {
                     Тесты
                   </Link>
 
-                  <Link
-                    to="/my-attempts"
-                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
-                      isActive('/my-attempts')
-                        ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <History className="w-4 h-4 text-white/90" />
-                    Мои результаты
-                  </Link>
+                  {!isAdmin && (
+                    <Link
+                      to="/my-attempts"
+                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                        isActive('/my-attempts')
+                          ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                          : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <History className="w-4 h-4 text-white/90" />
+                      Мои результаты
+                    </Link>
+                  )}
 
                   <Link
                     to="/knowledge-base"
@@ -126,6 +118,20 @@ export const Navbar = () => {
                     <FolderArchive className="w-4 h-4 text-white/90" />
                     База знаний
                   </Link>
+
+                  {isAdmin && (
+                    <Link
+                      to="/admin/users"
+                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                        isActive('/admin/users')
+                          ? 'bg-white/15 text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E30613] after:rounded-full'
+                          : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-white/90" />
+                      Сотрудники
+                    </Link>
+                  )}
 
                   {isAdmin && (
                     <>
@@ -287,30 +293,34 @@ export const Navbar = () => {
                     <GraduationCap className="w-4 h-4 text-white/80" />
                     <span>Курсы обучения</span>
                   </Link>
-                  <Link
-                    to="/tests"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                      isActive('/tests')
-                        ? 'bg-white/20 text-white font-semibold'
-                        : 'text-white/90 hover:bg-white/10'
-                    }`}
-                  >
-                    <FileQuestion className="w-4 h-4 text-white/80" />
-                    <span>Каталог тестов</span>
-                  </Link>
-                  <Link
-                    to="/my-attempts"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                      isActive('/my-attempts')
-                        ? 'bg-white/20 text-white font-semibold'
-                        : 'text-white/90 hover:bg-white/10'
-                    }`}
-                  >
-                    <History className="w-4 h-4 text-white/80" />
-                    <span>Мои результаты</span>
-                  </Link>
+                  {!isAdmin && (
+                    <Link
+                      to="/tests"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                        isActive('/tests')
+                          ? 'bg-white/20 text-white font-semibold'
+                          : 'text-white/90 hover:bg-white/10'
+                      }`}
+                    >
+                      <FileQuestion className="w-4 h-4 text-white/80" />
+                      <span>Каталог тестов</span>
+                    </Link>
+                  )}
+                  {!isAdmin && (
+                    <Link
+                      to="/my-attempts"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                        isActive('/my-attempts')
+                          ? 'bg-white/20 text-white font-semibold'
+                          : 'text-white/90 hover:bg-white/10'
+                      }`}
+                    >
+                      <History className="w-4 h-4 text-white/80" />
+                      <span>Мои результаты</span>
+                    </Link>
+                  )}
                   <Link
                     to="/knowledge-base"
                     onClick={() => setMobileMenuOpen(false)}
@@ -321,7 +331,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <FolderArchive className="w-4 h-4 text-white/80" />
-                    <span>База знаний AMG</span>
+                    <span>База знаний</span>
                   </Link>
                 </div>
 
@@ -417,28 +427,42 @@ export const Navbar = () => {
           </Link>
 
           <Link
-            to="/tests"
+            to={isAdmin ? '/admin/tests' : '/tests'}
             className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
-              isActive('/tests')
+              isActive('/tests') || isActive('/admin/tests')
                 ? 'text-[#003B73] font-bold'
                 : 'text-[#6C757D] hover:text-[#212529]'
             }`}
           >
-            <FileQuestion className={`w-5 h-5 ${isActive('/tests') ? 'text-[#E30613]' : 'currentColor'}`} />
+            <FileQuestion className={`w-5 h-5 ${isActive('/tests') || isActive('/admin/tests') ? 'text-[#E30613]' : 'currentColor'}`} />
             <span className="text-[10px] mt-0.5 leading-tight">Тесты</span>
           </Link>
 
-          <Link
-            to="/my-attempts"
-            className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
-              isActive('/my-attempts')
-                ? 'text-[#003B73] font-bold'
-                : 'text-[#6C757D] hover:text-[#212529]'
-            }`}
-          >
-            <History className={`w-5 h-5 ${isActive('/my-attempts') ? 'text-[#E30613]' : 'currentColor'}`} />
-            <span className="text-[10px] mt-0.5 leading-tight">Результаты</span>
-          </Link>
+          {!isAdmin ? (
+            <Link
+              to="/my-attempts"
+              className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+                isActive('/my-attempts')
+                  ? 'text-[#003B73] font-bold'
+                  : 'text-[#6C757D] hover:text-[#212529]'
+              }`}
+            >
+              <History className={`w-5 h-5 ${isActive('/my-attempts') ? 'text-[#E30613]' : 'currentColor'}`} />
+              <span className="text-[10px] mt-0.5 leading-tight">Результаты</span>
+            </Link>
+          ) : (
+            <Link
+              to="/admin/users"
+              className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
+                isActive('/admin/users')
+                  ? 'text-[#003B73] font-bold'
+                  : 'text-[#6C757D] hover:text-[#212529]'
+              }`}
+            >
+              <Users className={`w-5 h-5 ${isActive('/admin/users') ? 'text-[#E30613]' : 'currentColor'}`} />
+              <span className="text-[10px] mt-0.5 leading-tight">Сотрудники</span>
+            </Link>
+          )}
 
           <Link
             to="/knowledge-base"

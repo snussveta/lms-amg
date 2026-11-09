@@ -44,15 +44,18 @@ export const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Header Branding */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#003B73] text-white font-black text-2xl mb-3 shadow-md relative">
-            <span>AMG</span>
-            <span className="w-3 h-3 rounded-full bg-[#E30613] absolute -top-1 -right-1 ring-2 ring-white" />
+          <div className="flex justify-center mb-3">
+            <img
+              src="/logo.png"
+              alt="AutoMall Group"
+              className="h-10 sm:h-12 w-auto max-w-[260px] object-contain"
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#212529]">
-            Вход в систему AMG
+            Вход в систему
           </h1>
           <p className="text-[#6C757D] text-xs sm:text-sm mt-1.5 max-w-sm mx-auto">
-            Корпоративная платформа тестирования, курсов и аттестации сотрудников
+            Корпоративный портал обучения и аттестации сотрудников
           </p>
         </div>
 

@@ -4,9 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import get_current_user, require_role
+from app.core.security import get_current_user, get_password_hash, require_role
+from app.models.department import Department
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdateRole
+from app.schemas.user import UserAdminCreate, UserAdminUpdate, UserResponse, UserUpdateRole
 
 router = APIRouter(prefix="/users", tags=["Users Management"])
 
@@ -20,6 +21,128 @@ async def list_users(
     result = await db.execute(select(User).order_by(User.id.asc()))
     users = result.scalars().all()
     return [UserResponse.model_validate(u) for u in users]
+
+
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user_by_admin(
+    payload: UserAdminCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    """
+    Регистрация нового сотрудника администратором:
+    Администратор указывает ФИО, email (логин), пароль, филиал, отдел и роль.
+    """
+    email_clean = payload.email.lower().strip()
+    existing = await db.execute(select(User).where(User.email == email_clean))
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Пользователь с таким email (логином) уже зарегистрирован в системе",
+        )
+
+    # Guard: admin cannot create superadmin
+    if payload.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Только суперадминистратор может создавать учетные записи суперадминистратора",
+        )
+
+    # Sync department name if department_id provided
+    dept_name = payload.department or "СТО"
+    dept_id = payload.department_id
+    if dept_id:
+        dept_res = await db.execute(select(Department).where(Department.id == dept_id))
+        dept_obj = dept_res.scalar_one_or_none()
+        if dept_obj:
+            dept_name = dept_obj.name
+    elif payload.department:
+        dept_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
+        dept_obj = dept_res.scalar_one_or_none()
+        if dept_obj:
+            dept_id = dept_obj.id
+            dept_name = dept_obj.name
+
+    new_user = User(
+        email=email_clean,
+        hashed_password=get_password_hash(payload.password),
+        full_name=payload.full_name.strip(),
+        role=payload.role,
+        branch=payload.branch.strip() if payload.branch else "AutoMall Центральный",
+        department=dept_name,
+        department_id=dept_id,
+        is_active=True,
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    return UserResponse.model_validate(new_user)
+
+
+@router.patch("/{user_id}", response_model=UserResponse)
+async def update_user(
+    user_id: int,
+    payload: UserAdminUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    """Обновление данных сотрудника (ФИО, филиал, отдел, роль, смена пароля)."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    target_user = result.scalar_one_or_none()
+
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
+
+    # Guard: admin cannot modify superadmin
+    if target_user.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Только суперадминистратор может редактировать учетные записи суперадминов",
+        )
+
+    if payload.role is not None:
+        if payload.role == "superadmin" and current_user.role != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Только суперадминистратор может назначать роль суперадминистратора",
+            )
+        target_user.role = payload.role
+
+    if payload.full_name is not None and payload.full_name.strip():
+        target_user.full_name = payload.full_name.strip()
+
+    if payload.email is not None and payload.email.lower().strip() != target_user.email:
+        # Check uniqueness
+        dup = await db.execute(select(User).where(User.email == payload.email.lower().strip()))
+        if dup.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким email уже существует",
+            )
+        target_user.email = payload.email.lower().strip()
+
+    if payload.branch is not None:
+        target_user.branch = payload.branch.strip()
+
+    if payload.department_id is not None:
+        target_user.department_id = payload.department_id
+        dept_res = await db.execute(select(Department).where(Department.id == payload.department_id))
+        dept_obj = dept_res.scalar_one_or_none()
+        if dept_obj:
+            target_user.department = dept_obj.name
+    elif payload.department is not None:
+        target_user.department = payload.department.strip()
+        dept_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
+        dept_obj = dept_res.scalar_one_or_none()
+        if dept_obj:
+            target_user.department_id = dept_obj.id
+
+    if payload.password is not None and payload.password.strip():
+        target_user.hashed_password = get_password_hash(payload.password.strip())
+
+    await db.commit()
+    await db.refresh(target_user)
+    return UserResponse.model_validate(target_user)
 
 
 @router.patch("/{user_id}/role", response_model=UserResponse)

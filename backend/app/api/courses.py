@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select, delete
+from sqlalchemy import func, select, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -979,13 +979,31 @@ async def assign_course_to_users(
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
-    if not payload.user_ids:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Список сотрудников не может быть пустым")
+    target_user_ids = set(payload.user_ids or [])
+    if payload.department_ids or payload.departments:
+        dept_conditions = []
+        if payload.department_ids:
+            dept_conditions.append(User.department_id.in_(payload.department_ids))
+        if payload.departments:
+            dept_conditions.append(User.department.in_(payload.departments))
+        if dept_conditions:
+            dept_users_stmt = select(User.id).where(User.is_active.is_(True), or_(*dept_conditions))
+            dept_users_res = await db.execute(dept_users_stmt)
+            for (uid,) in dept_users_res.fetchall():
+                target_user_ids.add(uid)
+
+    if not target_user_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Не выбраны сотрудники или отделы для назначения",
+        )
+
+    target_list = list(target_user_ids)
 
     # Fetch existing assignments for this course and users
     existing_stmt = select(CourseAssignment).where(
         CourseAssignment.course_id == course_id,
-        CourseAssignment.user_id.in_(payload.user_ids),
+        CourseAssignment.user_id.in_(target_list),
     )
     existing_res = await db.execute(existing_stmt)
     existing_map = {a.user_id: a for a in existing_res.scalars().all()}
@@ -993,12 +1011,12 @@ async def assign_course_to_users(
     # Fetch existing enrollments
     enr_stmt = select(UserCourseEnrollment).where(
         UserCourseEnrollment.course_id == course_id,
-        UserCourseEnrollment.user_id.in_(payload.user_ids),
+        UserCourseEnrollment.user_id.in_(target_list),
     )
     enr_res = await db.execute(enr_stmt)
     enr_map = {e.user_id: e for e in enr_res.scalars().all()}
 
-    for uid in payload.user_ids:
+    for uid in target_list:
         if uid in existing_map:
             existing_map[uid].deadline = payload.deadline
             existing_map[uid].assigned_at = datetime.now(timezone.utc)
@@ -1026,7 +1044,7 @@ async def assign_course_to_users(
     return {
         "status": "assigned",
         "course_id": course_id,
-        "assigned_count": len(payload.user_ids),
+        "assigned_count": len(target_list),
     }
 
 
