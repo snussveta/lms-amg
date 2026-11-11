@@ -68,6 +68,23 @@ export const UserManagementPage = () => {
   // Department Modal State
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+
+  const handleSendTestEmail = async () => {
+    try {
+      setIsSendingTestEmail(true);
+      setError('');
+      setSuccessMsg('');
+      const res = await api.post('/users/test-email');
+      setSuccessMsg(res.data?.message || 'Тестовое письмо поставлено в очередь отправки. Проверьте ваш почтовый ящик.');
+      setTimeout(() => setSuccessMsg(''), 8000);
+    } catch (err) {
+      console.error('Ошибка отправки тестового письма:', err);
+      setError(err.response?.data?.detail || 'Не удалось отправить тестовое письмо. Проверьте настройки SMTP в .env на сервере.');
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
   const [isSubmittingDept, setIsSubmittingDept] = useState(false);
 
@@ -383,13 +400,25 @@ export const UserManagementPage = () => {
 
         <div className="flex items-center gap-2 flex-wrap">
           {activeTab === 'users' ? (
-            <button
-              onClick={openRegisterModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] hover:bg-[#C70510] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Зарегистрировать сотрудника</span>
-            </button>
+            <>
+              <button
+                onClick={handleSendTestEmail}
+                disabled={isSendingTestEmail}
+                title="Отправить тестовое письмо на почту администратора для проверки SMTP"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white hover:bg-[#F4F5F7] text-[#003B73] text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px] disabled:opacity-50"
+              >
+                <Mail className={`w-4 h-4 ${isSendingTestEmail ? 'animate-pulse text-[#E30613]' : 'text-[#003B73]'}`} />
+                <span>{isSendingTestEmail ? 'Отправка...' : 'Тест почты'}</span>
+              </button>
+
+              <button
+                onClick={openRegisterModal}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] hover:bg-[#C70510] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Зарегистрировать сотрудника</span>
+              </button>
+            </>
           ) : (
             <button
               onClick={openCreateDeptModal}
