@@ -24,6 +24,17 @@ class Settings(BaseSettings):
     # Media Storage for giant videos, presentations and assets
     MEDIA_DIR: str = "media"
 
+    # SMTP Email Configuration
+    SMTP_HOST: Union[str, None] = None
+    SMTP_PORT: int = 465
+    SMTP_USER: Union[str, None] = None
+    SMTP_PASSWORD: Union[str, None] = None
+    SMTP_FROM_NAME: str = "Учебный центр AutoMall"
+    SMTP_FROM_EMAIL: Union[str, None] = None
+    SMTP_TLS: bool = False
+    SMTP_SSL: bool = True
+    FRONTEND_URL: str = "https://lms-amg.duckdns.org"
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["*"]
 

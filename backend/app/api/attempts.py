@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
+from app.core.email import send_test_result_email
 from app.models.assignment import TestAssignment
 from app.models.attempt import Attempt, AttemptAnswer
 from app.models.question import Question, QuestionOption
@@ -260,6 +261,7 @@ async def get_active_attempt(
 async def submit_attempt(
     attempt_id: int,
     submission: AttemptSubmitRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -419,6 +421,20 @@ async def submit_attempt(
     await db.commit()
     await db.refresh(attempt)
 
+    if attempt.status == "submitted" and current_user.email:
+        background_tasks.add_task(
+            send_test_result_email,
+            to_email=current_user.email,
+            full_name=current_user.full_name,
+            test_title=test.title,
+            test_id=test.id,
+            score=attempt.score,
+            max_score=attempt.max_score,
+            percentage=percentage,
+            is_passed=attempt.is_passed,
+            passing_score=test.passing_score,
+        )
+
     time_spent = int((attempt.submitted_at - attempt.started_at).total_seconds())
 
     return AttemptResultResponse(
@@ -444,6 +460,7 @@ async def submit_attempt(
 async def review_attempt_answers(
     attempt_id: int,
     review_req: AttemptManualReviewRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
@@ -526,6 +543,20 @@ async def review_attempt_answers(
 
     await db.commit()
     await db.refresh(attempt)
+
+    if all_reviewed and attempt.user and attempt.user.email:
+        background_tasks.add_task(
+            send_test_result_email,
+            to_email=attempt.user.email,
+            full_name=attempt.user.full_name,
+            test_title=test.title,
+            test_id=test.id,
+            score=attempt.score,
+            max_score=max_possible,
+            percentage=percentage,
+            is_passed=attempt.is_passed,
+            passing_score=test.passing_score,
+        )
 
     # Формируем ответ
     answer_details: List[AttemptAnswerDetailResponse] = []

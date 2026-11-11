@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import func, select, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
+from app.core.email import send_bulk_course_assigned_email, send_course_completed_email
 from app.models.course import (
     Course,
     CourseModule,
@@ -831,6 +832,7 @@ async def update_lesson_progress(
 async def mark_lesson_complete(
     course_id: int,
     lesson_id: int,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -923,6 +925,16 @@ async def mark_lesson_complete(
 
     await db.commit()
 
+    if is_course_completed and current_user.email:
+        c_title_res = await db.execute(select(Course.title).where(Course.id == course_id))
+        course_title_val = c_title_res.scalar_one_or_none() or "Обучающий курс"
+        background_tasks.add_task(
+            send_course_completed_email,
+            to_email=current_user.email,
+            full_name=current_user.full_name,
+            course_title=course_title_val,
+        )
+
     return {
         "status": "completed",
         "lesson_id": lesson_id,
@@ -942,6 +954,7 @@ async def mark_lesson_complete(
 async def assign_course_to_users(
     course_id: int,
     payload: CourseAssignRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "superadmin"])),
 ):
@@ -1020,6 +1033,19 @@ async def assign_course_to_users(
     course.is_published = True
 
     await db.commit()
+
+    if target_list:
+        u_res = await db.execute(select(User.email, User.full_name).where(User.id.in_(target_list)))
+        users_info = [{"email": r[0], "full_name": r[1]} for r in u_res.fetchall() if r[0]]
+        if users_info:
+            background_tasks.add_task(
+                send_bulk_course_assigned_email,
+                users=users_info,
+                course_title=course.title,
+                course_id=course.id,
+                deadline=payload.deadline,
+            )
+
     return {
         "status": "assigned",
         "course_id": course_id,

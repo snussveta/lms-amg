@@ -1,12 +1,13 @@
 import secrets
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
+from app.core.email import send_bulk_test_assigned_email
 from app.models.assignment import TestAssignment
 from app.models.attempt import Attempt
 from app.models.question import Question, QuestionOption
@@ -362,6 +363,7 @@ async def delete_test(
 async def assign_test_to_users(
     test_id: int,
     assign_req: TestAssignRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
@@ -425,6 +427,20 @@ async def assign_test_to_users(
     test.is_published = True
 
     await db.commit()
+
+    if target_list:
+        u_res = await db.execute(select(User.email, User.full_name).where(User.id.in_(target_list)))
+        users_info = [{"email": r[0], "full_name": r[1]} for r in u_res.fetchall() if r[0]]
+        if users_info:
+            background_tasks.add_task(
+                send_bulk_test_assigned_email,
+                users=users_info,
+                test_title=test.title,
+                test_id=test.id,
+                passing_score=test.passing_score,
+                due_date=assign_req.due_date,
+            )
+
     return {"message": f"Тест успешно назначен {len(target_list)} сотрудникам"}
 
 

@@ -1,10 +1,11 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user, get_password_hash, require_role
+from app.core.email import send_welcome_email, send_test_smtp_email
 from app.models.department import Department
 from app.models.user import User
 from app.schemas.user import UserAdminCreate, UserAdminUpdate, UserResponse, UserUpdateRole
@@ -26,12 +27,14 @@ async def list_users(
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user_by_admin(
     payload: UserAdminCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """
     Регистрация нового сотрудника администратором:
     Администратор указывает ФИО, email (логин), пароль, филиал, отдел и роль.
+    Автоматически отправляется приветственное письмо с учетными данными.
     """
     email_clean = payload.email.lower().strip()
     existing = await db.execute(select(User).where(User.email == email_clean))
@@ -74,7 +77,30 @@ async def create_user_by_admin(
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+
+    # Фоновая отправка письма с данными для входа
+    background_tasks.add_task(
+        send_welcome_email,
+        to_email=new_user.email,
+        full_name=new_user.full_name,
+        password=payload.password,
+        role=new_user.role,
+    )
+
     return UserResponse.model_validate(new_user)
+
+
+@router.post("/test-email")
+async def test_email_configuration(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    """Отправить тестовое письмо текущему администратору для проверки настроек SMTP."""
+    background_tasks.add_task(send_test_smtp_email, to_email=current_user.email)
+    return {
+        "status": "queued",
+        "message": f"Тестовое письмо отправлено на {current_user.email}. Проверьте почтовый ящик.",
+    }
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
