@@ -1,8 +1,11 @@
 import logging
 import smtplib
 import ssl
+import re
+import html
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -121,9 +124,25 @@ def send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
     msg["Subject"] = subject
     msg["From"] = from_header
     msg["To"] = to_email
+    msg["Date"] = formatdate(localtime=True)
+    sender_domain = from_email.split("@")[-1] if "@" in from_email else None
+    msg["Message-ID"] = make_msgid(domain=sender_domain)
+    msg["Auto-Submitted"] = "auto-generated"
+    msg["X-Auto-Response-Suppress"] = "All"
 
-    part = MIMEText(html_content, "html", "utf-8")
-    msg.attach(part)
+    # Plain text alternative version (avoids spam filter penalties for HTML-only mail)
+    clean_text = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL)
+    clean_text = re.sub(r'<[^>]+>', ' ', clean_text)
+    clean_text = html.unescape(clean_text)
+    clean_text = re.sub(r'[ \t]+', ' ', clean_text)
+    clean_text = re.sub(r'\n\s*\n', '\n\n', clean_text).strip()
+
+    part_text = MIMEText(clean_text, "plain", "utf-8")
+    msg.attach(part_text)
+
+    # HTML version
+    part_html = MIMEText(html_content, "html", "utf-8")
+    msg.attach(part_html)
 
     port = settings.SMTP_PORT
     host = settings.SMTP_HOST
@@ -363,7 +382,6 @@ def send_test_result_email(
     percentage: float,
     passing_score: int,
     is_passed: bool,
-    test_id: Optional[int] = None,
 ) -> bool:
     """Notifies employee when their test attempt is graded and result is finalized."""
     results_url = f"{settings.FRONTEND_URL.rstrip('/')}/my-results"
@@ -489,3 +507,4 @@ def send_test_smtp_email(to_email: str) -> bool:
         action_label="Открыть систему LMS",
     )
     return send_email_sync(to_email, subject, html)
+
