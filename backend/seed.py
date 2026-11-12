@@ -39,7 +39,7 @@ async def seed_data() -> None:
         await db.flush()
 
         # 3. Seed Superadmin
-        superadmin_email = settings.FIRST_SUPERADMIN_EMAIL.lower()
+        superadmin_email = settings.FIRST_SUPERADMIN_EMAIL.lower().strip()
         res = await db.execute(select(User).where(User.email == superadmin_email))
         superadmin = res.scalar_one_or_none()
 
@@ -47,7 +47,7 @@ async def seed_data() -> None:
             logger.info(f"Создание суперадминистратора: {superadmin_email}")
             superadmin = User(
                 email=superadmin_email,
-                full_name="Администратор AMG",
+                full_name=settings.FIRST_SUPERADMIN_NAME or "Администратор AMG",
                 hashed_password=get_password_hash(settings.FIRST_SUPERADMIN_PASSWORD),
                 role="superadmin",
                 is_active=True,
@@ -56,7 +56,11 @@ async def seed_data() -> None:
             db.add(superadmin)
             await db.flush()
         else:
-            logger.info(f"Суперадминистратор {superadmin_email} уже существует.")
+            logger.info(f"Суперадминистратор {superadmin_email} найден. Синхронизация пароля из .env...")
+            superadmin.hashed_password = get_password_hash(settings.FIRST_SUPERADMIN_PASSWORD)
+            superadmin.role = "superadmin"
+            superadmin.is_active = True
+            await db.flush()
 
         # 4. Clean up initial demo tests, courses, and bank questions as requested
         # ("убери все эти начальные тесты вопросы и тд")

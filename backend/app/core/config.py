@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Union[str, None] = None
     SMTP_FROM_NAME: str = "Учебный центр AutoMall"
     SMTP_FROM_EMAIL: Union[str, None] = None
+    EMAILS_FROM_NAME: Union[str, None] = None
+    EMAILS_FROM_EMAIL: Union[str, None] = None
     SMTP_TLS: bool = False
     SMTP_SSL: bool = True
     FRONTEND_URL: str = "https://lms-amg.duckdns.org"

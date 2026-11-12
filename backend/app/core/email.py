@@ -117,8 +117,9 @@ def send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
         logger.info(f"[Email Skipped] SMTP not configured. Would send '{subject}' to <{to_email}>")
         return False
 
-    from_email = settings.SMTP_FROM_EMAIL or settings.SMTP_USER
-    from_header = f"{settings.SMTP_FROM_NAME} <{from_email}>"
+    from_email = settings.SMTP_FROM_EMAIL or settings.EMAILS_FROM_EMAIL or settings.SMTP_USER
+    from_name = settings.EMAILS_FROM_NAME or settings.SMTP_FROM_NAME or "AMG LMS Portal"
+    from_header = f"{from_name} <{from_email}>"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
