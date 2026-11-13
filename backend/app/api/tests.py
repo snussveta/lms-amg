@@ -365,9 +365,9 @@ async def assign_test_to_users(
     assign_req: TestAssignRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin")),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
-    """Назначить тест выбранным сотрудникам или всем сотрудникам организации."""
+    """Назначить тест сотрудникам (администраторы — всем, руководитель отдела — только своему отделу)."""
     test_res = await db.execute(select(Test).where(Test.id == test_id))
     test = test_res.scalar_one_or_none()
     if not test:
@@ -375,7 +375,11 @@ async def assign_test_to_users(
 
     target_user_ids = set()
     if assign_req.assign_all:
-        users_res = await db.execute(select(User.id).where(User.is_active.is_(True)))
+        if current_user.role == "department_head":
+            dept_filter = (User.department_id == current_user.department_id) | (User.department == current_user.department)
+            users_res = await db.execute(select(User.id).where(User.is_active.is_(True), dept_filter, User.role == "employee"))
+        else:
+            users_res = await db.execute(select(User.id).where(User.is_active.is_(True)))
         target_user_ids = {uid for (uid,) in users_res.fetchall()}
     else:
         target_user_ids.update(assign_req.user_ids or [])
@@ -392,10 +396,17 @@ async def assign_test_to_users(
                 for (uid,) in dept_users_res.fetchall():
                     target_user_ids.add(uid)
 
+    # Department head restriction
+    if current_user.role == "department_head":
+        dept_filter = (User.department_id == current_user.department_id) | (User.department == current_user.department)
+        allowed_res = await db.execute(select(User.id).where(User.is_active.is_(True), dept_filter, User.role == "employee"))
+        allowed_ids = set(uid for (uid,) in allowed_res.fetchall())
+        target_user_ids = target_user_ids.intersection(allowed_ids)
+
     if not target_user_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не выбраны сотрудники или отделы для назначения",
+            detail="Не выбраны сотрудники или отделы для назначения (или у вас нет прав на выбранных сотрудников)",
         )
 
     target_list = list(target_user_ids)
@@ -448,7 +459,7 @@ async def assign_test_to_users(
 async def get_test_assignments(
     test_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin")),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
     """Получить список назначений теста с детальным статусом прохождения."""
     test_res = await db.execute(select(Test).where(Test.id == test_id))
@@ -463,6 +474,16 @@ async def get_test_assignments(
         .order_by(TestAssignment.assigned_at.desc())
     )
     assignments = assignments_res.scalars().all()
+
+    # Filter for Department Head
+    if current_user.role == "department_head":
+        assignments = [
+            a for a in assignments
+            if a.user and (
+                (a.user.department_id and a.user.department_id == current_user.department_id)
+                or (a.user.department and a.user.department == current_user.department)
+            )
+        ]
 
     # Получаем последние попытки для каждого назначенного пользователя
     assigned_user_ids = [a.user_id for a in assignments]
@@ -520,11 +541,11 @@ async def delete_test_assignment(
     test_id: int,
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin")),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
     """Отозвать назначение теста у сотрудника."""
     res = await db.execute(
-        select(TestAssignment).where(
+        select(TestAssignment).options(selectinload(TestAssignment.user)).where(
             TestAssignment.test_id == test_id,
             TestAssignment.user_id == user_id,
         )
@@ -532,6 +553,18 @@ async def delete_test_assignment(
     assignment = res.scalar_one_or_none()
     if not assignment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Назначение не найдено")
+
+    if current_user.role == "department_head":
+        target_u = assignment.user
+        is_same_dept = target_u and (
+            (target_u.department_id and target_u.department_id == current_user.department_id)
+            or (target_u.department and target_u.department == current_user.department)
+        )
+        if not is_same_dept:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Руководитель отдела может отзывать тесты только у сотрудников своего отдела",
+            )
 
     await db.delete(assignment)
     await db.commit()

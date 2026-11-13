@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, ShieldCheck, UserCheck } from 'lucide-react';
+import { Briefcase, ShieldAlert, ShieldCheck, UserCheck } from 'lucide-react';
 
 export const RoleBadge = ({ role, className = '' }) => {
   switch (role) {
@@ -19,6 +19,15 @@ export const RoleBadge = ({ role, className = '' }) => {
         >
           <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
           Администратор
+        </span>
+      );
+    case 'department_head':
+      return (
+        <span
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#141414] text-[#E84C3D] border border-[#383838] shadow-2xs ${className}`}
+        >
+          <Briefcase className="w-3.5 h-3.5 text-[#E84C3D]" />
+          Руководитель отдела
         </span>
       );
     case 'employee':

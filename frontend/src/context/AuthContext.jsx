@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }) => {
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isDepartmentHead = user?.role === 'department_head';
+  const isManager = isAdmin || isDepartmentHead;
   const isEmployee = user?.role === 'employee';
 
   return (
@@ -75,6 +77,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         isSuperAdmin,
         isAdmin,
+        isDepartmentHead,
+        isManager,
         isEmployee,
       }}
     >

@@ -92,12 +92,21 @@ async def get_current_user(
     return user
 
 
-def require_role(*allowed_roles: str) -> Callable:
+def require_role(*allowed_roles: Union[str, List[str], tuple]) -> Callable:
     """
     Dependency factory to enforce Role-Based Access Control (RBAC).
-    'superadmin' automatically has access to 'admin' and 'employee' routes.
-    'admin' has access to 'admin' and 'employee' routes.
+    'superadmin' automatically has access to everything.
+    'admin' has access to routes allowing 'admin', 'department_head', or 'employee'.
+    'department_head' has access if 'department_head' is explicitly allowed.
+    'employee' has access if 'employee' is allowed.
     """
+    flat_roles = []
+    for r in allowed_roles:
+        if isinstance(r, (list, tuple)):
+            flat_roles.extend(r)
+        else:
+            flat_roles.append(r)
+
     async def role_checker(current_user: Any = Depends(get_current_user)) -> Any:
         user_role = current_user.role
 
@@ -105,17 +114,17 @@ def require_role(*allowed_roles: str) -> Callable:
         if user_role == "superadmin":
             return current_user
 
-        # admin has access if "admin" or "employee" is allowed
-        if user_role == "admin" and ("admin" in allowed_roles or "employee" in allowed_roles):
+        # admin has access to admin, department_head, and employee operations
+        if user_role == "admin" and any(r in flat_roles for r in ["admin", "department_head", "employee"]):
             return current_user
 
         # exact role match
-        if user_role in allowed_roles:
+        if user_role in flat_roles:
             return current_user
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Operation not permitted. Required roles: {', '.join(allowed_roles)}",
+            detail=f"Operation not permitted. Required roles: {', '.join(flat_roles)}",
         )
 
     return role_checker

@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { RoleBadge } from './RoleBadge';
 
 export const Navbar = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isDepartmentHead, isManager } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -128,7 +128,7 @@ export const Navbar = () => {
                     База знаний
                   </Link>
 
-                  {isAdmin && (
+                  {(isAdmin || isDepartmentHead) && (
                     <Link
                       to="/admin/users"
                       className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
@@ -138,7 +138,7 @@ export const Navbar = () => {
                       }`}
                     >
                       <Users className="w-4 h-4 text-white/90" />
-                      Сотрудники
+                      {isDepartmentHead ? 'Сотрудники отдела' : 'Сотрудники'}
                     </Link>
                   )}
 
@@ -342,6 +342,21 @@ export const Navbar = () => {
                     <FolderArchive className="w-4 h-4 text-white/80" />
                     <span>База знаний</span>
                   </Link>
+
+                  {isDepartmentHead && (
+                    <Link
+                      to="/admin/users"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                        isActive('/admin/users')
+                          ? 'bg-white/20 text-white font-semibold'
+                          : 'text-white/90 hover:bg-white/10'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-white/80" />
+                      <span>Сотрудники отдела</span>
+                    </Link>
+                  )}
                 </div>
 
                 {/* Admin Links */}
@@ -447,7 +462,7 @@ export const Navbar = () => {
             <span className="text-[10px] mt-0.5 leading-tight">Тесты</span>
           </Link>
 
-          {!isAdmin ? (
+          {!isManager ? (
             <Link
               to="/my-attempts"
               className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
@@ -469,7 +484,7 @@ export const Navbar = () => {
               }`}
             >
               <Users className={`w-5 h-5 ${isActive('/admin/users') ? 'text-[#E84C3D]' : 'currentColor'}`} />
-              <span className="text-[10px] mt-0.5 leading-tight">Сотрудники</span>
+              <span className="text-[10px] mt-0.5 leading-tight">{isDepartmentHead ? 'Отдел' : 'Сотрудники'}</span>
             </Link>
           )}
 

@@ -26,7 +26,7 @@ import { useAuth } from '../../context/AuthContext';
 import { RoleBadge } from '../../components/RoleBadge';
 
 export const UserManagementPage = () => {
-  const { user: currentUser, isSuperAdmin } = useAuth();
+  const { user: currentUser, isSuperAdmin, isAdmin, isDepartmentHead, isManager } = useAuth();
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'departments'
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -44,7 +44,6 @@ export const UserManagementPage = () => {
     full_name: '',
     email: '',
     password: '',
-    branch: 'AutoMall Центральный',
     department: 'СТО',
     department_id: null,
     role: 'employee',
@@ -58,7 +57,6 @@ export const UserManagementPage = () => {
     full_name: '',
     email: '',
     password: '',
-    branch: 'AutoMall Центральный',
     department: 'СТО',
     department_id: null,
     role: 'employee',
@@ -128,14 +126,16 @@ export const UserManagementPage = () => {
 
   // Open Register Modal
   const openRegisterModal = () => {
-    const initialDept = departments.length > 0 ? departments[0] : null;
+    const initialDept = isDepartmentHead
+      ? departments.find((d) => d.name === currentUser?.department || d.id === currentUser?.department_id) || { name: currentUser?.department || 'СТО', id: currentUser?.department_id || null }
+      : (departments.length > 0 ? departments[0] : null);
+
     setRegisterForm({
       full_name: '',
       email: '',
       password: generateRandomPassword(),
-      branch: 'AutoMall Центральный',
-      department: initialDept ? initialDept.name : 'СТО',
-      department_id: initialDept ? initialDept.id : null,
+      department: initialDept ? initialDept.name : (currentUser?.department || 'СТО'),
+      department_id: initialDept ? initialDept.id : (currentUser?.department_id || null),
       role: 'employee',
     });
     setCopiedPassword(false);
@@ -157,7 +157,6 @@ export const UserManagementPage = () => {
       );
       const payload = {
         ...registerForm,
-        branch: registerForm.branch.trim(),
         department: matchedDept ? matchedDept.name : registerForm.department,
         department_id: matchedDept ? matchedDept.id : registerForm.department_id,
       };
@@ -195,7 +194,6 @@ export const UserManagementPage = () => {
       full_name: targetUser.full_name || '',
       email: targetUser.email || '',
       password: '',
-      branch: targetUser.branch || 'AutoMall Центральный',
       department: resolvedDeptName,
       department_id: resolvedDeptId,
       role: targetUser.role || 'employee',
@@ -216,7 +214,6 @@ export const UserManagementPage = () => {
       const payload = {
         full_name: editForm.full_name.trim(),
         email: editForm.email.trim(),
-        branch: editForm.branch.trim(),
         department: matchedDept ? matchedDept.name : editForm.department,
         department_id: matchedDept ? matchedDept.id : editForm.department_id,
         role: editForm.role,
@@ -350,13 +347,42 @@ export const UserManagementPage = () => {
     }
   };
 
+  const canDeleteUser = (u) => {
+    if (!u || u.id === currentUser?.id) return false;
+    if (isDepartmentHead) {
+      return u.role === 'employee' && (
+        (u.department_id && u.department_id === currentUser?.department_id) ||
+        (u.department && u.department === currentUser?.department)
+      );
+    }
+    if (isSuperAdmin) return true;
+    if (currentUser?.role === 'admin') {
+      return u.role === 'employee' || u.role === 'department_head';
+    }
+    return false;
+  };
+
+  const canEditUser = (u) => {
+    if (!u) return false;
+    if (isDepartmentHead) {
+      return u.role === 'employee' && (
+        (u.department_id && u.department_id === currentUser?.department_id) ||
+        (u.department && u.department === currentUser?.department)
+      );
+    }
+    if (isSuperAdmin) return true;
+    if (currentUser?.role === 'admin') {
+      return u.role !== 'superadmin';
+    }
+    return false;
+  };
+
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       u.full_name?.toLowerCase().includes(term) ||
       u.email?.toLowerCase().includes(term) ||
-      u.department?.toLowerCase().includes(term) ||
-      u.branch?.toLowerCase().includes(term);
+      u.department?.toLowerCase().includes(term);
 
     if (!matchesSearch) return false;
     if (filterRole !== 'all' && u.role !== filterRole) return false;
@@ -468,20 +494,22 @@ export const UserManagementPage = () => {
           </span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('departments')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
-            activeTab === 'departments'
-              ? 'border-[#E84C3D] text-[#141414]'
-              : 'border-transparent text-[#777777] hover:text-[#222222]'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Отделы компании</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F5F5F7] text-[#777777] font-mono">
-            {departments.length}
-          </span>
-        </button>
+        {!isDepartmentHead && (
+          <button
+            onClick={() => setActiveTab('departments')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
+              activeTab === 'departments'
+                ? 'border-[#E84C3D] text-[#141414]'
+                : 'border-transparent text-[#777777] hover:text-[#222222]'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Отделы компании</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F5F5F7] text-[#777777] font-mono">
+              {departments.length}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ============================================================== */}
@@ -522,6 +550,7 @@ export const UserManagementPage = () => {
                 {[
                   { id: 'all', label: 'Все' },
                   { id: 'employee', label: 'Сотрудники' },
+                  { id: 'department_head', label: 'Руководители' },
                   { id: 'admin', label: 'Администраторы' },
                   { id: 'superadmin', label: 'Суперадмины' },
                 ].map((tab) => (
@@ -549,7 +578,7 @@ export const UserManagementPage = () => {
                   <tr className="border-b border-[#EEEEEE] bg-[#F5F5F7] text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                     <th className="py-3.5 px-5">Сотрудник</th>
                     <th className="py-3.5 px-5">Логин / Email</th>
-                    <th className="py-3.5 px-5">Отдел и Филиал</th>
+                    <th className="py-3.5 px-5">Отдел</th>
                     <th className="py-3.5 px-5">Роль</th>
                     <th className="py-3.5 px-5">Дата рег.</th>
                     <th className="py-3.5 px-5 text-right">Действия</th>
@@ -592,19 +621,14 @@ export const UserManagementPage = () => {
                           </td>
 
                           <td className="py-3.5 px-5">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#141414]">
-                                <Building2 className="w-3.5 h-3.5 text-[#141414]" />
-                                {u.department || 'СТО'}
-                              </span>
-                              <span className="text-[11px] text-[#777777]">
-                                {u.branch || 'AutoMall Центральный'}
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#141414]">
+                              <Building2 className="w-3.5 h-3.5 text-[#141414]" />
+                              {u.department || 'СТО'}
+                            </span>
                           </td>
 
                           <td className="py-3.5 px-5">
-                            {canEdit ? (
+                            {canEdit && !isDepartmentHead ? (
                               <select
                                 value={u.role}
                                 disabled={updatingId === u.id}
@@ -612,6 +636,7 @@ export const UserManagementPage = () => {
                                 className="bg-white text-[#222222] text-xs rounded-lg border border-[#EEEEEE] py-1.5 px-2.5 focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414]"
                               >
                                 <option value="employee">Сотрудник</option>
+                                <option value="department_head">Руководитель отдела</option>
                                 <option value="admin">Администратор</option>
                                 {isSuperAdmin && <option value="superadmin">Суперадмин</option>}
                               </select>
@@ -626,7 +651,7 @@ export const UserManagementPage = () => {
 
                           <td className="py-3.5 px-5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {canEdit && (
+                              {canEditUser(u) && (
                                 <button
                                   onClick={() => openEditModal(u)}
                                   className="p-1.5 rounded-lg text-[#141414] hover:bg-[#141414]/10 transition-colors"
@@ -636,12 +661,12 @@ export const UserManagementPage = () => {
                                 </button>
                               )}
 
-                              {isSuperAdmin && !isSelf && (
+                              {canDeleteUser(u) && (
                                 <button
                                   onClick={() => handleDeleteUser(u)}
                                   disabled={updatingId === u.id}
                                   className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
-                                  title="Удалить аккаунт"
+                                  title="Удалить сотрудника"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -868,61 +893,56 @@ export const UserManagementPage = () => {
                   </select>
                 </div>
 
+
+              </div>
+
+              {!isDepartmentHead && (
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                    Филиал компании
+                    Назначаемая роль
                   </label>
-                  <input
-                    type="text"
-                    list="branch-list-reg"
-                    value={registerForm.branch}
-                    onChange={(e) => setRegisterForm({ ...registerForm, branch: e.target.value })}
-                    placeholder="Например: AutoMall Центральный или КСМ"
-                    className="input-field text-xs w-full bg-white"
-                  />
-                  <datalist id="branch-list-reg">
-                    <option value="AutoMall Центральный" />
-                    <option value="AutoMall Север" />
-                    <option value="AutoMall Юг" />
-                    <option value="AutoMall Восток" />
-                    <option value="AutoMall Петриканы" />
-                    <option value="AutoMall Рышкановка" />
-                  </datalist>
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegisterForm({ ...registerForm, role: 'employee' })}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        registerForm.role === 'employee'
+                          ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
+                          : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
+                      }`}
+                    >
+                      <div className="text-xs">Сотрудник</div>
+                      <div className="text-[10px] text-[#777777] font-normal">Обучение и тесты</div>
+                    </button>
 
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                  Назначаемая роль
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRegisterForm({ ...registerForm, role: 'employee' })}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      registerForm.role === 'employee'
-                        ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
-                        : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
-                    }`}
-                  >
-                    <div className="text-xs">Сотрудник</div>
-                    <div className="text-[10px] text-[#777777] font-normal">Курсы и тесты</div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegisterForm({ ...registerForm, role: 'department_head' })}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        registerForm.role === 'department_head'
+                          ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
+                          : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
+                      }`}
+                    >
+                      <div className="text-xs">Руководитель</div>
+                      <div className="text-[10px] text-[#777777] font-normal">Управление отделом</div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setRegisterForm({ ...registerForm, role: 'admin' })}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      registerForm.role === 'admin'
-                        ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
-                        : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
-                    }`}
-                  >
-                    <div className="text-xs">Администратор</div>
-                    <div className="text-[10px] text-[#777777] font-normal">Управление платформой</div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegisterForm({ ...registerForm, role: 'admin' })}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        registerForm.role === 'admin'
+                          ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
+                          : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
+                      }`}
+                    >
+                      <div className="text-xs">Администратор</div>
+                      <div className="text-[10px] text-[#777777] font-normal">Вся платформа</div>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button
@@ -1068,43 +1088,26 @@ export const UserManagementPage = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                    Филиал компании
-                  </label>
-                  <input
-                    type="text"
-                    list="branch-list-edit"
-                    value={editForm.branch}
-                    onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                    placeholder="Например: AutoMall Центральный или КСМ"
-                    className="input-field text-xs w-full bg-white"
-                  />
-                  <datalist id="branch-list-edit">
-                    <option value="AutoMall Центральный" />
-                    <option value="AutoMall Север" />
-                    <option value="AutoMall Юг" />
-                    <option value="AutoMall Восток" />
-                    <option value="AutoMall Петриканы" />
-                    <option value="AutoMall Рышкановка" />
-                  </datalist>
-                </div>
+
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                  Роль в системе
-                </label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="input-field text-xs w-full bg-white"
-                >
-                  <option value="employee">Сотрудник</option>
-                  <option value="admin">Администратор</option>
-                  {isSuperAdmin && <option value="superadmin">Суперадмин</option>}
-                </select>
-              </div>
+              {!isDepartmentHead && (
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                    Роль в системе
+                  </label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                    className="input-field text-xs w-full bg-white"
+                  >
+                    <option value="employee">Сотрудник</option>
+                    <option value="department_head">Руководитель отдела</option>
+                    <option value="admin">Администратор</option>
+                    {isSuperAdmin && <option value="superadmin">Суперадмин</option>}
+                  </select>
+                </div>
+              )}
 
               <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button

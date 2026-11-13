@@ -19,8 +19,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(String(50), default="employee", nullable=False)  # superadmin, admin, employee
-    branch: Mapped[Optional[str]] = mapped_column(String(100), default="AutoMall Центральный", nullable=True)
+    role: Mapped[str] = mapped_column(String(50), default="employee", nullable=False)  # superadmin, admin, department_head, employee
+    branch: Mapped[Optional[str]] = mapped_column(String(100), default=None, nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), default="СТО", nullable=True)
     department_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True

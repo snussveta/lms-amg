@@ -681,8 +681,8 @@ async def get_course_learn_state(
 
     # Step locking logic:
     # A lesson is unlocked if it's the very first lesson OR if previous lesson is completed.
-    # If user is admin/superadmin, locks can be bypassed for review.
-    is_admin_bypass = current_user.role in ["admin", "superadmin"]
+    # If user is admin/superadmin/department_head, locks can be bypassed for review.
+    is_admin_bypass = current_user.role in ["admin", "superadmin", "department_head"]
 
     lesson_lock_status = {}
     prev_step_completed = True  # First step is always unlocked
@@ -945,12 +945,14 @@ async def assign_course_to_users(
     course_id: int,
     payload: CourseAssignRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(["admin", "superadmin"])),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
     """
     Assign a course to a list of employees.
     If already assigned, updates deadline.
     Also ensures user enrollment is initialized.
+    Admins can assign to any employee/department.
+    Department heads can only assign to employees of their own department.
     """
     course_res = await db.execute(select(Course).where(Course.id == course_id))
     course = course_res.scalar_one_or_none()
@@ -970,10 +972,17 @@ async def assign_course_to_users(
             for (uid,) in dept_users_res.fetchall():
                 target_user_ids.add(uid)
 
+    # Restriction for Department Head: only their department's employees
+    if current_user.role == "department_head":
+        dept_filter = (User.department_id == current_user.department_id) | (User.department == current_user.department)
+        allowed_users_res = await db.execute(select(User.id).where(User.is_active.is_(True), dept_filter, User.role == "employee"))
+        allowed_ids = set(uid for (uid,) in allowed_users_res.fetchall())
+        target_user_ids = target_user_ids.intersection(allowed_ids)
+
     if not target_user_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не выбраны сотрудники или отделы для назначения",
+            detail="Не выбраны сотрудники или отделы для назначения (или у вас нет доступа к выбранным сотрудникам)",
         )
 
     target_list = list(target_user_ids)
@@ -1034,9 +1043,23 @@ async def revoke_course_assignment(
     course_id: int,
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(["admin", "superadmin"])),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
     """Revoke course assignment from an employee."""
+    # Department head check
+    if current_user.role == "department_head":
+        target_res = await db.execute(select(User).where(User.id == user_id))
+        target_u = target_res.scalar_one_or_none()
+        is_same_dept = target_u and (
+            (target_u.department_id and target_u.department_id == current_user.department_id)
+            or (target_u.department and target_u.department == current_user.department)
+        )
+        if not is_same_dept or target_u.role != "employee":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Руководитель отдела может отзывать назначения только у сотрудников своего отдела",
+            )
+
     stmt = select(CourseAssignment).where(
         CourseAssignment.course_id == course_id,
         CourseAssignment.user_id == user_id,
@@ -1070,11 +1093,11 @@ async def revoke_course_assignment(
 async def get_course_assigned_users(
     course_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(["admin", "superadmin"])),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
     """
     Get all employees assigned to this course, including their progress status,
-    completion percent, branch/department, and deadline.
+    completion percent, department, and deadline.
     """
     course_res = await db.execute(select(Course).where(Course.id == course_id))
     course = course_res.scalar_one_or_none()
@@ -1089,6 +1112,16 @@ async def get_course_assigned_users(
     )
     res = await db.execute(stmt)
     assignments = res.scalars().all()
+
+    # Filter for Department Head
+    if current_user.role == "department_head":
+        assignments = [
+            a for a in assignments
+            if a.user and (
+                (a.user.department_id and a.user.department_id == current_user.department_id)
+                or (a.user.department and a.user.department == current_user.department)
+            )
+        ]
 
     user_ids = [a.user_id for a in assignments]
     enr_map = {}
@@ -1116,7 +1149,7 @@ async def get_course_assigned_users(
                 user_id=a.user_id,
                 full_name=u.full_name if u else f"User #{a.user_id}",
                 email=u.email if u else "",
-                branch=getattr(u, "branch", "AutoMall Центральный") if u else None,
+                branch=getattr(u, "branch", None) if u else None,
                 department=getattr(u, "department", "СТО") if u else None,
                 assigned_at=a.assigned_at,
                 deadline=a.deadline,

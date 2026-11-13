@@ -93,7 +93,7 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     );""",
                     "CREATE INDEX IF NOT EXISTS ix_departments_name ON departments(name);",
                     # Users branch, department & department_id
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(100) DEFAULT 'AutoMall Центральный';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(100);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'СТО';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id) ON DELETE SET NULL;",
                     "CREATE INDEX IF NOT EXISTS ix_users_department_id ON users(department_id);",

@@ -182,7 +182,11 @@ def send_welcome_email(to_email: str, full_name: str, password: str, role: str =
     login_url = f"{settings.FRONTEND_URL.rstrip('/')}/login"
     subject = "Доступ к обучающей платформе AutoMall"
 
-    role_title = "Администратор" if role in ["admin", "superadmin"] else "Сотрудник"
+    role_title = (
+        "Руководитель отдела"
+        if role == "department_head"
+        else ("Администратор" if role in ["admin", "superadmin"] else "Сотрудник")
+    )
 
     content = f"""
     <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">

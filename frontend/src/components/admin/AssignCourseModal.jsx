@@ -29,20 +29,11 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
   const [selectedDeptIds, setSelectedDeptIds] = useState([]);
   const [dueDate, setDueDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState('Все филиалы');
   const [selectedDept, setSelectedDept] = useState('Все отделы');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
-  const branches = [
-    'Все филиалы',
-    'AutoMall Центральный',
-    'AutoMall Север',
-    'AutoMall Юг',
-    'AutoMall Восток',
-  ];
 
   useEffect(() => {
     if (course?.id) {
@@ -72,23 +63,18 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
   const assignedUserIds = new Set(assignments.map((a) => a.user_id));
 
-  // Filter employees by search term, AutoMall branch and department
+  // Filter employees by search term and department
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       u.full_name?.toLowerCase().includes(term) ||
       u.email?.toLowerCase().includes(term);
 
-    const userBranch = u.branch || 'AutoMall Центральный';
     const userDept = u.department || 'СТО';
-
-    const matchesBranch =
-      selectedBranch === 'Все филиалы' || userBranch === selectedBranch;
-
     const matchesDept =
       selectedDept === 'Все отделы' || userDept === selectedDept;
 
-    return matchesSearch && matchesBranch && matchesDept;
+    return matchesSearch && matchesDept;
   });
 
   const toggleSelectUser = (userId) => {
@@ -422,21 +408,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                     />
                   </div>
 
-                  <div className="w-full sm:w-44">
-                    <select
-                      value={selectedBranch}
-                      onChange={(e) => setSelectedBranch(e.target.value)}
-                      className="input-field text-xs bg-white w-full"
-                    >
-                      {branches.map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="w-full sm:w-36">
+                  <div className="w-full sm:w-48">
                     <select
                       value={selectedDept}
                       onChange={(e) => setSelectedDept(e.target.value)}
@@ -512,8 +484,6 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                                 <span>{u.email}</span>
                                 <span>•</span>
                                 <span>{u.department || 'СТО'}</span>
-                                <span>•</span>
-                                <span>{u.branch || 'AutoMall Центральный'}</span>
                               </div>
                             </div>
                           </div>

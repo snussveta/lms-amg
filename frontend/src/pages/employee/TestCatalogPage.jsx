@@ -15,18 +15,21 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  UserPlus,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
 
 export const TestCatalogPage = () => {
-  const { user } = useAuth();
+  const { user, isManager } = useAuth();
   const navigate = useNavigate();
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('assigned'); // 'assigned', 'completed', 'general', 'all'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestModal, setSelectedTestModal] = useState(null);
+  const [selectedTestForAssign, setSelectedTestForAssign] = useState(null);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -512,7 +515,7 @@ export const TestCatalogPage = () => {
                     </div>
                   </div>
 
-                  {/* Кнопки действий */}
+                  {/* Action Button */}
                   {hasCompleted ? (
                     <div className="space-y-2">
                       <button
@@ -556,11 +559,33 @@ export const TestCatalogPage = () => {
                       <span>Начать тест</span>
                     </button>
                   )}
+
+                  {isManager && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTestForAssign(test)}
+                      className="w-full text-xs py-2 px-3 rounded-lg border border-[#CCCCCC] bg-white text-[#222222] hover:border-[#E84C3D] hover:text-[#E84C3D] font-medium transition-all flex items-center justify-center gap-1.5 shadow-sm mt-2"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-[#E84C3D]" />
+                      <span>Назначить сотрудникам</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Модальное окно назначения теста сотрудникам */}
+      {selectedTestForAssign && (
+        <TestAssignmentModal
+          test={selectedTestForAssign}
+          onClose={() => {
+            setSelectedTestForAssign(null);
+            fetchTests();
+          }}
+        />
       )}
 
       {/* Модальное окно подтверждения запуска теста */}

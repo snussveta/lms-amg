@@ -10,16 +10,21 @@ import {
   Loader2,
   Play,
   Search,
+  UserPlus,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
 
 export const CoursesCatalogPage = () => {
+  const { isManager } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [departments, setDepartments] = useState(['Все', 'СТО', 'Склад', 'Продажи', 'Общий']);
+  const [selectedCourseForAssign, setSelectedCourseForAssign] = useState(null);
 
   useEffect(() => {
     const loadDepts = async () => {
@@ -257,7 +262,7 @@ export const CoursesCatalogPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE]">
+                <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE] space-y-2">
                   <Link
                     to={`/courses/${course.id}/learn`}
                     className="btn-primary w-full text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2"
@@ -267,11 +272,33 @@ export const CoursesCatalogPage = () => {
                       {isCompleted ? 'Повторить материал' : isInProgress ? 'Продолжить курс' : 'Начать обучение'}
                     </span>
                   </Link>
+
+                  {isManager && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCourseForAssign(course)}
+                      className="w-full text-xs py-2 px-3 rounded-lg border border-[#CCCCCC] bg-white text-[#222222] hover:border-[#E84C3D] hover:text-[#E84C3D] font-medium transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-[#E84C3D]" />
+                      <span>Назначить сотрудникам</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {selectedCourseForAssign && (
+        <AssignCourseModal
+          course={selectedCourseForAssign}
+          onClose={() => setSelectedCourseForAssign(null)}
+          onAssigned={() => {
+            setSelectedCourseForAssign(null);
+            fetchCourses();
+          }}
+        />
       )}
     </div>
   );
