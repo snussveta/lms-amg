@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  PlusCircle,
   Shield,
   Users,
   X,
@@ -54,15 +53,25 @@ export const Navbar = () => {
       <nav className="sticky top-0 z-40 w-full bg-[#141414] text-white border-b border-[#242424] shadow-sm select-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Brand AMG */}
+            {/* Brand AMG LMS (Clean typography badge, no external logo image) */}
             <div className="flex items-center gap-6 lg:gap-8">
               <Link to="/" className="flex items-center gap-3 group focus:outline-none">
-                <div className="bg-white rounded-lg px-2 sm:px-2.5 py-1 flex items-center shadow-sm border border-white/20 group-hover:bg-white/95 transition-all">
-                  <img
-                    src="/logo.png"
-                    alt="AMG"
-                    className="h-6 sm:h-7 w-auto max-w-[130px] sm:max-w-[170px] object-contain"
-                  />
+                <div className="w-9 h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center text-white group-hover:bg-[#2e2e2e] transition-all relative shadow-sm">
+                  <span className="font-black text-sm tracking-wider">AMG</span>
+                  <span className="w-2 h-2 rounded-full bg-[#E84C3D] absolute -top-0.5 -right-0.5 ring-2 ring-[#141414]" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base sm:text-lg font-black text-white tracking-tight leading-none">
+                      AMG
+                    </span>
+                    <span className="text-[10px] font-bold text-white bg-[#E84C3D] px-1.5 py-0.5 rounded leading-tight tracking-wider uppercase">
+                      LMS
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#888888] font-medium tracking-wider uppercase mt-0.5 hidden xs:inline-block">
+                    Корпоративное обучение
+                  </span>
                 </div>
               </Link>
 
@@ -78,7 +87,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <GraduationCap className="w-4 h-4 text-white/90" />
-                    ÐšÑƒÑ€ÑÑ‹
+                    Курсы
                   </Link>
 
                   <Link
@@ -90,7 +99,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <FileQuestion className="w-4 h-4 text-white/90" />
-                    Ð¢ÐµÑÑ‚Ñ‹
+                    Тесты
                   </Link>
 
                   {!isAdmin && (
@@ -103,7 +112,7 @@ export const Navbar = () => {
                       }`}
                     >
                       <History className="w-4 h-4 text-white/90" />
-                      ÐœÐ¾Ð¸ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ñ‹
+                      Мои результаты
                     </Link>
                   )}
 
@@ -116,7 +125,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <FolderArchive className="w-4 h-4 text-white/90" />
-                    Ð‘Ð°Ð·Ð° Ð·Ð½Ð°Ð½Ð¸Ð¹
+                    База знаний
                   </Link>
 
                   {isAdmin && (
@@ -129,7 +138,7 @@ export const Navbar = () => {
                       }`}
                     >
                       <Users className="w-4 h-4 text-white/90" />
-                      Ð¡Ð¾Ñ‚Ñ€ÑƒÐ´Ð½Ð¸ÐºÐ¸
+                      Сотрудники
                     </Link>
                   )}
 
@@ -148,7 +157,7 @@ export const Navbar = () => {
                           }`}
                         >
                           <Shield className="w-4 h-4 text-[#E84C3D]" />
-                          <span>Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ</span>
+                          <span>Управление</span>
                           <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                         </button>
 
@@ -158,35 +167,35 @@ export const Navbar = () => {
                             onMouseLeave={() => setAdminDropdownOpen(false)}
                           >
                             <div className="px-3 py-1.5 text-[10px] font-bold text-[#777777] uppercase tracking-wider border-b border-[#EEEEEE]">
-                              ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ AMG
+                              Администрирование AMG
                             </div>
                             <Link
                               to="/admin/courses"
                               className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
                             >
                               <GraduationCap className="w-4 h-4 text-[#E84C3D]" />
-                              Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ ÐºÑƒÑ€ÑÐ°Ð¼Ð¸
+                              Управление курсами
                             </Link>
                             <Link
                               to="/admin/tests"
                               className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
                             >
                               <LayoutDashboard className="w-4 h-4 text-[#E84C3D]" />
-                              Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ñ‚ÐµÑÑ‚Ð°Ð¼Ð¸
+                              Управление тестами
                             </Link>
                             <Link
                               to="/admin/question-bank"
                               className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
                             >
                               <BookOpen className="w-4 h-4 text-[#E84C3D]" />
-                              Ð‘Ð°Ð½Ðº Ð²Ð¾Ð¿Ñ€Ð¾ÑÐ¾Ð²
+                              Банк вопросов
                             </Link>
                             <Link
                               to="/admin/users"
                               className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors border-t border-[#EEEEEE]"
                             >
                               <Users className="w-4 h-4 text-[#E84C3D]" />
-                              Ð¡Ð¾Ñ‚Ñ€ÑƒÐ´Ð½Ð¸ÐºÐ¸ Ð¸ Ñ€Ð¾Ð»Ð¸
+                              Сотрудники и роли
                             </Link>
                           </div>
                         )}
@@ -220,7 +229,7 @@ export const Navbar = () => {
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  title="Ð’Ñ‹Ð¹Ñ‚Ð¸ Ð¸Ð· ÑÐ¸ÑÑ‚ÐµÐ¼Ñ‹"
+                  title="Выйти из системы"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -231,13 +240,13 @@ export const Navbar = () => {
                   to="/login"
                   className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
                 >
-                  Ð’Ð¾Ð¹Ñ‚Ð¸
+                  Войти
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#E84C3D] hover:bg-[#D33829] transition-all shadow-sm"
                 >
-                  Ð ÐµÐ³Ð¸ÑÑ‚Ñ€Ð°Ñ†Ð¸Ñ
+                  Регистрация
                 </Link>
               </div>
             )}
@@ -247,7 +256,7 @@ export const Navbar = () => {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-white hover:bg-white/10 active:bg-white/20 transition-colors focus:outline-none"
-                aria-label="ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¼ÐµÐ½ÑŽ"
+                aria-label="Открыть меню"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -279,7 +288,7 @@ export const Navbar = () => {
                 {/* Main Navigation Links */}
                 <div className="space-y-1">
                   <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider px-2 pt-1 pb-1">
-                    ÐžÐ±ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ð¸ Ð°Ñ‚Ñ‚ÐµÑÑ‚Ð°Ñ†Ð¸Ñ
+                    Обучение и аттестация
                   </div>
                   <Link
                     to="/courses"
@@ -291,7 +300,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <GraduationCap className="w-4 h-4 text-white/80" />
-                    <span>ÐšÑƒÑ€ÑÑ‹ Ð¾Ð±ÑƒÑ‡ÐµÐ½Ð¸Ñ</span>
+                    <span>Курсы обучения</span>
                   </Link>
                   {!isAdmin && (
                     <Link
@@ -304,7 +313,7 @@ export const Navbar = () => {
                       }`}
                     >
                       <FileQuestion className="w-4 h-4 text-white/80" />
-                      <span>ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³ Ñ‚ÐµÑÑ‚Ð¾Ð²</span>
+                      <span>Каталог тестов</span>
                     </Link>
                   )}
                   {!isAdmin && (
@@ -318,7 +327,7 @@ export const Navbar = () => {
                       }`}
                     >
                       <History className="w-4 h-4 text-white/80" />
-                      <span>ÐœÐ¾Ð¸ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ñ‹</span>
+                      <span>Мои результаты</span>
                     </Link>
                   )}
                   <Link
@@ -331,7 +340,7 @@ export const Navbar = () => {
                     }`}
                   >
                     <FolderArchive className="w-4 h-4 text-white/80" />
-                    <span>Ð‘Ð°Ð·Ð° Ð·Ð½Ð°Ð½Ð¸Ð¹</span>
+                    <span>База знаний</span>
                   </Link>
                 </div>
 
@@ -339,7 +348,7 @@ export const Navbar = () => {
                 {isAdmin && (
                   <div className="space-y-1 pt-2 border-t border-white/15">
                     <div className="text-[10px] font-bold text-[#E84C3D] uppercase tracking-wider px-2 pb-1">
-                      ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ AMG
+                      Администрирование AMG
                     </div>
                     <Link
                       to="/admin/courses"
@@ -347,7 +356,7 @@ export const Navbar = () => {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
                       <GraduationCap className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ ÐºÑƒÑ€ÑÐ°Ð¼Ð¸</span>
+                      <span>Управление курсами</span>
                     </Link>
                     <Link
                       to="/admin/tests"
@@ -355,7 +364,7 @@ export const Navbar = () => {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
                       <LayoutDashboard className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ñ‚ÐµÑÑ‚Ð°Ð¼Ð¸</span>
+                      <span>Управление тестами</span>
                     </Link>
                     <Link
                       to="/admin/question-bank"
@@ -363,7 +372,7 @@ export const Navbar = () => {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
                       <BookOpen className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Ð‘Ð°Ð½Ðº Ð²Ð¾Ð¿Ñ€Ð¾ÑÐ¾Ð²</span>
+                      <span>Банк вопросов</span>
                     </Link>
                     <Link
                       to="/admin/users"
@@ -371,7 +380,7 @@ export const Navbar = () => {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
                       <Users className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Ð¡Ð¾Ñ‚Ñ€ÑƒÐ´Ð½Ð¸ÐºÐ¸ Ð¸ Ñ€Ð¾Ð»Ð¸</span>
+                      <span>Сотрудники и роли</span>
                     </Link>
                   </div>
                 )}
@@ -385,7 +394,7 @@ export const Navbar = () => {
                     className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-white bg-[#E84C3D] hover:bg-[#D33829] transition-colors min-h-[44px]"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Ð’Ñ‹Ð¹Ñ‚Ð¸ Ð¸Ð· ÑÐ¸ÑÑ‚ÐµÐ¼Ñ‹</span>
+                    <span>Выйти из системы</span>
                   </button>
                 </div>
               </>
@@ -396,14 +405,14 @@ export const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-lg font-semibold text-xs text-white bg-white/10 border border-white/20 min-h-[44px] flex items-center justify-center"
                 >
-                  Ð’Ð¾Ð¹Ñ‚Ð¸ Ð² ÑÐ¸ÑÑ‚ÐµÐ¼Ñƒ
+                  Войти в систему
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-lg font-semibold text-xs text-white bg-[#E84C3D] hover:bg-[#D33829] min-h-[44px] flex items-center justify-center"
                 >
-                  Ð—Ð°Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒÑÑ
+                  Зарегистрироваться
                 </Link>
               </div>
             )}
@@ -423,7 +432,7 @@ export const Navbar = () => {
             }`}
           >
             <GraduationCap className={`w-5 h-5 ${isActive('/courses') || location.pathname === '/' ? 'text-[#E84C3D]' : 'currentColor'}`} />
-            <span className="text-[10px] mt-0.5 leading-tight">ÐšÑƒÑ€ÑÑ‹</span>
+            <span className="text-[10px] mt-0.5 leading-tight">Курсы</span>
           </Link>
 
           <Link
@@ -435,7 +444,7 @@ export const Navbar = () => {
             }`}
           >
             <FileQuestion className={`w-5 h-5 ${isActive('/tests') || isActive('/admin/tests') ? 'text-[#E84C3D]' : 'currentColor'}`} />
-            <span className="text-[10px] mt-0.5 leading-tight">Ð¢ÐµÑÑ‚Ñ‹</span>
+            <span className="text-[10px] mt-0.5 leading-tight">Тесты</span>
           </Link>
 
           {!isAdmin ? (
@@ -448,7 +457,7 @@ export const Navbar = () => {
               }`}
             >
               <History className={`w-5 h-5 ${isActive('/my-attempts') ? 'text-[#E84C3D]' : 'currentColor'}`} />
-              <span className="text-[10px] mt-0.5 leading-tight">Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ñ‹</span>
+              <span className="text-[10px] mt-0.5 leading-tight">Результаты</span>
             </Link>
           ) : (
             <Link
@@ -460,7 +469,7 @@ export const Navbar = () => {
               }`}
             >
               <Users className={`w-5 h-5 ${isActive('/admin/users') ? 'text-[#E84C3D]' : 'currentColor'}`} />
-              <span className="text-[10px] mt-0.5 leading-tight">Ð¡Ð¾Ñ‚Ñ€ÑƒÐ´Ð½Ð¸ÐºÐ¸</span>
+              <span className="text-[10px] mt-0.5 leading-tight">Сотрудники</span>
             </Link>
           )}
 
@@ -473,7 +482,7 @@ export const Navbar = () => {
             }`}
           >
             <FolderArchive className={`w-5 h-5 ${isActive('/knowledge-base') ? 'text-[#E84C3D]' : 'currentColor'}`} />
-            <span className="text-[10px] mt-0.5 leading-tight">Ð‘Ð°Ð·Ð° Ð·Ð½Ð°Ð½Ð¸Ð¹</span>
+            <span className="text-[10px] mt-0.5 leading-tight">База знаний</span>
           </Link>
 
           <button
@@ -481,7 +490,7 @@ export const Navbar = () => {
             className="flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center text-[#777777] hover:text-[#141414] transition-colors"
           >
             <Menu className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5 leading-tight">ÐœÐµÐ½ÑŽ</span>
+            <span className="text-[10px] mt-0.5 leading-tight">Меню</span>
           </button>
         </div>
       )}

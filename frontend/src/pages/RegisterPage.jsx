@@ -57,12 +57,26 @@ export const RegisterPage = () => {
       <div className="w-full max-w-md">
         {/* Header Branding */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="flex justify-center mb-3">
-            <img
-              src="/logo.png"
-              alt="AutoMall Group"
-              className="h-10 sm:h-12 w-auto max-w-[260px] object-contain"
-            />
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-[#141414] border border-[#333333] flex items-center justify-center text-white relative shadow-sm">
+                <span className="font-black text-base tracking-wider">AMG</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#E84C3D] absolute -top-0.5 -right-0.5 ring-2 ring-white" />
+              </div>
+              <div className="flex flex-col text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-black text-[#141414] tracking-tight leading-none">
+                    AMG
+                  </span>
+                  <span className="text-[11px] font-bold text-white bg-[#E84C3D] px-1.5 py-0.5 rounded leading-tight uppercase">
+                    LMS
+                  </span>
+                </div>
+                <span className="text-[11px] text-[#777777] font-medium tracking-wide mt-0.5">
+                  Обучающая платформа
+                </span>
+              </div>
+            </div>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222]">
             Регистрация сотрудника
