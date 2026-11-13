@@ -183,10 +183,10 @@ export const TakeTestPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-[#6C757D] text-sm">Подготовка экзаменационной сессии AMG...</p>
+          <div className="w-8 h-8 border-3 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-[#777777] text-sm">Подготовка экзаменационной сессии AMG...</p>
         </div>
       </div>
     );
@@ -194,10 +194,10 @@ export const TakeTestPage = () => {
 
   if (error || !test) {
     return (
-      <div className="max-w-md mx-auto my-16 p-6 bg-white border border-[#E0E0E0] rounded-2xl text-center shadow-card">
-        <AlertCircle className="w-12 h-12 mx-auto text-[#E30613] mb-3" />
-        <h3 className="text-lg font-bold text-[#212529] mb-2">Ошибка доступа к тестированию</h3>
-        <p className="text-sm text-[#6C757D] mb-6">{error || 'Сессия не найдена.'}</p>
+      <div className="max-w-md mx-auto my-16 p-6 bg-white border border-[#EEEEEE] rounded-2xl text-center shadow-card">
+        <AlertCircle className="w-12 h-12 mx-auto text-[#E84C3D] mb-3" />
+        <h3 className="text-lg font-bold text-[#222222] mb-2">Ошибка доступа к тестированию</h3>
+        <p className="text-sm text-[#777777] mb-6">{error || 'Сессия не найдена.'}</p>
         <button onClick={() => navigate('/tests')} className="btn-primary text-sm">
           Вернуться в каталог
         </button>
@@ -211,16 +211,16 @@ export const TakeTestPage = () => {
   const isUrgentTimer = timeLeft !== null && timeLeft <= 120;
 
   return (
-    <div className="min-h-screen pb-20 bg-[#F4F5F7]">
+    <div className="min-h-screen pb-20 bg-[#F5F5F7]">
       {/* Липкая верхняя панель с прогрессом и таймером */}
-      <header className="sticky top-14 sm:top-16 z-30 w-full bg-white/95 backdrop-blur border-b border-[#E0E0E0] shadow-xs">
+      <header className="sticky top-14 sm:top-16 z-30 w-full bg-white/95 backdrop-blur border-b border-[#EEEEEE] shadow-xs">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           {/* Название теста и статус ответа */}
           <div className="flex items-center gap-3 truncate min-w-0">
-            <h2 className="text-sm sm:text-base font-bold text-[#212529] truncate max-w-[200px] sm:max-w-sm">
+            <h2 className="text-sm sm:text-base font-bold text-[#222222] truncate max-w-[200px] sm:max-w-sm">
               {test.title}
             </h2>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded text-xs font-semibold bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0] shrink-0">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded text-xs font-semibold bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE] shrink-0">
               Отвечено: {answeredCount} из {questions.length}
             </span>
           </div>
@@ -230,8 +230,8 @@ export const TakeTestPage = () => {
             {timeLeft !== null && (
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs sm:text-sm font-bold border transition-colors ${isUrgentTimer
-                  ? 'bg-[#FEF2F2] text-[#E30613] border-[#FBD0D3] animate-pulse'
-                  : 'bg-[#F0F5FA] text-[#003B73] border-[#B8D5ED]'
+                  ? 'bg-[#FCECEB] text-[#E84C3D] border-[#F8D3D0] animate-pulse'
+                  : 'bg-[#F0F5FA] text-[#141414] border-[#B8D5ED]'
                   }`}
               >
                 <Clock className="w-4 h-4 shrink-0" />
@@ -251,9 +251,9 @@ export const TakeTestPage = () => {
         </div>
 
         {/* Индикатор прогресса в корпоративном красном акценте */}
-        <div className="w-full bg-[#E0E0E0] h-1">
+        <div className="w-full bg-[#EEEEEE] h-1">
           <div
-            className="bg-[#E30613] h-1 transition-all duration-300"
+            className="bg-[#E84C3D] h-1 transition-all duration-300"
             style={{
               width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%`,
             }}
@@ -263,12 +263,12 @@ export const TakeTestPage = () => {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-5 sm:pt-6 space-y-5 sm:space-y-6">
         {/* Информационная строка */}
-        <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#E0E0E0] text-xs text-[#6C757D] shadow-2xs">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#EEEEEE] text-xs text-[#777777] shadow-2xs">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#003B73]" />
+            <ShieldCheck className="w-4 h-4 text-[#141414]" />
             <span>Сессия тестирования AMG • Ответы фиксируются сервером</span>
           </div>
-          <span className="font-mono text-[#6C757D]">Попытка #{attemptId}</span>
+          <span className="font-mono text-[#777777]">Попытка #{attemptId}</span>
         </div>
 
         {/* Панель номеров вопросов (горизонтальный скролл на мобильных) */}
@@ -282,10 +282,10 @@ export const TakeTestPage = () => {
                 key={q.id}
                 onClick={() => setCurrentQIndex(idx)}
                 className={`flex-shrink-0 w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all select-none relative ${isCurrent
-                  ? 'bg-[#003B73] text-white shadow-sm ring-2 ring-[#003B73]/20'
+                  ? 'bg-[#141414] text-white shadow-sm ring-2 ring-[#141414]/20'
                   : isAnswered
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-white text-[#6C757D] border border-[#E0E0E0] hover:text-[#212529] hover:bg-[#F4F5F7]'
+                    : 'bg-white text-[#777777] border border-[#EEEEEE] hover:text-[#222222] hover:bg-[#F5F5F7]'
                   }`}
               >
                 {idx + 1}
@@ -299,24 +299,24 @@ export const TakeTestPage = () => {
 
         {/* Карточка текущего вопроса */}
         {currentQuestion && (
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-5 sm:p-8 shadow-card">
+          <div className="bg-white border border-[#EEEEEE] rounded-2xl p-5 sm:p-8 shadow-card">
             {/* Заголовок вопроса */}
-            <div className="flex items-center justify-between gap-2 mb-5 pb-4 border-b border-[#E0E0E0]">
+            <div className="flex items-center justify-between gap-2 mb-5 pb-4 border-b border-[#EEEEEE]">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-[#003B73] text-white">
+                <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-[#141414] text-white">
                   Вопрос {currentQIndex + 1} из {questions.length}
                 </span>
-                <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0]">
+                <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE]">
                   {getQuestionTypeLabel(currentQuestion.question_type || currentQuestion.type)}
                 </span>
               </div>
-              <span className="text-xs font-bold text-[#003B73] bg-[#F0F5FA] px-2.5 py-1 rounded-md border border-[#B8D5ED]">
+              <span className="text-xs font-bold text-[#141414] bg-[#F0F5FA] px-2.5 py-1 rounded-md border border-[#B8D5ED]">
                 +{currentQuestion.points} {currentQuestion.points === 1 ? 'балл' : 'баллов'}
               </span>
             </div>
 
             {/* Текст вопроса */}
-            <h3 className="text-base sm:text-lg font-bold text-[#212529] leading-relaxed mb-6">
+            <h3 className="text-base sm:text-lg font-bold text-[#222222] leading-relaxed mb-6">
               {currentQuestion.text}
             </h3>
 
@@ -334,13 +334,13 @@ export const TakeTestPage = () => {
                         key={option.id}
                         onClick={() => handleSingleChoiceSelect(currentQuestion.id, option.id)}
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${isSelected
-                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
-                          : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
+                          ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-semibold ring-1 ring-[#141414]'
+                          : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
                           }`}
                       >
                         <div
                           className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isSelected
-                            ? 'border-[#003B73] bg-[#003B73] text-white'
+                            ? 'border-[#141414] bg-[#141414] text-white'
                             : 'border-[#ADB5BD] bg-white'
                             }`}
                         >
@@ -357,7 +357,7 @@ export const TakeTestPage = () => {
 
               {(currentQuestion.question_type === 'multiple_choice' || currentQuestion.type === 'multiple_choice') && (
                 <div className="space-y-2.5">
-                  <p className="text-xs text-[#6C757D] font-medium mb-1">
+                  <p className="text-xs text-[#777777] font-medium mb-1">
                     Выберите один или несколько правильных вариантов:
                   </p>
                   {currentQuestion.options?.map((option) => {
@@ -370,13 +370,13 @@ export const TakeTestPage = () => {
                         key={option.id}
                         onClick={() => handleMultipleChoiceToggle(currentQuestion.id, option.id)}
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${isSelected
-                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-semibold ring-1 ring-[#003B73]'
-                          : 'bg-white border-[#E0E0E0] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#212529]'
+                          ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-semibold ring-1 ring-[#141414]'
+                          : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
                           }`}
                       >
                         <div
                           className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isSelected
-                            ? 'border-[#003B73] bg-[#003B73] text-white'
+                            ? 'border-[#141414] bg-[#141414] text-white'
                             : 'border-[#ADB5BD] bg-white'
                             }`}
                         >
@@ -407,7 +407,7 @@ export const TakeTestPage = () => {
                     placeholder="Введите ваш развернутый ответ на вопрос..."
                     className="input-field text-sm leading-relaxed resize-y font-normal"
                   />
-                  <div className="flex items-center justify-between text-xs text-[#6C757D]">
+                  <div className="flex items-center justify-between text-xs text-[#777777]">
                     <span>Символов: {(userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || '').length}</span>
                     <span>Максимальный балл: {currentQuestion.points}</span>
                   </div>
@@ -417,7 +417,7 @@ export const TakeTestPage = () => {
               {/* Текстовый ввод */}
               {(currentQuestion.question_type === 'text' || currentQuestion.type === 'text') && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider">
                     Ваш ответ
                   </label>
                   <textarea
@@ -427,7 +427,7 @@ export const TakeTestPage = () => {
                     placeholder="Введите точный ответ..."
                     className="input-field text-sm resize-none font-normal"
                   />
-                  <span className="text-xs text-[#6C757D] block">
+                  <span className="text-xs text-[#777777] block">
                     Ответ проверяется автоматически без учета регистра символов.
                   </span>
                 </div>
@@ -435,7 +435,7 @@ export const TakeTestPage = () => {
             </div>
 
             {/* Кнопки навигации */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#E0E0E0] gap-3">
+            <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE] gap-3">
               <button
                 type="button"
                 onClick={() => setCurrentQIndex((prev) => Math.max(0, prev - 1))}
@@ -472,12 +472,12 @@ export const TakeTestPage = () => {
 
       {/* Модальное окно подтверждения отправки ответов */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl">
-            <h3 className="text-xl font-extrabold text-[#212529] mb-2">Завершить тестирование?</h3>
-            <p className="text-xs sm:text-sm text-[#6C757D] mb-4">
-              Вы ответили на <span className="font-bold text-[#212529]">{answeredCount}</span> из{' '}
-              <span className="font-bold text-[#212529]">{questions.length}</span> вопросов.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-[#EEEEEE] rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl">
+            <h3 className="text-xl font-extrabold text-[#222222] mb-2">Завершить тестирование?</h3>
+            <p className="text-xs sm:text-sm text-[#777777] mb-4">
+              Вы ответили на <span className="font-bold text-[#222222]">{answeredCount}</span> из{' '}
+              <span className="font-bold text-[#222222]">{questions.length}</span> вопросов.
             </p>
 
             {answeredCount < questions.length && (

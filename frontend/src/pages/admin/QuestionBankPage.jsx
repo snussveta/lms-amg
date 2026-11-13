@@ -272,17 +272,17 @@ export const QuestionBankPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Шапка раздела */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+            <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 Банк вопросов AMG
               </h1>
-              <p className="text-xs text-[#6C757D] mt-0.5">
+              <p className="text-xs text-[#777777] mt-0.5">
                 Централизованное хранилище тестовых вопросов с категоризацией по отделам
               </p>
             </div>
@@ -299,18 +299,18 @@ export const QuestionBankPage = () => {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs sm:text-sm flex items-center gap-3">
+        <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] text-xs sm:text-sm flex items-center gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Панель фильтров: Отделы + Поиск */}
-      <div className="bg-white border border-[#E0E0E0] rounded-2xl p-4 sm:p-5 space-y-4 shadow-card">
+      <div className="bg-white border border-[#EEEEEE] rounded-2xl p-4 sm:p-5 space-y-4 shadow-card">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
           {/* Поиск */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#6C757D] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#777777] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Поиск вопроса по ключевым словам..."
@@ -320,9 +320,9 @@ export const QuestionBankPage = () => {
             />
           </div>
 
-          <div className="text-xs text-[#6C757D] flex items-center gap-1.5 self-end md:self-auto">
+          <div className="text-xs text-[#777777] flex items-center gap-1.5 self-end md:self-auto">
             <span>Всего в банке:</span>
-            <span className="font-bold text-[#003B73]">{questions.length}</span>
+            <span className="font-bold text-[#141414]">{questions.length}</span>
             <span>вопросов</span>
           </div>
         </div>
@@ -333,8 +333,8 @@ export const QuestionBankPage = () => {
             onClick={() => setSelectedDept('Все')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none min-h-[36px] ${
               selectedDept === 'Все'
-                ? 'bg-[#003B73] text-white shadow-sm'
-                : 'bg-white border border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7]'
+                ? 'bg-[#141414] text-white shadow-sm'
+                : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
             }`}
           >
             Все ({questions.length})
@@ -347,13 +347,13 @@ export const QuestionBankPage = () => {
                 onClick={() => setSelectedDept(dept)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 select-none min-h-[36px] ${
                   selectedDept === dept
-                    ? 'bg-[#003B73] text-white shadow-sm'
-                    : 'bg-white border border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7]'
+                    ? 'bg-[#141414] text-white shadow-sm'
+                    : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
                 }`}
               >
                 <span>{dept}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  selectedDept === dept ? 'bg-white/20 text-white' : 'bg-[#F4F5F7] text-[#6C757D]'
+                  selectedDept === dept ? 'bg-white/20 text-white' : 'bg-[#F5F5F7] text-[#777777]'
                 }`}>
                   {count}
                 </span>
@@ -367,14 +367,14 @@ export const QuestionBankPage = () => {
       {loading ? (
         <div className="grid grid-cols-1 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-white border border-[#E0E0E0] animate-pulse" />
+            <div key={i} className="h-28 rounded-2xl bg-white border border-[#EEEEEE] animate-pulse" />
           ))}
         </div>
       ) : filteredQuestions.length === 0 ? (
-        <div className="bg-white border border-[#E0E0E0] rounded-2xl p-12 text-center max-w-md mx-auto my-8 shadow-card">
+        <div className="bg-white border border-[#EEEEEE] rounded-2xl p-12 text-center max-w-md mx-auto my-8 shadow-card">
           <BookOpen className="w-12 h-12 mx-auto text-[#CED4DA] mb-3" />
-          <h3 className="text-base font-bold text-[#212529]">Вопросы не найдены</h3>
-          <p className="text-xs sm:text-sm text-[#6C757D] mt-1 mb-6">
+          <h3 className="text-base font-bold text-[#222222]">Вопросы не найдены</h3>
+          <p className="text-xs sm:text-sm text-[#777777] mt-1 mb-6">
             {searchQuery || selectedDept !== 'Все'
               ? 'Попробуйте сбросить фильтры поиска или выбрать другой отдел.'
               : 'В банке вопросов пока нет записей. Создайте первый вопрос!'}
@@ -388,22 +388,22 @@ export const QuestionBankPage = () => {
           {filteredQuestions.map((q) => (
             <div
               key={q.id}
-              className="bg-white border border-[#E0E0E0] rounded-2xl p-5 hover:border-[#CED4DA] hover:shadow-card-hover transition-all duration-200 shadow-card flex flex-col md:flex-row md:items-start justify-between gap-4"
+              className="bg-white border border-[#EEEEEE] rounded-2xl p-5 hover:border-[#CED4DA] hover:shadow-card-hover transition-all duration-200 shadow-card flex flex-col md:flex-row md:items-start justify-between gap-4"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="px-2.5 py-0.5 rounded-md font-bold bg-[#F0F5FA] text-[#003B73] border border-[#B8D5ED]">
+                  <span className="px-2.5 py-0.5 rounded-md font-bold bg-[#F0F5FA] text-[#141414] border border-[#B8D5ED]">
                     {q.department}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-md font-medium bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0]">
+                  <span className="px-2.5 py-0.5 rounded-md font-medium bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE]">
                     {getQuestionTypeLabel(q.question_type)}
                   </span>
-                  <span className="text-[#6C757D] font-bold font-mono">
+                  <span className="text-[#777777] font-bold font-mono">
                     {q.points} б.
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-[#212529] leading-relaxed">
+                <h3 className="text-base font-bold text-[#222222] leading-relaxed">
                   {q.text}
                 </h3>
 
@@ -415,7 +415,7 @@ export const QuestionBankPage = () => {
                         className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${
                           opt.is_correct
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold'
-                            : 'bg-[#F4F5F7] text-[#495057] border-[#E0E0E0]'
+                            : 'bg-[#F5F5F7] text-[#495057] border-[#EEEEEE]'
                         }`}
                       >
                         {opt.is_correct ? (
@@ -434,14 +434,14 @@ export const QuestionBankPage = () => {
               <div className="flex items-center gap-2 self-end md:self-start flex-shrink-0">
                 <button
                   onClick={() => openEditModal(q)}
-                  className="p-2 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[#003B73] border border-[#E0E0E0] transition-colors"
+                  className="p-2 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] transition-colors"
                   title="Редактировать вопрос"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteQuestion(q.id)}
-                  className="p-2 rounded-lg bg-[#FEF2F2] hover:bg-[#FDE8E9] text-[#E30613] border border-[#FBD0D3] transition-colors"
+                  className="p-2 rounded-lg bg-[#FCECEB] hover:bg-[#FDE8E9] text-[#E84C3D] border border-[#F8D3D0] transition-colors"
                   title="Удалить вопрос"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -454,23 +454,23 @@ export const QuestionBankPage = () => {
 
       {/* Модальное окно создания / редактирования вопроса */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#003B73]/40 backdrop-blur-sm overflow-y-auto animate-fade-in">
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E0E0E0] mb-5">
-              <h3 className="text-lg font-bold text-[#212529] flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#003B73]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141414]/40 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-[#EEEEEE] rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#EEEEEE] mb-5">
+              <h3 className="text-lg font-bold text-[#222222] flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#141414]" />
                 <span>{editingQuestion ? 'Редактирование вопроса в банке' : 'Новый вопрос в банк AMG'}</span>
               </h3>
               <button
                 onClick={closeModal}
-                className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors"
+                className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {modalError && (
-              <div className="mb-4 p-3 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{modalError}</span>
               </div>
@@ -479,7 +479,7 @@ export const QuestionBankPage = () => {
             <form onSubmit={handleSaveQuestion} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                     Отдел / Направление *
                   </label>
                   <select
@@ -515,7 +515,7 @@ export const QuestionBankPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                     Тип вопроса *
                   </label>
                   <select
@@ -532,7 +532,7 @@ export const QuestionBankPage = () => {
               </div>
 
               <div className="w-36">
-                <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                   Баллы
                 </label>
                 <input
@@ -547,7 +547,7 @@ export const QuestionBankPage = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                   Текст вопроса *
                 </label>
                 <textarea
@@ -563,13 +563,13 @@ export const QuestionBankPage = () => {
               {(formType === 'single_choice' || formType === 'multiple_choice') && (
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-[#6C757D] uppercase tracking-wider">
+                    <label className="text-xs font-semibold text-[#777777] uppercase tracking-wider">
                       Варианты ответа (отметьте правильные)
                     </label>
                     <button
                       type="button"
                       onClick={handleAddOption}
-                      className="text-xs text-[#003B73] hover:text-[#E30613] flex items-center gap-1 font-bold transition-colors"
+                      className="text-xs text-[#141414] hover:text-[#E84C3D] flex items-center gap-1 font-bold transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Добавить вариант
@@ -585,7 +585,7 @@ export const QuestionBankPage = () => {
                           className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                             opt.is_correct
                               ? 'bg-emerald-600 text-white'
-                              : 'bg-[#F4F5F7] border border-[#E0E0E0] text-transparent hover:border-[#CED4DA]'
+                              : 'bg-[#F5F5F7] border border-[#EEEEEE] text-transparent hover:border-[#CED4DA]'
                           }`}
                           title="Отметить как правильный"
                         >
@@ -602,7 +602,7 @@ export const QuestionBankPage = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveOption(idx)}
-                            className="p-2 text-[#6C757D] hover:text-[#E30613] transition-colors"
+                            className="p-2 text-[#777777] hover:text-[#E84C3D] transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -615,7 +615,7 @@ export const QuestionBankPage = () => {
 
               {formType === 'text' && (
                 <div className="pt-2">
-                  <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                     Эталонный текстовый ответ
                   </label>
                   <input
@@ -625,7 +625,7 @@ export const QuestionBankPage = () => {
                     onChange={(e) => setFormOptions([{ text: e.target.value, is_correct: true }])}
                     className="input-field text-sm"
                   />
-                  <p className="text-[11px] text-[#6C757D] mt-1">
+                  <p className="text-[11px] text-[#777777] mt-1">
                     Ответ пользователя будет автоматически сверен с этим образцом без учета регистра.
                   </p>
                 </div>
@@ -640,7 +640,7 @@ export const QuestionBankPage = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E0E0E0]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#EEEEEE]">
                 <button
                   type="button"
                   onClick={closeModal}

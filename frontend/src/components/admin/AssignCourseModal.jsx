@@ -216,25 +216,25 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     .reduce((sum, d) => sum + (d.users_count || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+        <div className="p-4 sm:p-5 border-b border-[#EEEEEE] flex items-center justify-between bg-white">
           <div className="min-w-0 pr-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-[#003B73] shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold text-[#222222] flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-[#141414] shrink-0" />
               <span>Назначение курса</span>
             </h2>
-            <div className="text-xs text-[#6C757D] mt-1 flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-[#003B73] truncate">«{course.title}»</span>
-              <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] font-bold text-[#212529]">
+            <div className="text-xs text-[#777777] mt-1 flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-[#141414] truncate">«{course.title}»</span>
+              <span className="px-2 py-0.5 rounded bg-[#F5F5F7] border border-[#EEEEEE] text-[10px] font-bold text-[#222222]">
                 {course.department_tag}
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#6C757D] hover:text-[#212529] transition-colors p-2 rounded-xl hover:bg-[#F4F5F7] shrink-0"
+            className="text-[#777777] hover:text-[#222222] transition-colors p-2 rounded-xl hover:bg-[#F5F5F7] shrink-0"
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -242,34 +242,34 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#E0E0E0] bg-[#F4F5F7] px-4 sm:px-5">
+        <div className="flex border-b border-[#EEEEEE] bg-[#F5F5F7] px-4 sm:px-5">
           <button
             onClick={() => setActiveTab('assign')}
             className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 min-h-[44px] ${
               activeTab === 'assign'
-                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
-                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+                ? 'border-[#141414] text-[#141414] bg-white rounded-t-lg'
+                : 'border-transparent text-[#777777] hover:text-[#222222]'
             }`}
           >
-            <Users className="w-4 h-4 text-[#003B73]" />
+            <Users className="w-4 h-4 text-[#141414]" />
             <span>Назначить</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
             className={`py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 min-h-[44px] ${
               activeTab === 'list'
-                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
-                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+                ? 'border-[#141414] text-[#141414] bg-white rounded-t-lg'
+                : 'border-transparent text-[#777777] hover:text-[#222222]'
             }`}
           >
-            <UserCheck className="w-4 h-4 text-[#003B73]" />
+            <UserCheck className="w-4 h-4 text-[#141414]" />
             <span>Назначенные ({assignments.length})</span>
           </button>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2.5">
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E84C3D] text-xs flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -286,14 +286,14 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
         {activeTab === 'assign' && (
           <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 space-y-4 overflow-hidden">
             {/* Target mode toggle: [По сотрудникам] | [Целому отделу] */}
-            <div className="flex items-center gap-2 bg-[#F4F5F7] p-1 rounded-xl border border-[#E0E0E0] shrink-0">
+            <div className="flex items-center gap-2 bg-[#F5F5F7] p-1 rounded-xl border border-[#EEEEEE] shrink-0">
               <button
                 type="button"
                 onClick={() => setTargetMode('users')}
                 className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
                   targetMode === 'users'
-                    ? 'bg-[#003B73] text-white shadow-xs'
-                    : 'text-[#6C757D] hover:text-[#212529]'
+                    ? 'bg-[#141414] text-white shadow-xs'
+                    : 'text-[#777777] hover:text-[#222222]'
                 }`}
               >
                 <User className="w-3.5 h-3.5" />
@@ -304,8 +304,8 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                 onClick={() => setTargetMode('department')}
                 className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
                   targetMode === 'department'
-                    ? 'bg-[#003B73] text-white shadow-xs'
-                    : 'text-[#6C757D] hover:text-[#212529]'
+                    ? 'bg-[#141414] text-white shadow-xs'
+                    : 'text-[#777777] hover:text-[#222222]'
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
@@ -314,21 +314,21 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
             </div>
 
             {/* Deadline Selector */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F4F5F7] p-3 rounded-xl border border-[#E0E0E0] shrink-0">
-              <div className="flex items-center gap-2 text-xs text-[#212529] flex-wrap">
-                <Calendar className="w-4 h-4 text-[#003B73] shrink-0" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F5F5F7] p-3 rounded-xl border border-[#EEEEEE] shrink-0">
+              <div className="flex items-center gap-2 text-xs text-[#222222] flex-wrap">
+                <Calendar className="w-4 h-4 text-[#141414] shrink-0" />
                 <span className="shrink-0 font-semibold">Срок сдачи курса:</span>
                 <input
                   type="datetime-local"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="bg-white border border-[#E0E0E0] rounded-lg px-2.5 py-1 text-xs text-[#212529] focus:outline-none focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73]/20"
+                  className="bg-white border border-[#EEEEEE] rounded-lg px-2.5 py-1 text-xs text-[#222222] focus:outline-none focus:border-[#141414] focus:ring-1 focus:ring-[#141414]/20"
                 />
                 {dueDate && (
                   <button
                     type="button"
                     onClick={() => setDueDate('')}
-                    className="text-[11px] text-[#6C757D] hover:text-[#E30613] underline ml-1"
+                    className="text-[11px] text-[#777777] hover:text-[#E84C3D] underline ml-1"
                   >
                     Сбросить срок
                   </button>
@@ -340,13 +340,13 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
             {targetMode === 'department' ? (
               <div className="space-y-3 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between gap-2 shrink-0">
-                  <span className="text-xs font-semibold text-[#6C757D]">
+                  <span className="text-xs font-semibold text-[#777777]">
                     Выберите отделы компании для массового назначения:
                   </span>
                   <button
                     type="button"
                     onClick={selectAllDepts}
-                    className="text-xs font-bold text-[#003B73] hover:underline"
+                    className="text-xs font-bold text-[#141414] hover:underline"
                   >
                     {departments.length > 0 && selectedDeptIds.length === departments.length
                       ? 'Снять выбор'
@@ -363,26 +363,26 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                         onClick={() => toggleSelectDept(d.id)}
                         className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
                           isSelected
-                            ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
-                            : 'bg-white border-[#E0E0E0] hover:bg-[#F4F5F7] text-[#212529]'
+                            ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
+                            : 'bg-white border-[#EEEEEE] hover:bg-[#F5F5F7] text-[#222222]'
                         }`}
                       >
                         <div className="mt-0.5">
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-[#003B73]" />
+                            <CheckSquare className="w-4 h-4 text-[#141414]" />
                           ) : (
-                            <Square className="w-4 h-4 text-[#6C757D]" />
+                            <Square className="w-4 h-4 text-[#777777]" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-bold text-xs truncate">{d.name}</span>
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-[#E0E0E0] text-[#003B73] font-semibold">
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-[#EEEEEE] text-[#141414] font-semibold">
                               {d.users_count || 0} сотр.
                             </span>
                           </div>
                           {d.description && (
-                            <p className="text-[11px] text-[#6C757D] truncate mt-0.5">
+                            <p className="text-[11px] text-[#777777] truncate mt-0.5">
                               {d.description}
                             </p>
                           )}
@@ -393,15 +393,15 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                 </div>
 
                 {/* Dept Selection Summary */}
-                <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs shrink-0">
-                  <span className="text-[#6C757D]">
+                <div className="pt-3 border-t border-[#EEEEEE] flex items-center justify-between text-xs shrink-0">
+                  <span className="text-[#777777]">
                     Выбрано отделов:{' '}
-                    <strong className="text-[#212529]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотрудников)
+                    <strong className="text-[#222222]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотрудников)
                   </span>
                   <button
                     onClick={handleAssign}
                     disabled={submitting || selectedDeptIds.length === 0}
-                    className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-[#141414] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
                   >
                     {submitting ? 'Назначение...' : `Назначить ${selectedDeptIds.length} отдел(ам)`}
                   </button>
@@ -412,7 +412,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
               <div className="space-y-3 flex-1 flex flex-col min-h-0">
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6C757D]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#777777]" />
                     <input
                       type="text"
                       value={searchTerm}
@@ -452,14 +452,14 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#6C757D] shrink-0">
+                <div className="flex items-center justify-between text-xs text-[#777777] shrink-0">
                   <span>
-                    Найдено: <strong className="text-[#212529]">{filteredUsers.length}</strong>
+                    Найдено: <strong className="text-[#222222]">{filteredUsers.length}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={selectAllFiltered}
-                    className="font-bold text-[#003B73] hover:underline"
+                    className="font-bold text-[#141414] hover:underline"
                   >
                     {filteredUsers.length > 0 &&
                     filteredUsers.every((u) => selectedUserIds.includes(u.id))
@@ -469,13 +469,13 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                 </div>
 
                 {/* Users List with Checkboxes */}
-                <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] flex-1 overflow-y-auto bg-white min-h-[160px]">
+                <div className="border border-[#EEEEEE] rounded-xl overflow-hidden divide-y divide-[#EEEEEE] flex-1 overflow-y-auto bg-white min-h-[160px]">
                   {loading ? (
-                    <div className="p-8 text-center text-xs text-[#6C757D]">
+                    <div className="p-8 text-center text-xs text-[#777777]">
                       Загрузка сотрудников...
                     </div>
                   ) : filteredUsers.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-[#6C757D]">
+                    <div className="p-8 text-center text-xs text-[#777777]">
                       Сотрудники не найдены
                     </div>
                   ) : (
@@ -489,18 +489,18 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                           onClick={() => toggleSelectUser(u.id)}
                           className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
                             isSelected
-                              ? 'bg-[#003B73]/5'
-                              : 'hover:bg-[#F4F5F7]'
+                              ? 'bg-[#141414]/5'
+                              : 'hover:bg-[#F5F5F7]'
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0 pr-2">
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-[#003B73] shrink-0" />
+                              <CheckSquare className="w-4 h-4 text-[#141414] shrink-0" />
                             ) : (
-                              <Square className="w-4 h-4 text-[#6C757D] shrink-0" />
+                              <Square className="w-4 h-4 text-[#777777] shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <div className="font-bold text-[#212529] truncate flex items-center gap-2">
+                              <div className="font-bold text-[#222222] truncate flex items-center gap-2">
                                 <span>{u.full_name}</span>
                                 {isAlreadyAssigned && (
                                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
@@ -508,7 +508,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                              <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
                                 <span>{u.email}</span>
                                 <span>•</span>
                                 <span>{u.department || 'СТО'}</span>
@@ -524,15 +524,15 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                 </div>
 
                 {/* Users Selection Summary */}
-                <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs shrink-0">
-                  <span className="text-[#6C757D]">
+                <div className="pt-3 border-t border-[#EEEEEE] flex items-center justify-between text-xs shrink-0">
+                  <span className="text-[#777777]">
                     Выбрано сотрудников:{' '}
-                    <strong className="text-[#212529]">{selectedUserIds.length}</strong>
+                    <strong className="text-[#222222]">{selectedUserIds.length}</strong>
                   </span>
                   <button
                     onClick={handleAssign}
                     disabled={submitting || selectedUserIds.length === 0}
-                    className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-[#141414] hover:bg-[#002F5C] text-white text-xs font-bold transition-all disabled:opacity-50 min-h-[44px] flex items-center gap-2"
                   >
                     {submitting ? 'Назначение...' : `Назначить курс (${selectedUserIds.length})`}
                   </button>
@@ -545,9 +545,9 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
         {/* Tab 2: Assigned List */}
         {activeTab === 'list' && (
           <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] flex-1 overflow-y-auto bg-white">
+            <div className="border border-[#EEEEEE] rounded-xl overflow-hidden divide-y divide-[#EEEEEE] flex-1 overflow-y-auto bg-white">
               {assignments.length === 0 ? (
-                <div className="p-8 text-center text-xs text-[#6C757D]">
+                <div className="p-8 text-center text-xs text-[#777777]">
                   На данный момент курс еще никому не назначен.
                 </div>
               ) : (
@@ -557,13 +557,13 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                     className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-[#F8F9FA] transition-colors"
                   >
                     <div className="min-w-0">
-                      <div className="font-bold text-[#212529] text-sm">
+                      <div className="font-bold text-[#222222] text-sm">
                         {a.full_name}
                       </div>
-                      <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5 flex-wrap">
+                      <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5 flex-wrap">
                         <span>{a.email}</span>
                         <span>•</span>
-                        <span className="text-[#003B73] font-semibold">{a.department || 'СТО'}</span>
+                        <span className="text-[#141414] font-semibold">{a.department || 'СТО'}</span>
                         <span>•</span>
                         <span>Дедлайн: {formatDate(a.deadline)}</span>
                       </div>
@@ -571,10 +571,10 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <div className="text-xs font-bold text-[#003B73]">
+                        <div className="text-xs font-bold text-[#141414]">
                           {a.progress_percent}%
                         </div>
-                        <div className="text-[10px] text-[#6C757D]">
+                        <div className="text-[10px] text-[#777777]">
                           {a.status === 'completed'
                             ? 'Пройден'
                             : a.status === 'in_progress'
@@ -585,7 +585,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
 
                       <button
                         onClick={() => handleRevoke(a.user_id)}
-                        className="p-2 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                        className="p-2 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-red-50 transition-colors"
                         title="Отозвать назначение"
                       >
                         <Trash2 className="w-4 h-4" />

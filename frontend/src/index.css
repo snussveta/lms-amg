@@ -4,12 +4,14 @@
 
 @layer base {
   :root {
-    --color-accent: #E30613;
-    --color-navy: #003B73;
-    --color-main: #212529;
-    --color-secondary: #6C757D;
-    --color-divider: #E0E0E0;
-    --color-surface: #F4F5F7;
+    --color-accent: #E84C3D;
+    --color-accent-soft: #FCECEB;
+    --color-dark: #141414;
+    --color-graphite: #333333;
+    --color-main: #222222;
+    --color-secondary: #777777;
+    --color-divider: #EEEEEE;
+    --color-surface: #F5F5F7;
     --color-card: #FFFFFF;
   }
 
@@ -19,8 +21,8 @@
   }
 
   body {
-    background-color: #F4F5F7;
-    color: #212529;
+    background-color: #F5F5F7;
+    color: #222222;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
@@ -28,12 +30,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Heading and text helpers for light surfaces */
+  /* Heading and text helpers for crisp typography */
   h1, h2, h3, h4, h5, h6 {
-    color: #212529;
+    color: #222222;
+    letter-spacing: -0.015em;
   }
   
-  /* Retain white text specifically on navy bars and accent buttons */
+  /* Retain white text on dark headers and primary buttons */
   header h1, header h2, header h3,
   nav h1, nav h2, nav h3,
   .btn-primary, .btn-accent {
@@ -42,79 +45,79 @@
 }
 
 @layer components {
-  /* Corporate White Panels */
+  /* Clean White Panels */
   .glass-panel {
     background-color: #FFFFFF;
-    border: 1px solid #E0E0E0;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-    border-radius: 0.75rem;
+    border: 1px solid #EEEEEE;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    border-radius: 1rem;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
-  /* Corporate Interactive Cards (taste-skill lift & hover) */
+  /* Interactive Cards (taste-skill lift & hover) */
   .glass-card {
     background-color: #FFFFFF;
-    border: 1px solid #E0E0E0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-    border-radius: 0.75rem;
+    border: 1px solid #EEEEEE;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+    border-radius: 1rem;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-card:hover {
-    border-color: #CED4DA;
+    border-color: #D4D4D4;
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
   }
 
-  /* Primary Accent Button (#E30613 Red) */
+  /* Primary Accent Button (#E84C3D Coral-Red) */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm text-white 
-           bg-[#E30613] hover:bg-[#C70510] active:bg-[#A8040E] shadow-sm
-           transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
+           bg-[#E84C3D] hover:bg-[#D33829] active:bg-[#BA2E20] shadow-sm hover:shadow-md
+           transition-all duration-150 ease-in-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
   }
 
-  /* Secondary Button (Crisp White + Border) */
+  /* Secondary Button (Crisp White + Graphite Accent) */
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-[#212529] 
-           bg-white hover:bg-[#F4F5F7] border border-[#E0E0E0] hover:border-[#CED4DA] hover:text-[#003B73]
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm text-[#222222] 
+           bg-white hover:bg-[#F5F5F7] border border-[#EEEEEE] hover:border-[#D4D4D4] hover:text-[#141414]
            transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.98] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
   }
 
-  /* Navy Accent Button (#003B73 Dark Blue) */
+  /* Dark Charcoal Accent Button (#141414) */
   .btn-accent {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm text-white 
-           bg-[#003B73] hover:bg-[#002F5C] active:bg-[#002040] shadow-sm
-           transition-all duration-150 ease-in-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[38px];
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
+           bg-[#141414] hover:bg-[#222222] active:bg-[#000000] shadow-sm hover:shadow-md
+           transition-all duration-150 ease-in-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
   }
 
-  /* Danger Button (Subtle Red Tint) */
+  /* Danger / Soft Coral Action Button (#FCECEB) */
   .btn-danger {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-[#E30613] 
-           bg-[#FEF2F2] hover:bg-[#FDE8E9] border border-[#FBD0D3] hover:border-[#F8A1A7]
-           active:scale-[0.98] transition-all duration-150 ease-in-out hover:-translate-y-0.5 min-h-[42px] sm:min-h-[38px];
+    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-[#E84C3D] 
+           bg-[#FCECEB] hover:bg-[#FAD8D5] border border-[#F8D3D0]
+           active:scale-[0.98] transition-all duration-150 ease-in-out hover:-translate-y-0.5 min-h-[42px] sm:min-h-[40px];
   }
 
   /* Touch-friendly Form Inputs (44px min height on touch devices) */
   .input-field {
-    @apply w-full px-3.5 py-2.5 rounded-lg bg-white border border-[#E0E0E0] 
-           text-[#212529] placeholder-[#6C757D] text-sm focus:outline-none focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73] 
+    @apply w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E5E7EB] 
+           text-[#222222] placeholder-[#888888] text-sm focus:outline-none focus:ring-2 focus:ring-[#E84C3D]/20 focus:border-[#E84C3D] 
            transition-all duration-150 min-h-[44px];
   }
 
   /* Custom Status Badges */
   .badge-accent {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3];
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0];
   }
 
   .badge-navy {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F5FA] text-[#003B73] border border-[#B8D5ED];
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#141414]/5 text-[#141414] border border-[#141414]/15;
   }
 
   .badge-neutral {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0];
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F5F5F7] text-[#555555] border border-[#EEEEEE];
   }
 
   .badge-success {
@@ -148,7 +151,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F4F5F7;
+  background: #F5F5F7;
 }
 ::-webkit-scrollbar-thumb {
   background: #CED4DA;

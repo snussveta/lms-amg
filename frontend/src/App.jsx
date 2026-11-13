@@ -35,7 +35,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-[#F4F5F7] text-[#212529] selection:bg-[#E30613] selection:text-white">
+        <div className="min-h-screen flex flex-col bg-[#F5F5F7] text-[#222222] selection:bg-[#E84C3D] selection:text-white">
           <Navbar />
           <div className="flex-1 pb-20 md:pb-6">
             <Routes>

@@ -151,7 +151,7 @@ export const GuestTakeTestPage = () => {
           particleCount: 70,
           spread: 60,
           origin: { y: 0.6 },
-          colors: ['#003B73', '#E30613', '#10b981'],
+          colors: ['#141414', '#E84C3D', '#10b981'],
         });
       }
     } catch (err) {
@@ -261,10 +261,10 @@ export const GuestTakeTestPage = () => {
 
   if (loadingInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-[#6C757D] text-sm">Загрузка параметров тестирования AMG...</p>
+          <div className="w-8 h-8 border-3 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-[#777777] text-sm">Загрузка параметров тестирования AMG...</p>
         </div>
       </div>
     );
@@ -272,11 +272,11 @@ export const GuestTakeTestPage = () => {
 
   if (infoError || !testInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#F4F5F7]">
-        <div className="max-w-md w-full p-8 bg-white border border-[#E0E0E0] rounded-2xl text-center shadow-card">
-          <AlertCircle className="w-12 h-12 mx-auto text-[#E30613] mb-3" />
-          <h3 className="text-lg font-bold text-[#212529] mb-2">Тестирование недоступно</h3>
-          <p className="text-sm text-[#6C757D] mb-6">{infoError}</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#F5F5F7]">
+        <div className="max-w-md w-full p-8 bg-white border border-[#EEEEEE] rounded-2xl text-center shadow-card">
+          <AlertCircle className="w-12 h-12 mx-auto text-[#E84C3D] mb-3" />
+          <h3 className="text-lg font-bold text-[#222222] mb-2">Тестирование недоступно</h3>
+          <p className="text-sm text-[#777777] mb-6">{infoError}</p>
           <Link to="/login" className="btn-secondary text-sm">
             Войти в личный кабинет
           </Link>
@@ -288,15 +288,15 @@ export const GuestTakeTestPage = () => {
   // STAGE 1: Guest Info Form
   if (stage === 'info') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F4F5F7]">
-        <div className="max-w-lg w-full bg-white border border-[#E0E0E0] rounded-2xl p-6 sm:p-8 shadow-card">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F5F5F7]">
+        <div className="max-w-lg w-full bg-white border border-[#EEEEEE] rounded-2xl p-6 sm:p-8 shadow-card">
           {/* Header */}
-          <div className="flex items-center justify-between pb-5 mb-5 border-b border-[#E0E0E0]">
+          <div className="flex items-center justify-between pb-5 mb-5 border-b border-[#EEEEEE]">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#003B73] flex items-center justify-center text-xs font-black text-white tracking-wider">
+              <div className="w-8 h-8 rounded-lg bg-[#141414] flex items-center justify-center text-xs font-black text-white tracking-wider">
                 AMG
               </div>
-              <span className="text-xs font-bold text-[#6C757D] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#777777] uppercase tracking-wider">
                 Гостевой доступ
               </span>
             </div>
@@ -305,42 +305,42 @@ export const GuestTakeTestPage = () => {
             </span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-black text-[#212529] mb-2">{testInfo.title}</h1>
-          <p className="text-xs sm:text-sm text-[#6C757D] mb-6 leading-relaxed">
+          <h1 className="text-xl sm:text-2xl font-black text-[#222222] mb-2">{testInfo.title}</h1>
+          <p className="text-xs sm:text-sm text-[#777777] mb-6 leading-relaxed">
             {testInfo.description || 'Пройдите онлайн-тестирование для подтверждения квалификации.'}
           </p>
 
-          <div className="grid grid-cols-3 gap-2 text-center text-xs mb-6 bg-[#F4F5F7] p-3 rounded-xl border border-[#E0E0E0]">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs mb-6 bg-[#F5F5F7] p-3 rounded-xl border border-[#EEEEEE]">
             <div>
-              <div className="text-[#6C757D] text-[11px]">Вопросов</div>
-              <div className="font-bold text-[#212529] mt-0.5">{testInfo.question_count}</div>
+              <div className="text-[#777777] text-[11px]">Вопросов</div>
+              <div className="font-bold text-[#222222] mt-0.5">{testInfo.question_count}</div>
             </div>
             <div>
-              <div className="text-[#6C757D] text-[11px]">Лимит</div>
-              <div className="font-bold text-[#212529] mt-0.5">
+              <div className="text-[#777777] text-[11px]">Лимит</div>
+              <div className="font-bold text-[#222222] mt-0.5">
                 {testInfo.time_limit_minutes ? `${testInfo.time_limit_minutes} мин` : 'Нет'}
               </div>
             </div>
             <div>
-              <div className="text-[#6C757D] text-[11px]">Порог</div>
-              <div className="font-bold text-[#003B73] mt-0.5">{testInfo.passing_score}%</div>
+              <div className="text-[#777777] text-[11px]">Порог</div>
+              <div className="font-bold text-[#141414] mt-0.5">{testInfo.passing_score}%</div>
             </div>
           </div>
 
           <form onSubmit={handleStartGuestAttempt} className="space-y-4">
             {formError && (
-              <div className="p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
-                Ваше ФИО <span className="text-[#E30613]">*</span>
+              <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
+                Ваше ФИО <span className="text-[#E84C3D]">*</span>
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" />
                 <input
                   type="text"
                   required
@@ -350,14 +350,14 @@ export const GuestTakeTestPage = () => {
                   className="input-field pl-9 text-sm"
                 />
               </div>
-              <span className="text-[11px] text-[#6C757D] mt-1 block">
+              <span className="text-[11px] text-[#777777] mt-1 block">
                 ФИО будет зафиксировано в протоколе аттестации AMG.
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                   Email (опционально)
                 </label>
                 <input
@@ -370,7 +370,7 @@ export const GuestTakeTestPage = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider mb-1.5">
                   Телефон (опционально)
                 </label>
                 <input
@@ -406,17 +406,17 @@ export const GuestTakeTestPage = () => {
     const isUrgentTimer = timeLeft !== null && timeLeft <= 120;
 
     return (
-      <div className="min-h-screen pb-16 bg-[#F4F5F7]">
-        <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur border-b border-[#E0E0E0] shadow-xs">
+      <div className="min-h-screen pb-16 bg-[#F5F5F7]">
+        <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur border-b border-[#EEEEEE] shadow-xs">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 truncate">
-              <div className="w-7 h-7 rounded bg-[#003B73] flex items-center justify-center text-[10px] font-black text-white shrink-0">
+              <div className="w-7 h-7 rounded bg-[#141414] flex items-center justify-center text-[10px] font-black text-white shrink-0">
                 AMG
               </div>
-              <h2 className="text-sm font-bold text-[#212529] truncate max-w-[200px] sm:max-w-sm">
+              <h2 className="text-sm font-bold text-[#222222] truncate max-w-[200px] sm:max-w-sm">
                 {testData.title}
               </h2>
-              <span className="hidden sm:inline-block px-2 py-0.5 rounded text-xs font-medium bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0] shrink-0">
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded text-xs font-medium bg-[#F5F5F7] text-[#777777] border border-[#EEEEEE] shrink-0">
                 {formData.guest_name}
               </span>
             </div>
@@ -426,8 +426,8 @@ export const GuestTakeTestPage = () => {
                 <div
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs sm:text-sm font-bold border ${
                     isUrgentTimer
-                      ? 'bg-[#FEF2F2] text-[#E30613] border-[#FBD0D3] animate-pulse'
-                      : 'bg-[#F0F5FA] text-[#003B73] border-[#B8D5ED]'
+                      ? 'bg-[#FCECEB] text-[#E84C3D] border-[#F8D3D0] animate-pulse'
+                      : 'bg-[#F0F5FA] text-[#141414] border-[#B8D5ED]'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -446,9 +446,9 @@ export const GuestTakeTestPage = () => {
             </div>
           </div>
 
-          <div className="w-full bg-[#E0E0E0] h-1">
+          <div className="w-full bg-[#EEEEEE] h-1">
             <div
-              className="bg-[#E30613] h-1 transition-all duration-300"
+              className="bg-[#E84C3D] h-1 transition-all duration-300"
               style={{
                 width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%`,
               }}
@@ -457,11 +457,11 @@ export const GuestTakeTestPage = () => {
         </header>
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
-          <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#E0E0E0] text-xs text-[#6C757D] shadow-2xs">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#EEEEEE] text-xs text-[#777777] shadow-2xs">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#003B73]" />
+              <ShieldCheck className="w-4 h-4 text-[#141414]" />
               <span>
-                Гость: <strong className="text-[#212529]">{formData.guest_name}</strong>
+                Гость: <strong className="text-[#222222]">{formData.guest_name}</strong>
               </span>
             </div>
             <span>Отвечено: {answeredCount} из {questions.length}</span>
@@ -478,10 +478,10 @@ export const GuestTakeTestPage = () => {
                   onClick={() => setCurrentQIndex(idx)}
                   className={`flex-shrink-0 w-9 h-9 rounded-xl font-bold text-xs flex items-center justify-center transition-all relative ${
                     isCurrent
-                      ? 'bg-[#003B73] text-white shadow-sm ring-2 ring-[#003B73]/20'
+                      ? 'bg-[#141414] text-white shadow-sm ring-2 ring-[#141414]/20'
                       : isAnswered
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-white text-[#6C757D] border border-[#E0E0E0] hover:bg-[#F4F5F7]'
+                      : 'bg-white text-[#777777] border border-[#EEEEEE] hover:bg-[#F5F5F7]'
                   }`}
                 >
                   {idx + 1}
@@ -494,22 +494,22 @@ export const GuestTakeTestPage = () => {
           </div>
 
           {currentQuestion && (
-            <div className="bg-white border border-[#E0E0E0] rounded-2xl p-5 sm:p-8 shadow-card">
-              <div className="flex items-center justify-between gap-2 mb-5 pb-4 border-b border-[#E0E0E0]">
+            <div className="bg-white border border-[#EEEEEE] rounded-2xl p-5 sm:p-8 shadow-card">
+              <div className="flex items-center justify-between gap-2 mb-5 pb-4 border-b border-[#EEEEEE]">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-[#003B73] text-white">
+                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-[#141414] text-white">
                     Вопрос {currentQIndex + 1} из {questions.length}
                   </span>
-                  <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0]">
+                  <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE]">
                     {getQuestionTypeLabel(currentQuestion.question_type)}
                   </span>
                 </div>
-                <span className="text-xs font-bold text-[#003B73] bg-[#F0F5FA] px-2.5 py-1 rounded-md border border-[#B8D5ED]">
+                <span className="text-xs font-bold text-[#141414] bg-[#F0F5FA] px-2.5 py-1 rounded-md border border-[#B8D5ED]">
                   +{currentQuestion.points} {currentQuestion.points === 1 ? 'балл' : 'баллов'}
                 </span>
               </div>
 
-              <h3 className="text-base sm:text-lg font-bold text-[#212529] leading-relaxed mb-6">
+              <h3 className="text-base sm:text-lg font-bold text-[#222222] leading-relaxed mb-6">
                 {currentQuestion.text}
               </h3>
 
@@ -527,13 +527,13 @@ export const GuestTakeTestPage = () => {
                           onClick={() => handleSingleChoiceSelect(currentQuestion.id, option.id)}
                           className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${
                             isSelected
-                              ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
-                              : 'bg-white border-[#E0E0E0] hover:bg-[#F8F9FA] text-[#212529]'
+                              ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-1 ring-[#141414]'
+                              : 'bg-white border-[#EEEEEE] hover:bg-[#F8F9FA] text-[#222222]'
                           }`}
                         >
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                              isSelected ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
+                              isSelected ? 'border-[#141414] bg-[#141414]' : 'border-[#CED4DA] bg-white'
                             }`}
                           >
                             {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -547,7 +547,7 @@ export const GuestTakeTestPage = () => {
 
                 {currentQuestion.question_type === 'multiple_choice' && (
                   <div className="space-y-2.5">
-                    <p className="text-xs text-[#6C757D] font-medium mb-1">
+                    <p className="text-xs text-[#777777] font-medium mb-1">
                       Выберите один или несколько правильных вариантов:
                     </p>
                     {currentQuestion.options?.map((option) => {
@@ -561,13 +561,13 @@ export const GuestTakeTestPage = () => {
                           onClick={() => handleMultipleChoiceToggle(currentQuestion.id, option.id)}
                           className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 min-h-[50px] select-none ${
                             isSelected
-                              ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
-                              : 'bg-white border-[#E0E0E0] hover:bg-[#F8F9FA] text-[#212529]'
+                              ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-1 ring-[#141414]'
+                              : 'bg-white border-[#EEEEEE] hover:bg-[#F8F9FA] text-[#222222]'
                           }`}
                         >
                           <div
                             className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                              isSelected ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
+                              isSelected ? 'border-[#141414] bg-[#141414]' : 'border-[#CED4DA] bg-white'
                             }`}
                           >
                             {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
@@ -599,7 +599,7 @@ export const GuestTakeTestPage = () => {
 
                 {currentQuestion.question_type === 'text' && (
                   <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-[#6C757D] uppercase tracking-wider">
+                    <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider">
                       Ваш ответ
                     </label>
                     <textarea
@@ -613,7 +613,7 @@ export const GuestTakeTestPage = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#E0E0E0] gap-3">
+              <div className="flex items-center justify-between pt-4 border-t border-[#EEEEEE] gap-3">
                 <button
                   type="button"
                   onClick={() => setCurrentQIndex((prev) => Math.max(0, prev - 1))}
@@ -649,12 +649,12 @@ export const GuestTakeTestPage = () => {
         </main>
 
         {showConfirmModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white border border-[#E0E0E0] rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl">
-              <h3 className="text-xl font-extrabold text-[#212529] mb-2">Завершить тестирование?</h3>
-              <p className="text-xs sm:text-sm text-[#6C757D] mb-4">
-                Вы ответили на <span className="font-bold text-[#212529]">{answeredCount}</span> из{' '}
-                <span className="font-bold text-[#212529]">{questions.length}</span> вопросов.
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white border border-[#EEEEEE] rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl">
+              <h3 className="text-xl font-extrabold text-[#222222] mb-2">Завершить тестирование?</h3>
+              <p className="text-xs sm:text-sm text-[#777777] mb-4">
+                Вы ответили на <span className="font-bold text-[#222222]">{answeredCount}</span> из{' '}
+                <span className="font-bold text-[#222222]">{questions.length}</span> вопросов.
               </p>
 
               <div className="flex items-center justify-end gap-3">
@@ -686,10 +686,10 @@ export const GuestTakeTestPage = () => {
   if (stage === 'result') {
     if (loadingResult || !resultData) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-[#6C757D] text-sm">Подсчет результатов тестирования AMG...</p>
+            <div className="w-8 h-8 border-3 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[#777777] text-sm">Подсчет результатов тестирования AMG...</p>
           </div>
         </div>
       );
@@ -699,16 +699,16 @@ export const GuestTakeTestPage = () => {
     const isPassed = resultData.is_passed && !isNeedsReview;
 
     return (
-      <div className="min-h-screen p-4 sm:p-6 bg-[#F4F5F7]">
+      <div className="min-h-screen p-4 sm:p-6 bg-[#F5F5F7]">
         <div className="max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center justify-between bg-white border border-[#E0E0E0] rounded-xl px-4 py-3 shadow-2xs">
+          <div className="flex items-center justify-between bg-white border border-[#EEEEEE] rounded-xl px-4 py-3 shadow-2xs">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#003B73] flex items-center justify-center text-xs font-black text-white">
+              <div className="w-7 h-7 rounded bg-[#141414] flex items-center justify-center text-xs font-black text-white">
                 AMG
               </div>
-              <span className="text-sm font-bold text-[#212529]">Результат тестирования</span>
+              <span className="text-sm font-bold text-[#222222]">Результат тестирования</span>
             </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F4F5F7] text-[#495057] border border-[#E0E0E0] font-medium">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE] font-medium">
               Гость: {formData.guest_name}
             </span>
           </div>
@@ -719,7 +719,7 @@ export const GuestTakeTestPage = () => {
                 ? 'border-amber-200'
                 : isPassed
                 ? 'border-emerald-200'
-                : 'border-[#FBD0D3]'
+                : 'border-[#F8D3D0]'
             }`}
           >
             <div className="flex items-center gap-4 mb-4">
@@ -729,7 +729,7 @@ export const GuestTakeTestPage = () => {
                     ? 'bg-amber-50 text-amber-700 border border-amber-200'
                     : isPassed
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3]'
+                    : 'bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]'
                 }`}
               >
                 {isNeedsReview ? (
@@ -737,7 +737,7 @@ export const GuestTakeTestPage = () => {
                 ) : isPassed ? (
                   <Award className="w-7 h-7 text-emerald-600" />
                 ) : (
-                  <XCircle className="w-7 h-7 text-[#E30613]" />
+                  <XCircle className="w-7 h-7 text-[#E84C3D]" />
                 )}
               </div>
               <div>
@@ -747,7 +747,7 @@ export const GuestTakeTestPage = () => {
                       ? 'bg-amber-50 text-amber-700 border border-amber-200'
                       : isPassed
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3]'
+                      : 'bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]'
                   }`}
                 >
                   {isNeedsReview
@@ -756,11 +756,11 @@ export const GuestTakeTestPage = () => {
                     ? 'Тест сдан успешно'
                     : 'Тест не сдан'}
                 </span>
-                <h1 className="text-xl sm:text-2xl font-black text-[#212529]">{resultData.test_title}</h1>
+                <h1 className="text-xl sm:text-2xl font-black text-[#222222]">{resultData.test_title}</h1>
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-[#6C757D] leading-relaxed mb-6">
+            <p className="text-xs sm:text-sm text-[#777777] leading-relaxed mb-6">
               {isNeedsReview
                 ? 'Ваши ответы зафиксированы в базе данных AMG. Тест содержит вопросы со свободным ответом, которые будут проверены экзаменатором. Итоговый балл обновится после ручной проверки.'
                 : isPassed
@@ -768,36 +768,36 @@ export const GuestTakeTestPage = () => {
                 : 'К сожалению, набранного балла недостаточно для преодоления проходного порога.'}
             </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E0E0E0]">
-              <div className="bg-[#F4F5F7] rounded-xl p-3 text-center border border-[#E0E0E0]">
-                <div className="text-xs text-[#6C757D]">Баллы</div>
-                <div className="text-lg font-bold text-[#212529] mt-0.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#EEEEEE]">
+              <div className="bg-[#F5F5F7] rounded-xl p-3 text-center border border-[#EEEEEE]">
+                <div className="text-xs text-[#777777]">Баллы</div>
+                <div className="text-lg font-bold text-[#222222] mt-0.5">
                   {resultData.score} / {resultData.max_score}
                 </div>
               </div>
-              <div className="bg-[#F4F5F7] rounded-xl p-3 text-center border border-[#E0E0E0]">
-                <div className="text-xs text-[#6C757D]">Процент</div>
+              <div className="bg-[#F5F5F7] rounded-xl p-3 text-center border border-[#EEEEEE]">
+                <div className="text-xs text-[#777777]">Процент</div>
                 <div
                   className={`text-lg font-bold mt-0.5 ${
                     isNeedsReview
                       ? 'text-amber-700'
                       : isPassed
                       ? 'text-emerald-700'
-                      : 'text-[#E30613]'
+                      : 'text-[#E84C3D]'
                   }`}
                 >
                   {resultData.percentage}%
                 </div>
               </div>
-              <div className="bg-[#F4F5F7] rounded-xl p-3 text-center border border-[#E0E0E0]">
-                <div className="text-xs text-[#6C757D]">Время</div>
-                <div className="text-lg font-bold text-[#212529] mt-0.5">
+              <div className="bg-[#F5F5F7] rounded-xl p-3 text-center border border-[#EEEEEE]">
+                <div className="text-xs text-[#777777]">Время</div>
+                <div className="text-lg font-bold text-[#222222] mt-0.5">
                   {formatDuration(resultData.time_spent_seconds)}
                 </div>
               </div>
-              <div className="bg-[#F4F5F7] rounded-xl p-3 text-center border border-[#E0E0E0]">
-                <div className="text-xs text-[#6C757D]">Порог сдачи</div>
-                <div className="text-lg font-bold text-[#003B73] mt-0.5">
+              <div className="bg-[#F5F5F7] rounded-xl p-3 text-center border border-[#EEEEEE]">
+                <div className="text-xs text-[#777777]">Порог сдачи</div>
+                <div className="text-lg font-bold text-[#141414] mt-0.5">
                   {resultData.passing_score}%
                 </div>
               </div>
@@ -806,7 +806,7 @@ export const GuestTakeTestPage = () => {
 
           {/* Список ответов */}
           <div className="space-y-4">
-            <h2 className="text-base font-bold text-[#212529]">Разбор ваших ответов</h2>
+            <h2 className="text-base font-bold text-[#222222]">Разбор ваших ответов</h2>
 
             {resultData.answers.map((ans, idx) => {
               const isManual = ans.question_type === 'manual_review';
@@ -815,10 +815,10 @@ export const GuestTakeTestPage = () => {
               return (
                 <div
                   key={ans.question_id}
-                  className="bg-white border border-[#E0E0E0] rounded-xl p-4 sm:p-5 space-y-3 shadow-2xs"
+                  className="bg-white border border-[#EEEEEE] rounded-xl p-4 sm:p-5 space-y-3 shadow-2xs"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-[#6C757D]">
+                    <span className="text-xs font-bold text-[#777777]">
                       Вопрос {idx + 1} • {getQuestionTypeLabel(ans.question_type)}
                     </span>
                     {isManual && !ans.is_reviewed ? (
@@ -830,17 +830,17 @@ export const GuestTakeTestPage = () => {
                         +{ans.points_awarded} из {ans.points_max} б.
                       </span>
                     ) : (
-                      <span className="text-xs font-bold text-[#E30613] bg-[#FEF2F2] border border-[#FBD0D3] px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-bold text-[#E84C3D] bg-[#FCECEB] border border-[#F8D3D0] px-2 py-0.5 rounded-full">
                         0 из {ans.points_max} б.
                       </span>
                     )}
                   </div>
 
-                  <p className="text-sm text-[#212529] font-bold">{ans.question_text}</p>
+                  <p className="text-sm text-[#222222] font-bold">{ans.question_text}</p>
 
-                  <div className="bg-[#F4F5F7] p-3 rounded-lg border border-[#E0E0E0] text-xs">
-                    <span className="text-[#6C757D] font-bold block mb-1">Ваш ответ:</span>
-                    <p className="text-[#212529] whitespace-pre-wrap">
+                  <div className="bg-[#F5F5F7] p-3 rounded-lg border border-[#EEEEEE] text-xs">
+                    <span className="text-[#777777] font-bold block mb-1">Ваш ответ:</span>
+                    <p className="text-[#222222] whitespace-pre-wrap">
                       {ans.user_text_answer ||
                         (ans.user_selected_option_ids?.length
                           ? `Выбран(ы) вариант(ы) №${ans.user_selected_option_ids.join(', ')}`

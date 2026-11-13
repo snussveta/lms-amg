@@ -64,15 +64,15 @@ export const MyAttemptsPage = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Шапка */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#212529] flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#222222] flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
               <History className="w-5 h-5" />
             </div>
             <span>История моих тестирований</span>
           </h1>
-          <p className="text-[#6C757D] text-xs sm:text-sm mt-1">
+          <p className="text-[#777777] text-xs sm:text-sm mt-1">
             Просмотр всех пройденных тестов платформы AMG, набранных баллов и статусов проверки.
           </p>
         </div>
@@ -83,7 +83,7 @@ export const MyAttemptsPage = () => {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs sm:text-sm flex items-center gap-2.5">
+        <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] text-xs sm:text-sm flex items-center gap-2.5">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -93,14 +93,14 @@ export const MyAttemptsPage = () => {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl h-16 animate-pulse bg-white border border-[#E0E0E0]" />
+            <div key={i} className="rounded-xl h-16 animate-pulse bg-white border border-[#EEEEEE]" />
           ))}
         </div>
       ) : attempts.length === 0 ? (
-        <div className="bg-white border border-[#E0E0E0] rounded-2xl p-12 text-center max-w-md mx-auto my-8 shadow-card">
+        <div className="bg-white border border-[#EEEEEE] rounded-2xl p-12 text-center max-w-md mx-auto my-8 shadow-card">
           <FileQuestion className="w-12 h-12 mx-auto text-[#ADB5BD] mb-3" />
-          <h3 className="text-base font-bold text-[#212529]">Попыток не найдено</h3>
-          <p className="text-xs sm:text-sm text-[#6C757D] mt-1 mb-6">
+          <h3 className="text-base font-bold text-[#222222]">Попыток не найдено</h3>
+          <p className="text-xs sm:text-sm text-[#777777] mt-1 mb-6">
             Вы пока еще не проходили ни одного теста в корпоративной системе.
           </p>
           <Link to="/tests" className="btn-primary text-xs sm:text-sm">
@@ -108,11 +108,11 @@ export const MyAttemptsPage = () => {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl overflow-hidden border border-[#E0E0E0] shadow-card">
+        <div className="bg-white rounded-xl overflow-hidden border border-[#EEEEEE] shadow-card">
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full text-left border-collapse min-w-[640px]">
               <thead>
-                <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                <tr className="border-b border-[#EEEEEE] bg-[#F5F5F7] text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                   <th className="py-3.5 px-5">Название теста</th>
                   <th className="py-3.5 px-5">Статус</th>
                   <th className="py-3.5 px-5">Баллы</th>
@@ -121,7 +121,7 @@ export const MyAttemptsPage = () => {
                   <th className="py-3.5 px-5 text-right">Действие</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E0E0E0] text-sm text-[#212529]">
+              <tbody className="divide-y divide-[#EEEEEE] text-sm text-[#222222]">
                 {attempts.map((att) => {
                   const isNeedsReview = att.status === 'needs_review';
                   const isPassed = att.is_passed && !isNeedsReview;
@@ -134,10 +134,10 @@ export const MyAttemptsPage = () => {
                       onClick={() => handleRowClick(att)}
                       className="hover:bg-[#F8F9FA] transition-colors cursor-pointer group"
                     >
-                      <td className="py-4 px-5 font-bold text-[#212529] group-hover:text-[#003B73] transition-colors">
+                      <td className="py-4 px-5 font-bold text-[#222222] group-hover:text-[#141414] transition-colors">
                         <div className="flex items-center gap-2">
                           <span>{att.test_title}</span>
-                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-70 transition-opacity text-[#003B73]" />
+                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-70 transition-opacity text-[#141414]" />
                         </div>
                       </td>
 
@@ -153,20 +153,20 @@ export const MyAttemptsPage = () => {
                             Сдано
                           </span>
                         ) : isInProgress ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F5FA] text-[#003B73] border border-[#B8D5ED]">
-                            <Clock className="w-3.5 h-3.5 animate-spin text-[#003B73]" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F5FA] text-[#141414] border border-[#B8D5ED]">
+                            <Clock className="w-3.5 h-3.5 animate-spin text-[#141414]" />
                             В процессе
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#E30613] border border-[#FBD0D3]">
-                            <XCircle className="w-3.5 h-3.5 text-[#E30613]" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]">
+                            <XCircle className="w-3.5 h-3.5 text-[#E84C3D]" />
                             Не сдано
                           </span>
                         )}
                       </td>
 
                       <td className="py-4 px-5 font-mono text-xs">
-                        <span className="font-bold text-[#212529] text-sm">{att.score}</span> / {att.max_score} б.
+                        <span className="font-bold text-[#222222] text-sm">{att.score}</span> / {att.max_score} б.
                       </td>
 
                       <td className="py-4 px-5">
@@ -176,14 +176,14 @@ export const MyAttemptsPage = () => {
                               ? 'text-amber-700'
                               : isPassed
                               ? 'text-emerald-700'
-                              : 'text-[#E30613]'
+                              : 'text-[#E84C3D]'
                           }`}
                         >
                           {att.percentage}%
                         </span>
                       </td>
 
-                      <td className="py-4 px-5 text-xs text-[#6C757D]">
+                      <td className="py-4 px-5 text-xs text-[#777777]">
                         {formatDate(att.submitted_at || att.started_at)}
                       </td>
 
@@ -194,7 +194,7 @@ export const MyAttemptsPage = () => {
                             className="btn-secondary text-xs py-1.5 px-3"
                           >
                             <span>Разбор</span>
-                            <ExternalLink className="w-3 h-3 ml-1 text-[#003B73]" />
+                            <ExternalLink className="w-3 h-3 ml-1 text-[#141414]" />
                           </Link>
                         ) : (
                           <Link

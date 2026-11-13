@@ -852,10 +852,10 @@ export const CourseConstructorPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center bg-[#F4F5F7]">
+      <div className="min-h-[80vh] flex items-center justify-center bg-[#F5F5F7]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-[#003B73] animate-spin" />
-          <span className="text-sm font-semibold text-[#6C757D]">Загрузка структуры курса...</span>
+          <Loader2 className="w-8 h-8 text-[#141414] animate-spin" />
+          <span className="text-sm font-semibold text-[#777777]">Загрузка структуры курса...</span>
         </div>
       </div>
     );
@@ -864,25 +864,25 @@ export const CourseConstructorPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 pb-28">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div className="flex items-center gap-3">
           <Link
             to="/admin/courses"
-            className="p-2.5 rounded-xl bg-white border border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors shadow-2xs"
+            className="p-2.5 rounded-xl bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors shadow-2xs"
             title="Назад к списку курсов"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 {isEditing ? 'Конструктор курса' : 'Новый обучающий курс'}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#003B73]/10 border border-[#003B73]/20 text-[#003B73] uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#141414]/10 border border-[#141414]/20 text-[#141414] uppercase tracking-wider">
                 iSpring Module
               </span>
             </div>
-            <p className="text-xs text-[#6C757D] mt-0.5">
+            <p className="text-xs text-[#777777] mt-0.5">
               Настройка разделов, лонгридов, видео 5+ часов, презентаций и тестов
             </p>
           </div>
@@ -916,7 +916,7 @@ export const CourseConstructorPage = () => {
                 className="btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5"
                 title="Назначить курс сотрудникам"
               >
-                <Users className="w-4 h-4 text-[#003B73]" />
+                <Users className="w-4 h-4 text-[#141414]" />
                 <span>Назначить курс</span>
               </button>
 
@@ -926,7 +926,7 @@ export const CourseConstructorPage = () => {
                 rel="noreferrer"
                 className="btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5"
               >
-                <Eye className="w-4 h-4 text-[#003B73]" />
+                <Eye className="w-4 h-4 text-[#141414]" />
                 <span>Плеер сотрудника</span>
               </Link>
             </>
@@ -945,7 +945,7 @@ export const CourseConstructorPage = () => {
 
       {/* Notifications */}
       {error && (
-        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E84C3D] text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -958,10 +958,10 @@ export const CourseConstructorPage = () => {
       )}
 
       {/* Course Core Settings Card */}
-      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-5 space-y-4">
+      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-1.5">
-            <label className="text-xs font-bold text-[#212529]">Название курса *</label>
+            <label className="text-xs font-bold text-[#222222]">Название курса *</label>
             <input
               type="text"
               className="input-field font-bold text-sm bg-white"
@@ -972,7 +972,7 @@ export const CourseConstructorPage = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#212529]">Подразделение (Тег)</label>
+            <label className="text-xs font-bold text-[#222222]">Подразделение (Тег)</label>
             <select
               className="input-field text-sm bg-white"
               value={departmentTag}
@@ -989,7 +989,7 @@ export const CourseConstructorPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-1.5">
-            <label className="text-xs font-bold text-[#212529]">Краткое описание курса</label>
+            <label className="text-xs font-bold text-[#222222]">Краткое описание курса</label>
             <textarea
               rows={2}
               className="input-field text-xs bg-white"
@@ -1001,7 +1001,7 @@ export const CourseConstructorPage = () => {
 
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#212529]">URL обложки курса (баннер)</label>
+              <label className="text-xs font-bold text-[#222222]">URL обложки курса (баннер)</label>
               <input
                 type="text"
                 className="input-field text-xs bg-white"
@@ -1012,7 +1012,7 @@ export const CourseConstructorPage = () => {
             </div>
 
             <div className="space-y-1.5 pt-1">
-              <label className="text-xs font-bold text-[#212529]">Режим доступа</label>
+              <label className="text-xs font-bold text-[#222222]">Режим доступа</label>
               <select
                 className="input-field text-xs bg-white"
                 value={isPublic ? 'public' : 'assigned'}
@@ -1021,7 +1021,7 @@ export const CourseConstructorPage = () => {
                 <option value="assigned">🔒 Только назначенным (сотрудникам и отделам)</option>
                 <option value="public">🌐 Общий доступ (виден всем сотрудникам компании)</option>
               </select>
-              <p className="text-[10px] text-[#6C757D]">
+              <p className="text-[10px] text-[#777777]">
                 {isPublic
                   ? 'Курс открыт в каталоге для всех зарегистрированных сотрудников.'
                   : 'Курс увидят ТОЛЬКО те, кому он назначен через кнопку «Назначить курс».'}
@@ -1034,9 +1034,9 @@ export const CourseConstructorPage = () => {
                 id="isPublished"
                 checked={isPublished}
                 onChange={(e) => setIsPublished(e.target.checked)}
-                className="w-4 h-4 rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] cursor-pointer"
+                className="w-4 h-4 rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] cursor-pointer"
               />
-              <label htmlFor="isPublished" className="text-xs font-bold text-[#212529] cursor-pointer">
+              <label htmlFor="isPublished" className="text-xs font-bold text-[#222222] cursor-pointer">
                 Опубликовать курс
               </label>
             </div>
@@ -1050,17 +1050,17 @@ export const CourseConstructorPage = () => {
         {/* LEFT COLUMN: COURSE STRUCTURE TREE (4 cols)         */}
         {/* ==================================================== */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-[#E0E0E0]">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[#EEEEEE]">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#003B73]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#212529]">
+                <Layers className="w-4 h-4 text-[#141414]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#222222]">
                   Структура курса
                 </span>
               </div>
               <button
                 onClick={handleAddModule}
-                className="text-xs font-bold text-[#003B73] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#141414] hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Раздел</span>
@@ -1070,7 +1070,7 @@ export const CourseConstructorPage = () => {
             {/* Modules List */}
             <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
               {modules.length === 0 ? (
-                <div className="text-center py-8 text-[#6C757D] text-xs">
+                <div className="text-center py-8 text-[#777777] text-xs">
                   Нет разделов. Нажмите «+ Раздел», чтобы добавить.
                 </div>
               ) : (
@@ -1079,21 +1079,21 @@ export const CourseConstructorPage = () => {
                     key={mod.id}
                     className={`rounded-xl border transition-all ${
                       activeModuleId === mod.id
-                        ? 'border-[#003B73] bg-[#003B73]/5 shadow-2xs'
-                        : 'border-[#E0E0E0] bg-[#F4F5F7]/60'
+                        ? 'border-[#141414] bg-[#141414]/5 shadow-2xs'
+                        : 'border-[#EEEEEE] bg-[#F5F5F7]/60'
                     }`}
                   >
                     {/* Module Header */}
-                    <div className="p-2.5 flex items-center justify-between gap-2 border-b border-[#E0E0E0]">
+                    <div className="p-2.5 flex items-center justify-between gap-2 border-b border-[#EEEEEE]">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#003B73] text-white shrink-0">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#141414] text-white shrink-0">
                           {modIdx + 1}
                         </span>
                         <input
                           type="text"
                           value={mod.title}
                           onChange={(e) => handleUpdateModuleTitle(mod.id, e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#212529] border-none focus:outline-none focus:ring-0 w-full truncate"
+                          className="bg-transparent text-xs font-bold text-[#222222] border-none focus:outline-none focus:ring-0 w-full truncate"
                           title="Кликните для редактирования названия"
                         />
                       </div>
@@ -1102,7 +1102,7 @@ export const CourseConstructorPage = () => {
                         <button
                           onClick={() => handleMoveModule(modIdx, 'up')}
                           disabled={modIdx === 0}
-                          className="p-1.5 rounded text-[#6C757D] hover:text-[#212529] hover:bg-white disabled:opacity-20"
+                          className="p-1.5 rounded text-[#777777] hover:text-[#222222] hover:bg-white disabled:opacity-20"
                           title="Поднять раздел выше"
                         >
                           <MoveUp className="w-3.5 h-3.5" />
@@ -1110,14 +1110,14 @@ export const CourseConstructorPage = () => {
                         <button
                           onClick={() => handleMoveModule(modIdx, 'down')}
                           disabled={modIdx === modules.length - 1}
-                          className="p-1.5 rounded text-[#6C757D] hover:text-[#212529] hover:bg-white disabled:opacity-20"
+                          className="p-1.5 rounded text-[#777777] hover:text-[#222222] hover:bg-white disabled:opacity-20"
                           title="Опустить раздел ниже"
                         >
                           <MoveDown className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteModule(mod.id)}
-                          className="p-1.5 rounded text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded text-[#777777] hover:text-[#E84C3D] hover:bg-red-50 transition-colors"
                           title="Удалить раздел"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1131,9 +1131,9 @@ export const CourseConstructorPage = () => {
                         const isSelected = activeLesson?.id === les.id;
                         const iconMap = {
                           article: <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />,
-                          video: <Video className="w-3.5 h-3.5 text-[#003B73] shrink-0" />,
+                          video: <Video className="w-3.5 h-3.5 text-[#141414] shrink-0" />,
                           presentation: <FileCode className="w-3.5 h-3.5 text-amber-600 shrink-0" />,
-                          quiz: <HelpCircle className="w-3.5 h-3.5 text-[#E30613] shrink-0" />,
+                          quiz: <HelpCircle className="w-3.5 h-3.5 text-[#E84C3D] shrink-0" />,
                         };
 
                         return (
@@ -1142,8 +1142,8 @@ export const CourseConstructorPage = () => {
                             onClick={() => handleSelectLessonInEditor(les, mod.id)}
                             className={`flex items-center justify-between p-2 rounded-lg cursor-pointer text-xs transition-all ${
                               isSelected
-                                ? 'bg-[#003B73] text-white font-bold shadow-xs'
-                                : 'text-[#212529] hover:bg-white hover:border-[#E0E0E0] border border-transparent'
+                                ? 'bg-[#141414] text-white font-bold shadow-xs'
+                                : 'text-[#222222] hover:bg-white hover:border-[#EEEEEE] border border-transparent'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0 pr-2">
@@ -1167,7 +1167,7 @@ export const CourseConstructorPage = () => {
                                 handleDeleteLesson(mod.id, les.id);
                               }}
                               className={`p-1 rounded transition-colors ${
-                                isSelected ? 'text-white/80 hover:text-white' : 'text-[#6C757D] hover:text-[#E30613]'
+                                isSelected ? 'text-white/80 hover:text-white' : 'text-[#777777] hover:text-[#E84C3D]'
                               }`}
                               title="Удалить урок"
                             >
@@ -1190,14 +1190,14 @@ export const CourseConstructorPage = () => {
                           onClick={() => handleAddLesson(mod.id, 'video')}
                           className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                         >
-                          <Plus className="w-3 h-3 text-[#003B73]" />
+                          <Plus className="w-3 h-3 text-[#141414]" />
                           <span>Видео</span>
                         </button>
                         <button
                           onClick={() => handleAddLesson(mod.id, 'quiz')}
                           className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[32px]"
                         >
-                          <Plus className="w-3 h-3 text-[#E30613]" />
+                          <Plus className="w-3 h-3 text-[#E84C3D]" />
                           <span>Тест</span>
                         </button>
                         <button
@@ -1222,23 +1222,23 @@ export const CourseConstructorPage = () => {
         {/* ==================================================== */}
         <div className="lg:col-span-8">
           {!activeLesson ? (
-            <div className="bg-white rounded-2xl border border-[#E0E0E0] p-12 text-center text-[#6C757D] space-y-3 shadow-sm">
-              <Layers className="w-12 h-12 mx-auto text-[#6C757D] opacity-40" />
-              <div className="text-base font-bold text-[#212529]">Урок не выбран</div>
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] p-12 text-center text-[#777777] space-y-3 shadow-sm">
+              <Layers className="w-12 h-12 mx-auto text-[#777777] opacity-40" />
+              <div className="text-base font-bold text-[#222222]">Урок не выбран</div>
               <p className="text-xs max-w-sm mx-auto leading-relaxed">
                 Выберите урок в дереве слева или добавьте новый раздел и урок, чтобы приступить к верстке лонгрида или загрузке видео.
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-5 sm:p-6 space-y-6">
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-5 sm:p-6 space-y-6">
               {/* Lesson General Header */}
-              <div className="space-y-4 pb-5 border-b border-[#E0E0E0]">
+              <div className="space-y-4 pb-5 border-b border-[#EEEEEE]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex-1 space-y-1">
-                    <label className="text-xs font-bold text-[#212529]">Название урока</label>
+                    <label className="text-xs font-bold text-[#222222]">Название урока</label>
                     <input
                       type="text"
-                      className="input-field text-base font-bold text-[#212529] bg-white"
+                      className="input-field text-base font-bold text-[#222222] bg-white"
                       value={activeLesson.title}
                       onChange={(e) => updateActiveLessonField('title', e.target.value)}
                     />
@@ -1248,7 +1248,7 @@ export const CourseConstructorPage = () => {
                     <button
                       onClick={() => setPreviewMode(!previewMode)}
                       className={`btn-secondary text-xs flex items-center gap-1.5 min-h-[40px] px-3.5 ${
-                        previewMode ? 'bg-[#003B73] text-white border-[#003B73]' : ''
+                        previewMode ? 'bg-[#141414] text-white border-[#141414]' : ''
                       }`}
                     >
                       <Eye className="w-4 h-4" />
@@ -1259,13 +1259,13 @@ export const CourseConstructorPage = () => {
 
                 {/* Lesson Type Selector Tabs */}
                 <div>
-                  <label className="text-xs font-bold text-[#212529] block mb-2">Формат урока</label>
+                  <label className="text-xs font-bold text-[#222222] block mb-2">Формат урока</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {[
                       { id: 'article', label: 'Лонгрид / Статья', icon: FileText, color: 'text-emerald-600' },
-                      { id: 'video', label: 'Видео (2–10 ГБ)', icon: Video, color: 'text-[#003B73]' },
+                      { id: 'video', label: 'Видео (2–10 ГБ)', icon: Video, color: 'text-[#141414]' },
                       { id: 'presentation', label: 'Презентация PDF', icon: FileCode, color: 'text-amber-600' },
-                      { id: 'quiz', label: 'Тестирование', icon: HelpCircle, color: 'text-[#E30613]' },
+                      { id: 'quiz', label: 'Тестирование', icon: HelpCircle, color: 'text-[#E84C3D]' },
                     ].map((t) => {
                       const Icon = t.icon;
                       const active = activeLesson.lesson_type === t.id;
@@ -1276,8 +1276,8 @@ export const CourseConstructorPage = () => {
                           onClick={() => updateActiveLessonField('lesson_type', t.id)}
                           className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1.5 min-h-[64px] ${
                             active
-                              ? 'bg-[#003B73] border-[#003B73] text-white shadow-sm'
-                              : 'bg-[#F4F5F7] border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#E0E0E0]/60'
+                              ? 'bg-[#141414] border-[#141414] text-white shadow-sm'
+                              : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#EEEEEE]/60'
                           }`}
                         >
                           <Icon className={`w-4 h-4 ${active ? 'text-white' : t.color}`} />
@@ -1296,22 +1296,22 @@ export const CourseConstructorPage = () => {
                 <div className="space-y-6">
                   {previewMode ? (
                     /* Read Mode Preview */
-                    <div className="prose max-w-none space-y-4 text-[#212529]">
+                    <div className="prose max-w-none space-y-4 text-[#222222]">
                       {getParsedLongreadBlocks().map((block, idx) => {
                         if (block.type === 'h1') {
-                          return <h1 key={idx} className="text-2xl font-black text-[#212529]">{block.text}</h1>;
+                          return <h1 key={idx} className="text-2xl font-black text-[#222222]">{block.text}</h1>;
                         }
                         if (block.type === 'h2') {
-                          return <h2 key={idx} className="text-xl font-bold text-[#003B73] mt-6">{block.text}</h2>;
+                          return <h2 key={idx} className="text-xl font-bold text-[#141414] mt-6">{block.text}</h2>;
                         }
                         if (block.type === 'paragraph') {
-                          return <p key={idx} className="text-sm text-[#212529] leading-relaxed">{block.text}</p>;
+                          return <p key={idx} className="text-sm text-[#222222] leading-relaxed">{block.text}</p>;
                         }
                         if (block.type === 'callout') {
                           const variants = {
-                            danger: 'bg-red-50 border-red-200 text-[#E30613]',
+                            danger: 'bg-red-50 border-red-200 text-[#E84C3D]',
                             warning: 'bg-amber-50 border-amber-200 text-amber-800',
-                            info: 'bg-blue-50 border-blue-200 text-[#003B73]',
+                            info: 'bg-blue-50 border-blue-200 text-[#141414]',
                             success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
                           };
                           return (
@@ -1323,7 +1323,7 @@ export const CourseConstructorPage = () => {
                         }
                         if (block.type === 'list') {
                           return (
-                            <ul key={idx} className="list-disc list-inside space-y-1 text-xs text-[#212529]">
+                            <ul key={idx} className="list-disc list-inside space-y-1 text-xs text-[#222222]">
                               {(block.items || []).map((item, iIdx) => (
                                 <li key={iIdx}>{item}</li>
                               ))}
@@ -1333,8 +1333,8 @@ export const CourseConstructorPage = () => {
                         if (block.type === 'image') {
                           return (
                             <div key={idx} className="space-y-1.5 text-center my-4">
-                              <img src={block.url} alt={block.caption} className="rounded-xl max-h-96 mx-auto border border-[#E0E0E0]" />
-                              {block.caption && <div className="text-[11px] text-[#6C757D] italic">{block.caption}</div>}
+                              <img src={block.url} alt={block.caption} className="rounded-xl max-h-96 mx-auto border border-[#EEEEEE]" />
+                              {block.caption && <div className="text-[11px] text-[#777777] italic">{block.caption}</div>}
                             </div>
                           );
                         }
@@ -1347,15 +1347,15 @@ export const CourseConstructorPage = () => {
                       {/* Blocks List */}
                       <div className="space-y-3">
                         {getParsedLongreadBlocks().map((block, bIdx) => (
-                          <div key={bIdx} className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] relative group space-y-2">
-                            <div className="flex items-center justify-between pb-1 border-b border-[#E0E0E0]">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6C757D]">
+                          <div key={bIdx} className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] relative group space-y-2">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#EEEEEE]">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#777777]">
                                 Блок: {block.type}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => removeLongreadBlock(bIdx)}
-                                className="text-[#6C757D] hover:text-[#E30613] transition-colors p-1 rounded"
+                                className="text-[#777777] hover:text-[#E84C3D] transition-colors p-1 rounded"
                                 title="Удалить блок"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1408,7 +1408,7 @@ export const CourseConstructorPage = () => {
                             {/* List block */}
                             {block.type === 'list' && (
                               <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-[#6C757D]">Пункты списка (по одному на строку)</label>
+                                <label className="text-[11px] font-bold text-[#777777]">Пункты списка (по одному на строку)</label>
                                 <textarea
                                   rows={3}
                                   className="input-field text-xs bg-white"
@@ -1440,7 +1440,7 @@ export const CourseConstructorPage = () => {
                                   />
                                 </div>
                                 {block.url && (
-                                  <div className="p-2 bg-white rounded-xl border border-[#E0E0E0] text-center">
+                                  <div className="p-2 bg-white rounded-xl border border-[#EEEEEE] text-center">
                                     <img src={block.url} alt="Превью" className="max-h-40 mx-auto rounded" />
                                   </div>
                                 )}
@@ -1451,8 +1451,8 @@ export const CourseConstructorPage = () => {
                       </div>
 
                       {/* Add Block Toolbar */}
-                      <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-dashed border-[#E0E0E0] flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xs font-bold text-[#212529]">Добавить блок в статью:</span>
+                      <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-dashed border-[#EEEEEE] flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-xs font-bold text-[#222222]">Добавить блок в статью:</span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
@@ -1493,7 +1493,7 @@ export const CourseConstructorPage = () => {
                           <button
                             type="button"
                             onClick={() => imageInputRef.current?.click()}
-                            className="btn-secondary text-xs py-1.5 px-3 text-[#003B73] font-bold min-h-[34px] flex items-center gap-1"
+                            className="btn-secondary text-xs py-1.5 px-3 text-[#141414] font-bold min-h-[34px] flex items-center gap-1"
                           >
                             <ImageIcon className="w-3.5 h-3.5" />
                             Загрузить фото
@@ -1517,13 +1517,13 @@ export const CourseConstructorPage = () => {
               {/* ============================================== */}
               {activeLesson.lesson_type === 'video' && (
                 <div className="space-y-4">
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#222222]">
                           Видеофайл лекции (MP4 / MKV / WebM)
                         </div>
-                        <p className="text-xs text-[#6C757D] mt-0.5">
+                        <p className="text-xs text-[#777777] mt-0.5">
                           Поддерживаются видеофайлы длительностью 5+ часов и размером до 10 ГБ. Загрузите файл с ПК или выберите готовый из Базы знаний.
                         </p>
                       </div>
@@ -1531,7 +1531,7 @@ export const CourseConstructorPage = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenKnowledgePicker('video')}
-                          className="btn-secondary text-xs font-bold text-[#003B73] min-h-[38px] px-3.5 flex items-center gap-1.5"
+                          className="btn-secondary text-xs font-bold text-[#141414] min-h-[38px] px-3.5 flex items-center gap-1.5"
                         >
                           <FolderArchive className="w-3.5 h-3.5" />
                           <span>Выбрать из Базы знаний</span>
@@ -1558,18 +1558,18 @@ export const CourseConstructorPage = () => {
 
                     {/* Upload Progress Indicator */}
                     {uploadStatus === 'uploading' && (
-                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-sm space-y-2">
+                      <div className="p-4 rounded-xl bg-white border border-[#EEEEEE] shadow-sm space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-[#003B73]">
+                          <span className="font-bold text-[#141414]">
                             Чанковая загрузка на сервер: {uploadProgress}%
                           </span>
-                          <span className="text-[#6C757D]">
+                          <span className="text-[#777777]">
                             Чанк {chunkStats.current} из {chunkStats.total} ({chunkStats.speed})
                           </span>
                         </div>
-                        <div className="w-full h-2.5 bg-[#E0E0E0] rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-[#EEEEEE] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#E30613] transition-all duration-150"
+                            className="h-full bg-[#E84C3D] transition-all duration-150"
                             style={{ width: `${uploadProgress}%` }}
                           />
                         </div>
@@ -1584,7 +1584,7 @@ export const CourseConstructorPage = () => {
                     )}
 
                     {uploadStatus === 'error' && (
-                      <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E30613] text-xs flex items-center gap-2">
+                      <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#E84C3D] text-xs flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 shrink-0" />
                         <span>{uploadError}</span>
                       </div>
@@ -1592,7 +1592,7 @@ export const CourseConstructorPage = () => {
 
                     {/* Embedded Video Preview Player with Replace Video Button OR Dropzone */}
                     {activeLesson.file_url ? (
-                      <div className="rounded-2xl overflow-hidden border border-[#E0E0E0] bg-[#212529] p-3 space-y-3 shadow-md">
+                      <div className="rounded-2xl overflow-hidden border border-[#EEEEEE] bg-[#222222] p-3 space-y-3 shadow-md">
                         <div className="flex items-center justify-between px-1">
                           <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -1659,14 +1659,14 @@ export const CourseConstructorPage = () => {
                       /* Drag and Drop Zone */
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-[#E0E0E0] hover:border-[#003B73] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#003B73]/5 space-y-3 group"
+                        className="border-2 border-dashed border-[#EEEEEE] hover:border-[#141414] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#141414]/5 space-y-3 group"
                       >
-                        <Upload className="w-8 h-8 text-[#003B73] group-hover:scale-110 transition-transform mx-auto" />
+                        <Upload className="w-8 h-8 text-[#141414] group-hover:scale-110 transition-transform mx-auto" />
                         <div>
-                          <span className="text-xs font-bold text-[#212529]">
+                          <span className="text-xs font-bold text-[#222222]">
                             Нажмите для выбора файла или перетащите видео сюда
                           </span>
-                          <div className="text-[11px] text-[#6C757D] mt-1">
+                          <div className="text-[11px] text-[#777777] mt-1">
                             До 10 ГБ • Потоковая чанковая отправка • Стриминг Range (HTTP 206)
                           </div>
                         </div>
@@ -1681,13 +1681,13 @@ export const CourseConstructorPage = () => {
               {/* ============================================== */}
               {activeLesson.lesson_type === 'presentation' && (
                 <div className="space-y-4">
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#222222]">
                           Презентация регламента (PDF)
                         </div>
-                        <p className="text-xs text-[#6C757D] mt-0.5">
+                        <p className="text-xs text-[#777777] mt-0.5">
                           Интерактивный встроенный просмотр PDF-слайдов для сотрудников. Загрузите файл с ПК или выберите из Базы знаний.
                         </p>
                       </div>
@@ -1713,7 +1713,7 @@ export const CourseConstructorPage = () => {
 
                     <div
                       onClick={() => pdfInputRef.current?.click()}
-                      className="border-2 border-dashed border-[#E0E0E0] hover:border-[#003B73] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#003B73]/5 space-y-3"
+                      className="border-2 border-dashed border-[#EEEEEE] hover:border-[#141414] rounded-2xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-[#141414]/5 space-y-3"
                     >
                       <input
                         ref={pdfInputRef}
@@ -1724,21 +1724,21 @@ export const CourseConstructorPage = () => {
                       />
                       <FileCode className="w-8 h-8 text-amber-600 mx-auto" />
                       <div>
-                        <span className="text-xs font-bold text-[#212529]">
+                        <span className="text-xs font-bold text-[#222222]">
                           Нажмите для выбора PDF-файла презентации
                         </span>
-                        <div className="text-[11px] text-[#6C757D] mt-1">
+                        <div className="text-[11px] text-[#777777] mt-1">
                           Интерактивный встроенный просмотр для сотрудников
                         </div>
                       </div>
                     </div>
 
                     {uploadStatus === 'uploading' && (
-                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-sm space-y-2">
+                      <div className="p-4 rounded-xl bg-white border border-[#EEEEEE] shadow-sm space-y-2">
                         <div className="flex items-center justify-between text-xs text-amber-700 font-bold">
                           <span>Загрузка PDF: {uploadProgress}%</span>
                         </div>
-                        <div className="w-full h-2.5 bg-[#E0E0E0] rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-[#EEEEEE] rounded-full overflow-hidden">
                           <div className="h-full bg-amber-500" style={{ width: `${uploadProgress}%` }} />
                         </div>
                       </div>
@@ -1762,7 +1762,7 @@ export const CourseConstructorPage = () => {
                             <button
                               type="button"
                               onClick={() => pdfInputRef.current?.click()}
-                              className="text-[#003B73] hover:underline transition-colors font-bold"
+                              className="text-[#141414] hover:underline transition-colors font-bold"
                             >
                               Загрузить PDF
                             </button>
@@ -1782,7 +1782,7 @@ export const CourseConstructorPage = () => {
                                   }
                                 }
                               }}
-                              className="text-[#E30613] hover:underline transition-colors font-bold"
+                              className="text-[#E84C3D] hover:underline transition-colors font-bold"
                             >
                               Удалить PDF
                             </button>
@@ -1790,7 +1790,7 @@ export const CourseConstructorPage = () => {
                         </div>
                         <iframe
                           src={activeLesson.file_url}
-                          className="w-full h-[500px] rounded-2xl border border-[#E0E0E0] bg-white shadow-md"
+                          className="w-full h-[500px] rounded-2xl border border-[#EEEEEE] bg-white shadow-md"
                           title="Презентация"
                         />
                       </div>
@@ -1803,13 +1803,13 @@ export const CourseConstructorPage = () => {
               {/* 4. QUIZ ATTACHMENT FROM QUESTION BANK          */}
               {/* ============================================== */}
               {activeLesson.lesson_type === 'quiz' && (
-                <div className="p-5 rounded-2xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-4">
+                <div className="p-5 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#212529]">
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#222222]">
                         Привязка тестирования из Банка Тестов
                       </div>
-                      <p className="text-xs text-[#6C757D] mt-0.5">
+                      <p className="text-xs text-[#777777] mt-0.5">
                         Сотрудник должен будет сдать этот тест для успешного завершения шага курса.
                       </p>
                     </div>
@@ -1825,7 +1825,7 @@ export const CourseConstructorPage = () => {
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <label className="text-xs font-bold text-[#212529]">Выберите готовый тест</label>
+                    <label className="text-xs font-bold text-[#222222]">Выберите готовый тест</label>
                     <select
                       className="input-field text-sm bg-white"
                       value={activeLesson.quiz_id || ''}
@@ -1857,8 +1857,8 @@ export const CourseConstructorPage = () => {
                   </div>
 
                   {activeLesson.quiz_id && (
-                    <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#003B73] flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-[#003B73] shrink-0" />
+                    <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#141414] flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#141414] shrink-0" />
                       <div className="font-medium">
                         Тест успешно привязан. В плеере сотрудника он будет запущен бесшовно с лимитом в 1 попытку и проверкой проходного балла.
                       </div>
@@ -1873,18 +1873,18 @@ export const CourseConstructorPage = () => {
 
       {/* Knowledge Base Picker Modal */}
       {showKnowledgePicker && (
-        <div className="fixed inset-0 z-50 bg-[#003B73]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-          <div className="bg-white max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#E0E0E0] pb-3">
+        <div className="fixed inset-0 z-50 bg-[#141414]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl border border-[#EEEEEE] p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#EEEEEE] pb-3">
               <div className="flex items-center gap-2">
-                <FolderArchive className="w-5 h-5 text-[#003B73]" />
-                <h3 className="text-base font-bold text-[#212529]">
+                <FolderArchive className="w-5 h-5 text-[#141414]" />
+                <h3 className="text-base font-bold text-[#222222]">
                   Выбрать {knowledgePickerType === 'presentation' ? 'презентацию' : 'видео'} из Базы знаний
                 </h3>
               </div>
               <button
                 onClick={() => setShowKnowledgePicker(false)}
-                className="text-[#6C757D] hover:text-[#212529] p-1 rounded-lg"
+                className="text-[#777777] hover:text-[#222222] p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1902,10 +1902,10 @@ export const CourseConstructorPage = () => {
             </div>
 
             {/* File list */}
-            <div className="flex-1 overflow-y-auto divide-y divide-[#E0E0E0] max-h-[50vh] pr-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-[#EEEEEE] max-h-[50vh] pr-1">
               {loadingKnowledge ? (
-                <div className="py-12 text-center text-xs text-[#6C757D] flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#003B73]" />
+                <div className="py-12 text-center text-xs text-[#777777] flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#141414]" />
                   <span>Загрузка файлов из Базы знаний...</span>
                 </div>
               ) : knowledgeFiles.filter(
@@ -1915,11 +1915,11 @@ export const CourseConstructorPage = () => {
                     kf.file_name.toLowerCase().includes(knowledgeSearchTerm.toLowerCase())
                 ).length === 0 ? (
                 <div className="py-12 text-center space-y-2">
-                  <FolderArchive className="w-8 h-8 text-[#6C757D] mx-auto opacity-50" />
-                  <div className="text-xs text-[#6C757D]">
+                  <FolderArchive className="w-8 h-8 text-[#777777] mx-auto opacity-50" />
+                  <div className="text-xs text-[#777777]">
                     В Базе знаний пока нет загруженных {knowledgePickerType === 'presentation' ? 'презентаций' : 'видео'}.
                   </div>
-                  <div className="text-[11px] text-[#6C757D]">
+                  <div className="text-[11px] text-[#777777]">
                     Вы можете загрузить файл с компьютера, и он автоматически сохранится в Базу знаний.
                   </div>
                 </div>
@@ -1934,15 +1934,15 @@ export const CourseConstructorPage = () => {
                   .map((kf) => (
                     <div
                       key={kf.id}
-                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-[#F4F5F7] rounded-xl transition-colors group cursor-pointer"
+                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-[#F5F5F7] rounded-xl transition-colors group cursor-pointer"
                       onClick={() => handleSelectKnowledgeFile(kf)}
                     >
                       <div className="min-w-0 flex-1 space-y-1">
-                        <div className="text-xs font-bold text-[#212529] group-hover:text-[#003B73] transition-colors truncate">
+                        <div className="text-xs font-bold text-[#222222] group-hover:text-[#141414] transition-colors truncate">
                           {kf.title}
                         </div>
-                        <div className="text-[11px] text-[#6C757D] flex items-center gap-2 truncate">
-                          <span className="px-2 py-0.5 rounded bg-[#F4F5F7] border border-[#E0E0E0] text-[10px] text-[#212529] font-bold">
+                        <div className="text-[11px] text-[#777777] flex items-center gap-2 truncate">
+                          <span className="px-2 py-0.5 rounded bg-[#F5F5F7] border border-[#EEEEEE] text-[10px] text-[#222222] font-bold">
                             {kf.department}
                           </span>
                           <span>{kf.file_name}</span>
@@ -1965,7 +1965,7 @@ export const CourseConstructorPage = () => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-[#E0E0E0] flex justify-end">
+            <div className="pt-3 border-t border-[#EEEEEE] flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowKnowledgePicker(false)}

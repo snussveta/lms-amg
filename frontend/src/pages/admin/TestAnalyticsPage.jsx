@@ -62,18 +62,18 @@ export const TestAnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
-        <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
+        <div className="w-8 h-8 border-3 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="max-w-md mx-auto my-16 p-6 bg-white rounded-2xl text-center border border-[#E0E0E0] shadow-sm">
-        <XCircle className="w-10 h-10 mx-auto text-[#E30613] mb-2.5" />
-        <h3 className="text-base font-bold text-[#212529] mb-1">Ошибка аналитики</h3>
-        <p className="text-xs text-[#6C757D] mb-5">{error}</p>
+      <div className="max-w-md mx-auto my-16 p-6 bg-white rounded-2xl text-center border border-[#EEEEEE] shadow-sm">
+        <XCircle className="w-10 h-10 mx-auto text-[#E84C3D] mb-2.5" />
+        <h3 className="text-base font-bold text-[#222222] mb-1">Ошибка аналитики</h3>
+        <p className="text-xs text-[#777777] mb-5">{error}</p>
         <Link to="/admin/tests" className="btn-primary text-xs inline-flex items-center gap-1.5 px-4 py-2">
           Вернуться к списку тестов
         </Link>
@@ -89,88 +89,88 @@ export const TestAnalyticsPage = () => {
       <div className="mb-6">
         <Link
           to="/admin/tests"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6C757D] hover:text-[#003B73] transition-colors mb-2.5"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#777777] hover:text-[#141414] transition-colors mb-2.5"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Назад к списку тестов</span>
         </Link>
-        <h1 className="text-xl sm:text-2xl font-black text-[#212529] flex items-center gap-2.5">
-          <BarChart3 className="w-6 h-6 text-[#003B73] shrink-0" />
+        <h1 className="text-xl sm:text-2xl font-black text-[#222222] flex items-center gap-2.5">
+          <BarChart3 className="w-6 h-6 text-[#141414] shrink-0" />
           <span>Аналитика: {data.test_title}</span>
         </h1>
-        <p className="text-[#6C757D] text-xs sm:text-sm mt-1">
+        <p className="text-[#777777] text-xs sm:text-sm mt-1">
           Детальный журнал попыток сотрудников и внешних гостей, статистика сдачи и ручная проверка ответов.
         </p>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-6">
-        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
-          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+        <div className="bg-white rounded-2xl p-4 border border-[#EEEEEE] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#777777] text-xs mb-1.5">
             <span className="font-semibold">Всего попыток</span>
-            <Users className="w-4 h-4 text-[#003B73]" />
+            <Users className="w-4 h-4 text-[#141414]" />
           </div>
-          <div className="text-2xl font-black text-[#212529]">{summary.total_attempts}</div>
-          <div className="text-[11px] text-[#6C757D] mt-0.5">Зафиксировано</div>
+          <div className="text-2xl font-black text-[#222222]">{summary.total_attempts}</div>
+          <div className="text-[11px] text-[#777777] mt-0.5">Зафиксировано</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
-          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+        <div className="bg-white rounded-2xl p-4 border border-[#EEEEEE] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#777777] text-xs mb-1.5">
             <span className="font-semibold">Успешно сдали</span>
             <Award className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-black text-emerald-600">{summary.passed_attempts}</div>
-          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">
+          <div className="text-[11px] text-[#777777] mt-0.5 font-medium">
             {summary.pass_rate}% от сданных
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
-          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+        <div className="bg-white rounded-2xl p-4 border border-[#EEEEEE] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#777777] text-xs mb-1.5">
             <span className="font-semibold">Не сдали</span>
-            <XCircle className="w-4 h-4 text-[#E30613]" />
+            <XCircle className="w-4 h-4 text-[#E84C3D]" />
           </div>
-          <div className="text-2xl font-black text-[#E30613]">{summary.failed_attempts}</div>
-          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">Ниже порога</div>
+          <div className="text-2xl font-black text-[#E84C3D]">{summary.failed_attempts}</div>
+          <div className="text-[11px] text-[#777777] mt-0.5 font-medium">Ниже порога</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all">
-          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+        <div className="bg-white rounded-2xl p-4 border border-[#EEEEEE] shadow-sm hover:shadow-card-hover transition-all">
+          <div className="flex items-center justify-between text-[#777777] text-xs mb-1.5">
             <span className="font-semibold">На проверке</span>
             <FileCheck className="w-4 h-4 text-amber-600" />
           </div>
           <div className="text-2xl font-black text-amber-600">{summary.needs_review_attempts}</div>
-          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">Ждут оценки</div>
+          <div className="text-[11px] text-[#777777] mt-0.5 font-medium">Ждут оценки</div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-[#E0E0E0] shadow-sm hover:shadow-card-hover transition-all col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between text-[#6C757D] text-xs mb-1.5">
+        <div className="bg-white rounded-2xl p-4 border border-[#EEEEEE] shadow-sm hover:shadow-card-hover transition-all col-span-2 md:col-span-1">
+          <div className="flex items-center justify-between text-[#777777] text-xs mb-1.5">
             <span className="font-semibold">Средний балл</span>
-            <CheckCircle2 className="w-4 h-4 text-[#003B73]" />
+            <CheckCircle2 className="w-4 h-4 text-[#141414]" />
           </div>
-          <div className="text-2xl font-black text-[#212529]">{summary.average_score}</div>
-          <div className="text-[11px] text-[#6C757D] mt-0.5 font-medium">из {summary.max_possible_points} макс. б.</div>
+          <div className="text-2xl font-black text-[#222222]">{summary.average_score}</div>
+          <div className="text-[11px] text-[#777777] mt-0.5 font-medium">из {summary.max_possible_points} макс. б.</div>
         </div>
       </div>
 
       {/* Submissions Roster */}
-      <div className="bg-white rounded-2xl overflow-hidden border border-[#E0E0E0] shadow-sm">
-        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
-          <h3 className="font-bold text-[#212529] text-sm sm:text-base">Журнал сдачи теста</h3>
-          <span className="text-xs font-semibold text-[#6C757D] bg-[#F4F5F7] px-2.5 py-1 rounded-lg border border-[#E0E0E0]">
+      <div className="bg-white rounded-2xl overflow-hidden border border-[#EEEEEE] shadow-sm">
+        <div className="p-4 sm:p-5 border-b border-[#EEEEEE] flex items-center justify-between bg-white">
+          <h3 className="font-bold text-[#222222] text-sm sm:text-base">Журнал сдачи теста</h3>
+          <span className="text-xs font-semibold text-[#777777] bg-[#F5F5F7] px-2.5 py-1 rounded-lg border border-[#EEEEEE]">
             {attempts.length} записей
           </span>
         </div>
 
         {attempts.length === 0 ? (
-          <div className="p-12 text-center text-[#6C757D] text-xs">
+          <div className="p-12 text-center text-[#777777] text-xs">
             По данному тесту пока нет завершенных или активных попыток.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                <tr className="border-b border-[#EEEEEE] bg-[#F5F5F7] text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                   <th className="py-3 px-4 sm:px-5">Участник</th>
                   <th className="py-3 px-4 sm:px-5">Тип</th>
                   <th className="py-3 px-4 sm:px-5">Статус</th>
@@ -181,29 +181,29 @@ export const TestAnalyticsPage = () => {
                   <th className="py-3 px-4 sm:px-5 text-right">Действия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E0E0E0] text-xs text-[#212529]">
+              <tbody className="divide-y divide-[#EEEEEE] text-xs text-[#222222]">
                 {attempts.map((att) => {
                   const isPassed = att.is_passed;
                   const isNeedsReview = att.status === 'needs_review';
 
                   return (
-                    <tr key={att.id} className="hover:bg-[#F4F5F7]/70 transition-colors">
+                    <tr key={att.id} className="hover:bg-[#F5F5F7]/70 transition-colors">
                       <td className="py-3.5 px-4 sm:px-5">
-                        <div className="font-bold text-[#212529]">{att.user_name}</div>
-                        <div className="text-[11px] text-[#6C757D]">{att.user_email}</div>
+                        <div className="font-bold text-[#222222]">{att.user_name}</div>
+                        <div className="text-[11px] text-[#777777]">{att.user_email}</div>
                         {att.guest_phone && (
-                          <div className="text-[10px] text-[#6C757D]">Тел: {att.guest_phone}</div>
+                          <div className="text-[10px] text-[#777777]">Тел: {att.guest_phone}</div>
                         )}
                       </td>
 
                       <td className="py-3.5 px-4 sm:px-5">
                         {att.is_guest ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#003B73] border border-[#E0E0E0]">
-                            <Globe className="w-3 h-3 text-[#003B73]" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F5F5F7] text-[#141414] border border-[#EEEEEE]">
+                            <Globe className="w-3 h-3 text-[#141414]" />
                             Гость
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F5F7] text-[#6C757D] border border-[#E0E0E0]">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F5F5F7] text-[#777777] border border-[#EEEEEE]">
                             Сотрудник
                           </span>
                         )}
@@ -221,20 +221,20 @@ export const TestAnalyticsPage = () => {
                             Сдан
                           </span>
                         ) : att.status === 'in_progress' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#003B73] border border-blue-200">
-                            <Clock className="w-3 h-3 text-[#003B73]" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#141414] border border-blue-200">
+                            <Clock className="w-3 h-3 text-[#141414]" />
                             В процессе
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-[#E30613] border border-red-200">
-                            <XCircle className="w-3 h-3 text-[#E30613]" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-[#E84C3D] border border-red-200">
+                            <XCircle className="w-3 h-3 text-[#E84C3D]" />
                             Не сдан
                           </span>
                         )}
                       </td>
 
                       <td className="py-3.5 px-4 sm:px-5 font-mono">
-                        <span className="font-bold text-[#212529]">{att.score}</span> / {att.max_score}
+                        <span className="font-bold text-[#222222]">{att.score}</span> / {att.max_score}
                       </td>
 
                       <td className="py-3.5 px-4 sm:px-5">
@@ -244,18 +244,18 @@ export const TestAnalyticsPage = () => {
                               ? 'text-amber-700'
                               : isPassed
                               ? 'text-emerald-600'
-                              : 'text-[#E30613]'
+                              : 'text-[#E84C3D]'
                           }`}
                         >
                           {att.percentage}%
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 sm:px-5 text-[#6C757D] text-[11px]">
+                      <td className="py-3.5 px-4 sm:px-5 text-[#777777] text-[11px]">
                         {formatDuration(att.time_spent_seconds)}
                       </td>
 
-                      <td className="py-3.5 px-4 sm:px-5 text-[#6C757D] text-[11px]">
+                      <td className="py-3.5 px-4 sm:px-5 text-[#777777] text-[11px]">
                         {formatDate(att.submitted_at || att.started_at)}
                       </td>
 

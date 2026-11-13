@@ -381,17 +381,17 @@ export const UserManagementPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+            <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 Управление персоналом и отделами AMG
               </h1>
-              <p className="text-xs text-[#6C757D] mt-0.5">
+              <p className="text-xs text-[#777777] mt-0.5">
                 Регистрация сотрудников, распределение по отделам и управление доступом
               </p>
             </div>
@@ -405,15 +405,15 @@ export const UserManagementPage = () => {
                 onClick={handleSendTestEmail}
                 disabled={isSendingTestEmail}
                 title="Отправить тестовое письмо на почту администратора для проверки SMTP"
-                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white hover:bg-[#F4F5F7] text-[#003B73] text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px] disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#EEEEEE] bg-white hover:bg-[#F5F5F7] text-[#141414] text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px] disabled:opacity-50"
               >
-                <Mail className={`w-4 h-4 ${isSendingTestEmail ? 'animate-pulse text-[#E30613]' : 'text-[#003B73]'}`} />
+                <Mail className={`w-4 h-4 ${isSendingTestEmail ? 'animate-pulse text-[#E84C3D]' : 'text-[#141414]'}`} />
                 <span>{isSendingTestEmail ? 'Отправка...' : 'Тест почты'}</span>
               </button>
 
               <button
                 onClick={openRegisterModal}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] hover:bg-[#C70510] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E84C3D] hover:bg-[#D33829] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Зарегистрировать сотрудника</span>
@@ -422,7 +422,7 @@ export const UserManagementPage = () => {
           ) : (
             <button
               onClick={openCreateDeptModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#141414] hover:bg-[#002F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>Создать отдел</span>
@@ -432,10 +432,10 @@ export const UserManagementPage = () => {
       </div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-start gap-2.5 text-[#E30613] text-xs animate-fade-in">
+        <div className="p-3.5 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] flex items-start gap-2.5 text-[#E84C3D] text-xs animate-fade-in">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span className="flex-1">{error}</span>
-          <button onClick={() => setError('')} className="text-[#E30613]/70 hover:text-[#E30613]">
+          <button onClick={() => setError('')} className="text-[#E84C3D]/70 hover:text-[#E84C3D]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -452,18 +452,18 @@ export const UserManagementPage = () => {
       )}
 
       {/* Main Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E0E0E0]">
+      <div className="flex items-center gap-2 border-b border-[#EEEEEE]">
         <button
           onClick={() => setActiveTab('users')}
           className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
             activeTab === 'users'
-              ? 'border-[#E30613] text-[#003B73]'
-              : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+              ? 'border-[#E84C3D] text-[#141414]'
+              : 'border-transparent text-[#777777] hover:text-[#222222]'
           }`}
         >
           <Users className="w-4 h-4" />
           <span>Сотрудники</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F4F5F7] text-[#6C757D] font-mono">
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F5F5F7] text-[#777777] font-mono">
             {users.length}
           </span>
         </button>
@@ -472,13 +472,13 @@ export const UserManagementPage = () => {
           onClick={() => setActiveTab('departments')}
           className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
             activeTab === 'departments'
-              ? 'border-[#E30613] text-[#003B73]'
-              : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+              ? 'border-[#E84C3D] text-[#141414]'
+              : 'border-transparent text-[#777777] hover:text-[#222222]'
           }`}
         >
           <Building2 className="w-4 h-4" />
           <span>Отделы компании</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F4F5F7] text-[#6C757D] font-mono">
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#F5F5F7] text-[#777777] font-mono">
             {departments.length}
           </span>
         </button>
@@ -492,7 +492,7 @@ export const UserManagementPage = () => {
           {/* Filters & Search */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#777777]" />
               <input
                 type="text"
                 placeholder="Поиск по ФИО, логину, отделу или филиалу..."
@@ -507,7 +507,7 @@ export const UserManagementPage = () => {
               <select
                 value={filterDept}
                 onChange={(e) => setFilterDept(e.target.value)}
-                className="bg-white text-xs text-[#212529] font-medium rounded-xl border border-[#E0E0E0] px-3 py-2 focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73] min-h-[40px]"
+                className="bg-white text-xs text-[#222222] font-medium rounded-xl border border-[#EEEEEE] px-3 py-2 focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414] min-h-[40px]"
               >
                 <option value="all">Все отделы</option>
                 {departments.map((d) => (
@@ -518,7 +518,7 @@ export const UserManagementPage = () => {
               </select>
 
               {/* Role filter pills */}
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#E0E0E0] shadow-2xs overflow-x-auto scrollbar-none">
+              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EEEEEE] shadow-2xs overflow-x-auto scrollbar-none">
                 {[
                   { id: 'all', label: 'Все' },
                   { id: 'employee', label: 'Сотрудники' },
@@ -530,8 +530,8 @@ export const UserManagementPage = () => {
                     onClick={() => setFilterRole(tab.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                       filterRole === tab.id
-                        ? 'bg-[#003B73] text-white shadow-sm'
-                        : 'text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7]'
+                        ? 'bg-[#141414] text-white shadow-sm'
+                        : 'text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
                     }`}
                   >
                     {tab.label}
@@ -542,11 +542,11 @@ export const UserManagementPage = () => {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-xl overflow-hidden border border-[#E0E0E0] shadow-card">
+          <div className="bg-white rounded-xl overflow-hidden border border-[#EEEEEE] shadow-card">
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <table className="w-full text-left border-collapse min-w-[760px]">
                 <thead>
-                  <tr className="border-b border-[#E0E0E0] bg-[#F4F5F7] text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                  <tr className="border-b border-[#EEEEEE] bg-[#F5F5F7] text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                     <th className="py-3.5 px-5">Сотрудник</th>
                     <th className="py-3.5 px-5">Логин / Email</th>
                     <th className="py-3.5 px-5">Отдел и Филиал</th>
@@ -555,16 +555,16 @@ export const UserManagementPage = () => {
                     <th className="py-3.5 px-5 text-right">Действия</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E0E0E0] text-xs text-[#212529]">
+                <tbody className="divide-y divide-[#EEEEEE] text-xs text-[#222222]">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-[#6C757D]">
+                      <td colSpan="6" className="py-12 text-center text-[#777777]">
                         Загрузка сотрудников...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-[#6C757D]">
+                      <td colSpan="6" className="py-12 text-center text-[#777777]">
                         По заданным критериям сотрудники не найдены.
                       </td>
                     </tr>
@@ -577,27 +577,27 @@ export const UserManagementPage = () => {
                       return (
                         <tr key={u.id} className="hover:bg-[#F8F9FA] transition-colors">
                           <td className="py-3.5 px-5">
-                            <div className="font-bold text-[#212529] text-sm flex items-center gap-2">
+                            <div className="font-bold text-[#222222] text-sm flex items-center gap-2">
                               <span>{u.full_name}</span>
                               {isSelf && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#003B73]/10 text-[#003B73] border border-[#003B73]/20 font-semibold">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#141414]/10 text-[#141414] border border-[#141414]/20 font-semibold">
                                   Вы
                                 </span>
                               )}
                             </div>
                           </td>
 
-                          <td className="py-3.5 px-5 font-mono text-[#6C757D]">
+                          <td className="py-3.5 px-5 font-mono text-[#777777]">
                             {u.email}
                           </td>
 
                           <td className="py-3.5 px-5">
                             <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#003B73]">
-                                <Building2 className="w-3.5 h-3.5 text-[#003B73]" />
+                              <span className="inline-flex items-center gap-1 font-semibold text-[#141414]">
+                                <Building2 className="w-3.5 h-3.5 text-[#141414]" />
                                 {u.department || 'СТО'}
                               </span>
-                              <span className="text-[11px] text-[#6C757D]">
+                              <span className="text-[11px] text-[#777777]">
                                 {u.branch || 'AutoMall Центральный'}
                               </span>
                             </div>
@@ -609,7 +609,7 @@ export const UserManagementPage = () => {
                                 value={u.role}
                                 disabled={updatingId === u.id}
                                 onChange={(e) => handleRoleChange(u, e.target.value)}
-                                className="bg-white text-[#212529] text-xs rounded-lg border border-[#E0E0E0] py-1.5 px-2.5 focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73]"
+                                className="bg-white text-[#222222] text-xs rounded-lg border border-[#EEEEEE] py-1.5 px-2.5 focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414]"
                               >
                                 <option value="employee">Сотрудник</option>
                                 <option value="admin">Администратор</option>
@@ -620,7 +620,7 @@ export const UserManagementPage = () => {
                             )}
                           </td>
 
-                          <td className="py-3.5 px-5 text-[#6C757D]">
+                          <td className="py-3.5 px-5 text-[#777777]">
                             {formatDate(u.created_at)}
                           </td>
 
@@ -629,7 +629,7 @@ export const UserManagementPage = () => {
                               {canEdit && (
                                 <button
                                   onClick={() => openEditModal(u)}
-                                  className="p-1.5 rounded-lg text-[#003B73] hover:bg-[#003B73]/10 transition-colors"
+                                  className="p-1.5 rounded-lg text-[#141414] hover:bg-[#141414]/10 transition-colors"
                                   title="Редактировать сотрудника / Сменить пароль"
                                 >
                                   <Edit2 className="w-4 h-4" />
@@ -640,7 +640,7 @@ export const UserManagementPage = () => {
                                 <button
                                   onClick={() => handleDeleteUser(u)}
                                   disabled={updatingId === u.id}
-                                  className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-[#FEF2F2] transition-colors"
+                                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
                                   title="Удалить аккаунт"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -673,19 +673,19 @@ export const UserManagementPage = () => {
               return (
                 <div
                   key={dept.id}
-                  className="bg-white rounded-2xl border border-[#E0E0E0] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-[#EEEEEE] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+                        <div className="w-9 h-9 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
                           <Building2 className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-base text-[#212529]">
+                          <h3 className="font-bold text-base text-[#222222]">
                             {dept.name}
                           </h3>
-                          <span className="text-[11px] font-semibold text-[#003B73]">
+                          <span className="text-[11px] font-semibold text-[#141414]">
                             {deptEmployees.length} {deptEmployees.length === 1 ? 'сотрудник' : deptEmployees.length >= 2 && deptEmployees.length <= 4 ? 'сотрудника' : 'сотрудников'}
                           </span>
                         </div>
@@ -694,14 +694,14 @@ export const UserManagementPage = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditDeptModal(dept)}
-                          className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#003B73] hover:bg-[#F4F5F7] transition-colors"
+                          className="p-1.5 rounded-lg text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] transition-colors"
                           title="Редактировать отдел"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteDept(dept)}
-                          className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-[#FEF2F2] transition-colors"
+                          className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
                           title="Удалить отдел"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -709,17 +709,17 @@ export const UserManagementPage = () => {
                       </div>
                     </div>
 
-                    <p className="text-xs text-[#6C757D] line-clamp-2 mt-2 min-h-[32px]">
+                    <p className="text-xs text-[#777777] line-clamp-2 mt-2 min-h-[32px]">
                       {dept.description || 'Корпоративное подразделение компании'}
                     </p>
 
                     {/* Employee preview avatars/names */}
-                    <div className="mt-4 pt-3 border-t border-[#E0E0E0]">
-                      <div className="text-[11px] font-semibold text-[#6C757D] mb-2">
+                    <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
+                      <div className="text-[11px] font-semibold text-[#777777] mb-2">
                         Сотрудники отдела:
                       </div>
                       {deptEmployees.length === 0 ? (
-                        <div className="text-[11px] text-[#6C757D] italic">
+                        <div className="text-[11px] text-[#777777] italic">
                           Пока нет прикрепленных сотрудников
                         </div>
                       ) : (
@@ -727,7 +727,7 @@ export const UserManagementPage = () => {
                           {deptEmployees.map((emp) => (
                             <span
                               key={emp.id}
-                              className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F4F5F7] text-[11px] text-[#212529] font-medium border border-[#E0E0E0]"
+                              className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F5F5F7] text-[11px] text-[#222222] font-medium border border-[#EEEEEE]"
                             >
                               {emp.full_name}
                             </span>
@@ -748,8 +748,8 @@ export const UserManagementPage = () => {
       {/* ============================================================== */}
       {isRegisterModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[#003B73] text-white flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-white" />
                 <h3 className="font-bold text-base">Зарегистрировать сотрудника</h3>
@@ -764,7 +764,7 @@ export const UserManagementPage = () => {
 
             <form onSubmit={handleRegisterSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   ФИО сотрудника *
                 </label>
                 <input
@@ -778,7 +778,7 @@ export const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Логин / Корпоративный Email *
                 </label>
                 <input
@@ -793,13 +793,13 @@ export const UserManagementPage = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                     Пароль для входа *
                   </label>
                   <button
                     type="button"
                     onClick={() => setRegisterForm({ ...registerForm, password: generateRandomPassword() })}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#003B73] hover:underline"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#141414] hover:underline"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Сгенерировать
@@ -816,7 +816,7 @@ export const UserManagementPage = () => {
                   <button
                     type="button"
                     onClick={() => handleCopyPassword(registerForm.password)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[11px] font-semibold text-[#003B73] border border-[#E0E0E0] flex items-center gap-1"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[11px] font-semibold text-[#141414] border border-[#EEEEEE] flex items-center gap-1"
                   >
                     {copiedPassword ? (
                       <>
@@ -831,14 +831,14 @@ export const UserManagementPage = () => {
                     )}
                   </button>
                 </div>
-                <p className="text-[11px] text-[#6C757D] mt-1">
+                <p className="text-[11px] text-[#777777] mt-1">
                   Скопируйте и передайте эти данные сотруднику для входа в систему.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                     Отдел компании
                   </label>
                   <select
@@ -869,7 +869,7 @@ export const UserManagementPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                     Филиал компании
                   </label>
                   <input
@@ -892,7 +892,7 @@ export const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Назначаемая роль
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -901,12 +901,12 @@ export const UserManagementPage = () => {
                     onClick={() => setRegisterForm({ ...registerForm, role: 'employee' })}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       registerForm.role === 'employee'
-                        ? 'bg-[#003B73]/10 border-[#003B73] text-[#003B73] font-bold'
-                        : 'border-[#E0E0E0] text-[#6C757D] hover:bg-[#F4F5F7]'
+                        ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
+                        : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
                     }`}
                   >
                     <div className="text-xs">Сотрудник</div>
-                    <div className="text-[10px] text-[#6C757D] font-normal">Курсы и тесты</div>
+                    <div className="text-[10px] text-[#777777] font-normal">Курсы и тесты</div>
                   </button>
 
                   <button
@@ -914,28 +914,28 @@ export const UserManagementPage = () => {
                     onClick={() => setRegisterForm({ ...registerForm, role: 'admin' })}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       registerForm.role === 'admin'
-                        ? 'bg-[#003B73]/10 border-[#003B73] text-[#003B73] font-bold'
-                        : 'border-[#E0E0E0] text-[#6C757D] hover:bg-[#F4F5F7]'
+                        ? 'bg-[#141414]/10 border-[#141414] text-[#141414] font-bold'
+                        : 'border-[#EEEEEE] text-[#777777] hover:bg-[#F5F5F7]'
                     }`}
                   >
                     <div className="text-xs">Администратор</div>
-                    <div className="text-[10px] text-[#6C757D] font-normal">Управление платформой</div>
+                    <div className="text-[10px] text-[#777777] font-normal">Управление платформой</div>
                   </button>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#E0E0E0] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsRegisterModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-xs font-semibold text-[#6C757D] hover:bg-[#F4F5F7] min-h-[44px]"
+                  className="px-4 py-2.5 rounded-xl border border-[#EEEEEE] text-xs font-semibold text-[#777777] hover:bg-[#F5F5F7] min-h-[44px]"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingUser}
-                  className="px-5 py-2.5 rounded-xl bg-[#E30613] hover:bg-[#C70510] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#E84C3D] hover:bg-[#D33829] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
                 >
                   {isSubmittingUser && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>Создать аккаунт</span>
@@ -951,8 +951,8 @@ export const UserManagementPage = () => {
       {/* ============================================================== */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[#003B73] text-white flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-white" />
                 <h3 className="font-bold text-base">Редактирование сотрудника</h3>
@@ -967,7 +967,7 @@ export const UserManagementPage = () => {
 
             <form onSubmit={handleEditSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   ФИО сотрудника *
                 </label>
                 <input
@@ -980,7 +980,7 @@ export const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Логин / Email *
                 </label>
                 <input
@@ -994,13 +994,13 @@ export const UserManagementPage = () => {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#6C757D]">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#777777]">
                     Новый пароль (оставьте пустым, если не меняется)
                   </label>
                   <button
                     type="button"
                     onClick={() => setEditForm({ ...editForm, password: generateRandomPassword() })}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#003B73] hover:underline"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#141414] hover:underline"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Сгенерировать
@@ -1018,7 +1018,7 @@ export const UserManagementPage = () => {
                     <button
                       type="button"
                       onClick={() => handleCopyPassword(editForm.password)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[#F4F5F7] hover:bg-[#E0E0E0] text-[11px] font-semibold text-[#003B73] border border-[#E0E0E0] flex items-center gap-1"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[11px] font-semibold text-[#141414] border border-[#EEEEEE] flex items-center gap-1"
                     >
                       {copiedPassword ? (
                         <>
@@ -1038,7 +1038,7 @@ export const UserManagementPage = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                     Отдел компании
                   </label>
                   <select
@@ -1069,7 +1069,7 @@ export const UserManagementPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                     Филиал компании
                   </label>
                   <input
@@ -1092,7 +1092,7 @@ export const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Роль в системе
                 </label>
                 <select
@@ -1106,18 +1106,18 @@ export const UserManagementPage = () => {
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-[#E0E0E0] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-xs font-semibold text-[#6C757D] hover:bg-[#F4F5F7] min-h-[44px]"
+                  className="px-4 py-2.5 rounded-xl border border-[#EEEEEE] text-xs font-semibold text-[#777777] hover:bg-[#F5F5F7] min-h-[44px]"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingEdit}
-                  className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#141414] hover:bg-[#002F5C] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
                 >
                   {isSubmittingEdit && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>Сохранить изменения</span>
@@ -1133,8 +1133,8 @@ export const UserManagementPage = () => {
       {/* ============================================================== */}
       {isDeptModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-            <div className="px-6 py-4 bg-[#003B73] text-white flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-white" />
                 <h3 className="font-bold text-base">
@@ -1151,7 +1151,7 @@ export const UserManagementPage = () => {
 
             <form onSubmit={handleDeptSubmit} className="p-6 space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Название отдела *
                 </label>
                 <input
@@ -1165,7 +1165,7 @@ export const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6C757D] mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
                   Описание деятельности отдела
                 </label>
                 <textarea
@@ -1177,18 +1177,18 @@ export const UserManagementPage = () => {
                 />
               </div>
 
-              <div className="pt-4 border-t border-[#E0E0E0] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsDeptModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-xs font-semibold text-[#6C757D] hover:bg-[#F4F5F7] min-h-[44px]"
+                  className="px-4 py-2.5 rounded-xl border border-[#EEEEEE] text-xs font-semibold text-[#777777] hover:bg-[#F5F5F7] min-h-[44px]"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingDept}
-                  className="px-5 py-2.5 rounded-xl bg-[#003B73] hover:bg-[#002F5C] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#141414] hover:bg-[#002F5C] text-white text-xs font-bold shadow-sm transition-all min-h-[44px] flex items-center gap-2"
                 >
                   {isSubmittingDept && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingDept ? 'Сохранить изменения' : 'Создать отдел'}</span>

@@ -187,23 +187,23 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     .reduce((sum, d) => sum + (d.users_count || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+        <div className="p-4 sm:p-5 border-b border-[#EEEEEE] flex items-center justify-between bg-white">
           <div className="min-w-0 pr-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
-              <Users className="w-5 h-5 text-[#003B73] shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold text-[#222222] flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#141414] shrink-0" />
               <span>Назначение теста</span>
             </h2>
-            <p className="text-xs text-[#003B73] font-semibold mt-0.5 truncate max-w-md">
+            <p className="text-xs text-[#141414] font-semibold mt-0.5 truncate max-w-md">
               «{test.title}»
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors shrink-0"
+            className="p-2 rounded-xl text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors shrink-0"
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -211,34 +211,34 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-[#E0E0E0] bg-[#F4F5F7] px-4 sm:px-5">
+        <div className="flex border-b border-[#EEEEEE] bg-[#F5F5F7] px-4 sm:px-5">
           <button
             onClick={() => setActiveTab('assign')}
             className={`py-3 px-4 text-xs font-bold border-b-2 transition-all min-h-[44px] flex items-center gap-2 ${
               activeTab === 'assign'
-                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
-                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+                ? 'border-[#141414] text-[#141414] bg-white rounded-t-lg'
+                : 'border-transparent text-[#777777] hover:text-[#222222]'
             }`}
           >
-            <Users className="w-4 h-4 text-[#003B73]" />
+            <Users className="w-4 h-4 text-[#141414]" />
             <span>Назначить</span>
           </button>
           <button
             onClick={() => setActiveTab('list')}
             className={`py-3 px-4 text-xs font-bold border-b-2 transition-all min-h-[44px] flex items-center gap-2 ${
               activeTab === 'list'
-                ? 'border-[#003B73] text-[#003B73] bg-white rounded-t-lg'
-                : 'border-transparent text-[#6C757D] hover:text-[#212529]'
+                ? 'border-[#141414] text-[#141414] bg-white rounded-t-lg'
+                : 'border-transparent text-[#777777] hover:text-[#222222]'
             }`}
           >
-            <UserCheck className="w-4 h-4 text-[#003B73]" />
+            <UserCheck className="w-4 h-4 text-[#141414]" />
             <span>Назначенные ({assignments.length})</span>
           </button>
         </div>
 
         {/* Notification banners */}
         {error && (
-          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E30613] text-xs">
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E84C3D] text-xs">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -254,19 +254,19 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         <div className="p-4 sm:p-5 flex-1 overflow-y-auto">
           {loading ? (
             <div className="py-12 flex justify-center">
-              <div className="w-7 h-7 border-2 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-7 h-7 border-2 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : activeTab === 'assign' ? (
             <div className="space-y-4">
               {/* Target mode toggle: [По сотрудникам] | [Целому отделу] */}
-              <div className="flex items-center gap-2 bg-[#F4F5F7] p-1 rounded-xl border border-[#E0E0E0]">
+              <div className="flex items-center gap-2 bg-[#F5F5F7] p-1 rounded-xl border border-[#EEEEEE]">
                 <button
                   type="button"
                   onClick={() => setTargetMode('users')}
                   className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
                     targetMode === 'users'
-                      ? 'bg-[#003B73] text-white shadow-xs'
-                      : 'text-[#6C757D] hover:text-[#212529]'
+                      ? 'bg-[#141414] text-white shadow-xs'
+                      : 'text-[#777777] hover:text-[#222222]'
                   }`}
                 >
                   <User className="w-3.5 h-3.5" />
@@ -277,8 +277,8 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                   onClick={() => setTargetMode('department')}
                   className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 min-h-[40px] ${
                     targetMode === 'department'
-                      ? 'bg-[#003B73] text-white shadow-xs'
-                      : 'text-[#6C757D] hover:text-[#212529]'
+                      ? 'bg-[#141414] text-white shadow-xs'
+                      : 'text-[#777777] hover:text-[#222222]'
                   }`}
                 >
                   <Building2 className="w-3.5 h-3.5" />
@@ -287,9 +287,9 @@ export const TestAssignmentModal = ({ test, onClose }) => {
               </div>
 
               {/* Optional Deadline */}
-              <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-[#212529] font-semibold">
-                  <Calendar className="w-4 h-4 text-[#003B73]" />
+              <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs text-[#222222] font-semibold">
+                  <Calendar className="w-4 h-4 text-[#141414]" />
                   <span>Дедлайн сдачи (опционально):</span>
                 </div>
                 <input
@@ -304,13 +304,13 @@ export const TestAssignmentModal = ({ test, onClose }) => {
               {targetMode === 'department' ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[#6C757D]">
+                    <span className="text-xs font-semibold text-[#777777]">
                       Выберите отделы для назначения теста:
                     </span>
                     <button
                       type="button"
                       onClick={selectAllDepts}
-                      className="text-xs font-bold text-[#003B73] hover:underline"
+                      className="text-xs font-bold text-[#141414] hover:underline"
                     >
                       {departments.length > 0 && selectedDeptIds.length === departments.length
                         ? 'Снять выбор'
@@ -327,26 +327,26 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                           onClick={() => toggleSelectDept(d.id)}
                           className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
                             isSelected
-                              ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
-                              : 'bg-white border-[#E0E0E0] hover:bg-[#F4F5F7] text-[#212529]'
+                              ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
+                              : 'bg-white border-[#EEEEEE] hover:bg-[#F5F5F7] text-[#222222]'
                           }`}
                         >
                           <div className="mt-0.5">
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-[#003B73]" />
+                              <CheckSquare className="w-4 h-4 text-[#141414]" />
                             ) : (
-                              <Square className="w-4 h-4 text-[#6C757D]" />
+                              <Square className="w-4 h-4 text-[#777777]" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold text-xs truncate">{d.name}</span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#E0E0E0] text-[#003B73] font-semibold">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#EEEEEE] text-[#141414] font-semibold">
                                 {d.users_count || 0} сотр.
                               </span>
                             </div>
                             {d.description && (
-                              <p className="text-[11px] text-[#6C757D] truncate mt-0.5">
+                              <p className="text-[11px] text-[#777777] truncate mt-0.5">
                                 {d.description}
                               </p>
                             )}
@@ -357,10 +357,10 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                   </div>
 
                   {/* Summary & Assign Button */}
-                  <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between text-xs">
-                    <span className="text-[#6C757D]">
+                  <div className="pt-3 border-t border-[#EEEEEE] flex items-center justify-between text-xs">
+                    <span className="text-[#777777]">
                       Выбрано отделов:{' '}
-                      <strong className="text-[#212529]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотр.)
+                      <strong className="text-[#222222]">{selectedDeptIds.length}</strong> (~{deptEmployeesCount} сотр.)
                     </span>
                     <button
                       type="button"
@@ -378,7 +378,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                   {/* Search & Select All */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="relative flex-1">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" />
                       <input
                         type="text"
                         placeholder="Поиск по ФИО, логину или отделу..."
@@ -398,9 +398,9 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                   </div>
 
                   {/* Users list with checkboxes */}
-                  <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-64 overflow-y-auto bg-white">
+                  <div className="border border-[#EEEEEE] rounded-xl overflow-hidden divide-y divide-[#EEEEEE] max-h-64 overflow-y-auto bg-white">
                     {filteredUsers.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-[#6C757D]">
+                      <div className="p-8 text-center text-xs text-[#777777]">
                         Сотрудники не найдены
                       </div>
                     ) : (
@@ -413,17 +413,17 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                             key={u.id}
                             onClick={() => toggleSelectUser(u.id)}
                             className={`p-3 flex items-center justify-between text-xs cursor-pointer transition-colors ${
-                              isSelected ? 'bg-[#003B73]/5' : 'hover:bg-[#F4F5F7]'
+                              isSelected ? 'bg-[#141414]/5' : 'hover:bg-[#F5F5F7]'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0 pr-2">
                               {isSelected ? (
-                                <CheckSquare className="w-4 h-4 text-[#003B73] shrink-0" />
+                                <CheckSquare className="w-4 h-4 text-[#141414] shrink-0" />
                               ) : (
-                                <Square className="w-4 h-4 text-[#6C757D] shrink-0" />
+                                <Square className="w-4 h-4 text-[#777777] shrink-0" />
                               )}
                               <div className="min-w-0">
-                                <div className="font-bold text-[#212529] truncate flex items-center gap-2">
+                                <div className="font-bold text-[#222222] truncate flex items-center gap-2">
                                   <span>{u.full_name}</span>
                                   {isAlreadyAssigned && (
                                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
@@ -431,7 +431,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                                <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
                                   <span>{u.email}</span>
                                   <span>•</span>
                                   <span>{u.department || 'СТО'}</span>
@@ -446,8 +446,8 @@ export const TestAssignmentModal = ({ test, onClose }) => {
 
                   {/* Action button */}
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs text-[#6C757D]">
-                      Выбрано: <strong className="text-[#212529]">{selectedUserIds.length}</strong> сотр.
+                    <span className="text-xs text-[#777777]">
+                      Выбрано: <strong className="text-[#222222]">{selectedUserIds.length}</strong> сотр.
                     </span>
                     <button
                       type="button"
@@ -463,9 +463,9 @@ export const TestAssignmentModal = ({ test, onClose }) => {
             </div>
           ) : (
             /* TAB 2: LIST */
-            <div className="border border-[#E0E0E0] rounded-xl overflow-hidden divide-y divide-[#E0E0E0] max-h-80 overflow-y-auto bg-white">
+            <div className="border border-[#EEEEEE] rounded-xl overflow-hidden divide-y divide-[#EEEEEE] max-h-80 overflow-y-auto bg-white">
               {assignments.length === 0 ? (
-                <div className="p-8 text-center text-xs text-[#6C757D]">
+                <div className="p-8 text-center text-xs text-[#777777]">
                   На данный момент тест еще никому не назначен.
                 </div>
               ) : (
@@ -475,10 +475,10 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                     className="p-3.5 flex items-center justify-between text-xs hover:bg-[#F8F9FA] transition-colors"
                   >
                     <div className="min-w-0 pr-3">
-                      <div className="font-bold text-[#212529] text-sm">
+                      <div className="font-bold text-[#222222] text-sm">
                         {a.user_name}
                       </div>
-                      <div className="text-[11px] text-[#6C757D] flex items-center gap-2 mt-0.5">
+                      <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
                         <span>{a.user_email}</span>
                         <span>•</span>
                         <span>Дедлайн: {formatDate(a.due_date)}</span>
@@ -492,7 +492,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                             ? 'bg-emerald-100 text-emerald-800'
                             : a.status === 'in_progress'
                             ? 'bg-amber-100 text-amber-800'
-                            : 'bg-[#F4F5F7] text-[#6C757D]'
+                            : 'bg-[#F5F5F7] text-[#777777]'
                         }`}
                       >
                         {a.status === 'completed'
@@ -504,7 +504,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
 
                       <button
                         onClick={() => handleRevoke(a.user_id)}
-                        className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-red-50 transition-colors"
                         title="Отозвать назначение"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -51,18 +51,18 @@ export const LoginPage = () => {
               className="h-10 sm:h-12 w-auto max-w-[260px] object-contain"
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#212529]">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222]">
             Вход в систему
           </h1>
-          <p className="text-[#6C757D] text-xs sm:text-sm mt-1.5 max-w-sm mx-auto">
+          <p className="text-[#777777] text-xs sm:text-sm mt-1.5 max-w-sm mx-auto">
             Корпоративный портал обучения и аттестации сотрудников
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E0E0E0] shadow-card">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EEEEEE] shadow-card">
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-start gap-2.5 text-[#E30613] text-xs sm:text-sm animate-fade-in">
+            <div className="mb-5 p-3.5 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] flex items-start gap-2.5 text-[#E84C3D] text-xs sm:text-sm animate-fade-in">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -70,11 +70,11 @@ export const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#6C757D] mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#777777] mb-1.5">
                 Корпоративный Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#777777]" />
                 <input
                   type="email"
                   required
@@ -88,12 +88,12 @@ export const LoginPage = () => {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#6C757D]">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#777777]">
                   Пароль
                 </label>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#777777]" />
                 <input
                   type="password"
                   required
@@ -123,11 +123,11 @@ export const LoginPage = () => {
         </div>
 
         {/* Footer info */}
-        <p className="text-center text-xs sm:text-sm text-[#6C757D] mt-6">
+        <p className="text-center text-xs sm:text-sm text-[#777777] mt-6">
           Нет учетной записи?{' '}
           <Link
             to="/register"
-            className="text-[#003B73] hover:text-[#E30613] font-semibold underline underline-offset-4 transition-colors"
+            className="text-[#141414] hover:text-[#E84C3D] font-semibold underline underline-offset-4 transition-colors"
           >
             Зарегистрироваться
           </Link>

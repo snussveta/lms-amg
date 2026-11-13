@@ -36,7 +36,7 @@ def _format_datetime(dt_val: Any) -> str:
 def _build_html_container(title: str, content_html: str, action_url: Optional[str] = None, action_label: Optional[str] = None) -> str:
     """
     Renders corporate branded responsive HTML email template for AutoMall LMS.
-    Colors: Dark Blue (#003B73), Accent Red (#E30613), Background (#F4F5F7).
+    Colors: Dark Blue (#141414), Accent Red (#E84C3D), Background (#F5F5F7).
     """
     action_button_html = ""
     if action_url and action_label:
@@ -44,7 +44,7 @@ def _build_html_container(title: str, content_html: str, action_url: Optional[st
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 28px; margin-bottom: 24px;">
             <tr>
                 <td align="center">
-                    <a href="{action_url}" target="_blank" style="display: inline-block; background-color: #E30613; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 4px rgba(227, 6, 19, 0.25);">
+                    <a href="{action_url}" target="_blank" style="display: inline-block; background-color: #E84C3D; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 4px rgba(227, 6, 19, 0.25);">
                         {action_label} &rarr;
                     </a>
                 </td>
@@ -61,21 +61,21 @@ def _build_html_container(title: str, content_html: str, action_url: Optional[st
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F4F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #212529;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #F4F5F7; padding: 30px 10px;">
+<body style="margin: 0; padding: 0; background-color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #222222;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #F5F5F7; padding: 30px 10px;">
         <tr>
             <td align="center">
                 <!-- Main Container -->
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E0E0E0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                     <!-- Brand Header -->
                     <tr>
-                        <td style="background-color: #003B73; padding: 24px 30px; text-align: left;">
+                        <td style="background-color: #141414; padding: 24px 30px; text-align: left;">
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <td>
-                                        <div style="display: inline-block; background: #FFFFFF; padding: 6px 14px; border-radius: 6px;">
-                                            <span style="font-size: 15px; font-weight: 900; color: #003B73; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                Учебный центр <span style="color: #E30613;">AUTOMALL</span>
+                                        <div style="display: inline-block; background: #242424; border: 1px solid rgba(255,255,255,0.15); padding: 7px 16px; border-radius: 8px;">
+                                            <span style="font-size: 14px; font-weight: 900; color: #FFFFFF; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                Учебный центр <span style="color: #E84C3D;">AUTOMALL</span>
                                             </span>
                                         </div>
                                     </td>
@@ -86,7 +86,7 @@ def _build_html_container(title: str, content_html: str, action_url: Optional[st
 
                     <!-- Body Content -->
                     <tr>
-                        <td style="padding: 32px 30px 24px 30px; font-size: 14px; line-height: 1.6; color: #212529;">
+                        <td style="padding: 32px 30px 24px 30px; font-size: 14px; line-height: 1.6; color: #222222;">
                             {content_html}
                             {action_button_html}
                         </td>
@@ -94,9 +94,9 @@ def _build_html_container(title: str, content_html: str, action_url: Optional[st
 
                     <!-- Footer -->
                     <tr>
-                        <td style="background-color: #F8F9FA; padding: 20px 30px; border-top: 1px solid #EAEAEA; text-align: center; font-size: 12px; color: #6C757D; line-height: 1.5;">
+                        <td style="background-color: #F8F9FA; padding: 20px 30px; border-top: 1px solid #EAEAEA; text-align: center; font-size: 12px; color: #777777; line-height: 1.5;">
                             Это автоматическое уведомление платформы квалификации AutoMall.<br>
-                            Портал обучения: <a href="{frontend_link}" target="_blank" style="color: #003B73; text-decoration: underline; font-weight: bold;">{frontend_link}</a>
+                            Портал обучения: <a href="{frontend_link}" target="_blank" style="color: #E84C3D; text-decoration: underline; font-weight: bold;">{frontend_link}</a>
                         </td>
                     </tr>
                 </table>
@@ -185,38 +185,38 @@ def send_welcome_email(to_email: str, full_name: str, password: str, role: str =
     role_title = "Администратор" if role in ["admin", "superadmin"] else "Сотрудник"
 
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Здравствуйте, {full_name}!
     </h2>
     <p style="margin-bottom: 20px; font-size: 14px; color: #495057;">
         Вам открыт доступ к корпоративному учебному центру <strong>AutoMall</strong> для прохождения обучающих программ, регламентов и тестирований.
     </p>
 
-    <div style="background-color: #F4F5F7; border: 1px solid #E0E0E0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;">
-        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: #6C757D; letter-spacing: 0.5px; margin-bottom: 12px;">
+    <div style="background-color: #F5F5F7; border: 1px solid #E0E0E0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;">
+        <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: #777777; letter-spacing: 0.5px; margin-bottom: 12px;">
             Ваши учетные данные для входа:
         </div>
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px;">
             <tr>
-                <td style="padding: 4px 0; color: #6C757D; width: 110px;">Логин (Email):</td>
-                <td style="padding: 4px 0; font-weight: bold; color: #212529;">{to_email}</td>
+                <td style="padding: 4px 0; color: #777777; width: 110px;">Логин (Email):</td>
+                <td style="padding: 4px 0; font-weight: bold; color: #222222;">{to_email}</td>
             </tr>
             <tr>
-                <td style="padding: 4px 0; color: #6C757D;">Пароль:</td>
+                <td style="padding: 4px 0; color: #777777;">Пароль:</td>
                 <td style="padding: 4px 0;">
-                    <span style="font-family: monospace; font-size: 15px; font-weight: bold; background: #FFFFFF; border: 1px solid #CED4DA; padding: 2px 8px; border-radius: 4px; color: #003B73;">
+                    <span style="font-family: monospace; font-size: 15px; font-weight: bold; background: #FFFFFF; border: 1px solid #CED4DA; padding: 2px 8px; border-radius: 4px; color: #141414;">
                         {password}
                     </span>
                 </td>
             </tr>
             <tr>
-                <td style="padding: 4px 0; color: #6C757D;">Роль:</td>
-                <td style="padding: 4px 0; color: #212529;">{role_title}</td>
+                <td style="padding: 4px 0; color: #777777;">Роль:</td>
+                <td style="padding: 4px 0; color: #222222;">{role_title}</td>
             </tr>
         </table>
     </div>
 
-    <p style="font-size: 13px; color: #6C757D; margin-bottom: 0;">
+    <p style="font-size: 13px; color: #777777; margin-bottom: 0;">
         Вы можете войти с компьютера или телефона. Рекомендуем сохранить данные для входа.
     </p>
     """
@@ -248,18 +248,18 @@ def send_course_assigned_email(
     deadline_str = _format_datetime(deadline)
 
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Здравствуйте, {full_name}!
     </h2>
     <p style="font-size: 14px; color: #495057;">
         Вам назначен обязательный обучающий курс в системе AutoMall:
     </p>
 
-    <div style="background-color: #F4F5F7; border-left: 4px solid #003B73; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
-        <div style="font-size: 16px; font-weight: 800; color: #003B73; margin-bottom: 6px;">
+    <div style="background-color: #F5F5F7; border-left: 4px solid #141414; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
+        <div style="font-size: 16px; font-weight: 800; color: #141414; margin-bottom: 6px;">
             {course_title}
         </div>
-        <div style="font-size: 13px; color: #6C757D;">
+        <div style="font-size: 13px; color: #777777;">
             <strong>Срок прохождения:</strong> {deadline_str}
         </div>
     </div>
@@ -317,15 +317,15 @@ def send_test_assigned_email(
     due_str = _format_datetime(due_date)
 
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Здравствуйте, {full_name}!
     </h2>
     <p style="font-size: 14px; color: #495057;">
         Вам назначено контрольное тестирование квалификации:
     </p>
 
-    <div style="background-color: #F4F5F7; border-left: 4px solid #E30613; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
-        <div style="font-size: 16px; font-weight: 800; color: #212529; margin-bottom: 6px;">
+    <div style="background-color: #F5F5F7; border-left: 4px solid #E84C3D; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
+        <div style="font-size: 16px; font-weight: 800; color: #222222; margin-bottom: 6px;">
             {test_title}
         </div>
         <div style="font-size: 13px; color: #495057; line-height: 1.6;">
@@ -334,7 +334,7 @@ def send_test_assigned_email(
         </div>
     </div>
 
-    <p style="font-size: 13px; color: #6C757D;">
+    <p style="font-size: 13px; color: #777777;">
         Пожалуйста, завершите аттестацию в установленный срок.
     </p>
     """
@@ -395,15 +395,15 @@ def send_test_result_email(
         status_icon = "&#10003;"
     else:
         status_text = "Тест не сдан"
-        status_badge_bg = "#FEF2F2"
-        status_badge_color = "#B91C1C"
-        status_badge_border = "#FCA5A5"
+        status_badge_bg = "#FCECEB"
+        status_badge_color = "#E84C3D"
+        status_badge_border = "#F8D3D0"
         status_icon = "&#10007;"
 
     subject = f"Результат теста «{test_title}»: {status_text} ({percentage}%)"
 
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Здравствуйте, {full_name}!
     </h2>
     <p style="font-size: 14px; color: #495057;">
@@ -415,15 +415,15 @@ def send_test_result_email(
         <div style="font-size: 26px; font-weight: 900; color: {status_badge_color}; margin-bottom: 6px;">
             {status_icon} {status_text}
         </div>
-        <div style="font-size: 32px; font-weight: 900; color: #003B73; margin-bottom: 8px;">
+        <div style="font-size: 32px; font-weight: 900; color: #141414; margin-bottom: 8px;">
             {percentage}%
         </div>
-        <div style="font-size: 13px; color: #6C757D;">
+        <div style="font-size: 13px; color: #777777;">
             Набрано баллов: <strong>{score}</strong> из <strong>{max_score}</strong> (проходной порог: {passing_score}%)
         </div>
     </div>
 
-    <p style="font-size: 13px; color: #6C757D;">
+    <p style="font-size: 13px; color: #777777;">
         Подробный разбор ошибок и комментарии проверяющего доступны в разделе «Мои результаты».
     </p>
     """
@@ -451,7 +451,7 @@ def send_course_completed_email(
     subject = f"Поздравляем! Курс «{course_title}» успешно завершен"
 
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Поздравляем, {full_name}!
     </h2>
     <p style="font-size: 14px; color: #495057;">
@@ -462,12 +462,12 @@ def send_course_completed_email(
         <div style="font-size: 18px; font-weight: 800; color: #047857; margin-bottom: 4px;">
             &#10003; Курс пройден на 100%
         </div>
-        <div style="font-size: 16px; font-weight: bold; color: #003B73;">
+        <div style="font-size: 16px; font-weight: bold; color: #141414;">
             «{course_title}»
         </div>
     </div>
 
-    <p style="font-size: 13px; color: #6C757D;">
+    <p style="font-size: 13px; color: #777777;">
         Данные об успешном прохождении курса зафиксированы в корпоративном реестре квалификации AutoMall.
     </p>
     """
@@ -489,13 +489,13 @@ def send_test_smtp_email(to_email: str) -> bool:
     """Diagnostic check to test SMTP configuration from admin panel."""
     subject = "Тестовое сообщение почтового сервера AutoMall LMS"
     content = f"""
-    <h2 style="margin-top: 0; color: #003B73; font-size: 20px; font-weight: 800;">
+    <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
         Связь с почтовым сервером успешно установлена!
     </h2>
     <p style="font-size: 14px; color: #495057;">
         Это тестовое письмо подтверждает, что настройки SMTP в файле конфигурации <code>.env</code> работают корректно.
     </p>
-    <div style="background-color: #F4F5F7; border: 1px solid #E0E0E0; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #495057; font-family: monospace;">
+    <div style="background-color: #F5F5F7; border: 1px solid #E0E0E0; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #495057; font-family: monospace;">
         SMTP Сервер: {settings.SMTP_HOST}:{settings.SMTP_PORT}<br>
         Пользователь: {settings.SMTP_USER}<br>
         Отправитель: {settings.SMTP_FROM_NAME}

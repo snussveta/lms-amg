@@ -386,22 +386,22 @@ export const CoursePlayerPage = () => {
   // 1. Loading Skeleton
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F4F5F7] animate-fade-in">
-        <div className="sticky top-14 sm:top-16 z-30 bg-white border-b border-[#E0E0E0] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F5F5F7] animate-fade-in">
+        <div className="sticky top-14 sm:top-16 z-30 bg-white border-b border-[#EEEEEE] px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#E0E0E0] animate-pulse" />
+            <div className="w-8 h-8 rounded-lg bg-[#EEEEEE] animate-pulse" />
             <div className="space-y-1.5">
-              <div className="w-48 h-4 rounded bg-[#E0E0E0] animate-pulse" />
-              <div className="w-24 h-3 rounded bg-[#E0E0E0] animate-pulse" />
+              <div className="w-48 h-4 rounded bg-[#EEEEEE] animate-pulse" />
+              <div className="w-24 h-3 rounded bg-[#EEEEEE] animate-pulse" />
             </div>
           </div>
-          <div className="w-32 h-3 rounded bg-[#E0E0E0] animate-pulse" />
+          <div className="w-32 h-3 rounded bg-[#EEEEEE] animate-pulse" />
         </div>
         <div className="flex-1 flex p-6 max-w-5xl mx-auto w-full">
-          <div className="w-full bg-white rounded-2xl p-8 border border-[#E0E0E0] space-y-4 animate-pulse">
-            <div className="h-6 w-1/3 bg-[#F4F5F7] rounded" />
-            <div className="h-4 w-3/4 bg-[#F4F5F7] rounded" />
-            <div className="h-64 bg-[#F4F5F7] rounded-xl" />
+          <div className="w-full bg-white rounded-2xl p-8 border border-[#EEEEEE] space-y-4 animate-pulse">
+            <div className="h-6 w-1/3 bg-[#F5F5F7] rounded" />
+            <div className="h-4 w-3/4 bg-[#F5F5F7] rounded" />
+            <div className="h-64 bg-[#F5F5F7] rounded-xl" />
           </div>
         </div>
       </div>
@@ -411,14 +411,14 @@ export const CoursePlayerPage = () => {
   // 2. Error State
   if (error || !courseData) {
     return (
-      <div className="min-h-[calc(100vh-56px)] bg-[#F4F5F7] flex items-center justify-center p-4">
-        <div className="bg-white max-w-md w-full p-8 text-center space-y-5 border border-[#E0E0E0] rounded-2xl shadow-card">
-          <div className="w-16 h-16 rounded-2xl bg-[#FEF2F2] border border-[#FBD0D3] flex items-center justify-center mx-auto text-[#E30613]">
+      <div className="min-h-[calc(100vh-56px)] bg-[#F5F5F7] flex items-center justify-center p-4">
+        <div className="bg-white max-w-md w-full p-8 text-center space-y-5 border border-[#EEEEEE] rounded-2xl shadow-card">
+          <div className="w-16 h-16 rounded-2xl bg-[#FCECEB] border border-[#F8D3D0] flex items-center justify-center mx-auto text-[#E84C3D]">
             <AlertCircle className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-extrabold text-[#212529]">Ошибка загрузки курса</h2>
-            <p className="text-xs sm:text-sm text-[#6C757D] leading-relaxed">
+            <h2 className="text-xl font-extrabold text-[#222222]">Ошибка загрузки курса</h2>
+            <p className="text-xs sm:text-sm text-[#777777] leading-relaxed">
               {error || 'Курс не найден или у вас нет доступа к его прохождению.'}
             </p>
           </div>
@@ -449,13 +449,13 @@ export const CoursePlayerPage = () => {
   });
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F4F5F7] text-[#212529]">
+    <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F5F5F7] text-[#222222]">
       {/* Top Header: Clean Corporate Bar */}
-      <div className="sticky top-14 sm:top-16 z-30 bg-white/95 backdrop-blur border-b border-[#E0E0E0] px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shadow-xs">
+      <div className="sticky top-14 sm:top-16 z-30 bg-white/95 backdrop-blur border-b border-[#EEEEEE] px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center gap-1.5 p-2 rounded-lg bg-[#F4F5F7] border border-[#E0E0E0] text-[#003B73] hover:bg-[#E0E0E0] transition-colors min-h-[40px] text-xs font-bold"
+            className="flex items-center gap-1.5 p-2 rounded-lg bg-[#F5F5F7] border border-[#EEEEEE] text-[#141414] hover:bg-[#EEEEEE] transition-colors min-h-[40px] text-xs font-bold"
             title={sidebarOpen ? 'Скрыть программу курса' : 'Показать программу курса'}
           >
             <Menu className="w-4 h-4" />
@@ -463,11 +463,11 @@ export const CoursePlayerPage = () => {
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-sm font-bold text-[#212529] truncate">
+            <h1 className="text-xs sm:text-sm font-bold text-[#222222] truncate">
               {courseData.title}
             </h1>
-            <div className="text-[11px] text-[#6C757D] truncate flex items-center gap-2">
-              <span className="px-1.5 py-0.2 rounded bg-[#003B73]/10 text-[10px] font-bold text-[#003B73]">
+            <div className="text-[11px] text-[#777777] truncate flex items-center gap-2">
+              <span className="px-1.5 py-0.2 rounded bg-[#141414]/10 text-[10px] font-bold text-[#141414]">
                 {courseData.department_tag || 'AMG'}
               </span>
               <span>{activeLesson?.title || 'Выберите урок'}</span>
@@ -478,14 +478,14 @@ export const CoursePlayerPage = () => {
         {/* Course Progress Indicator */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <div className="hidden sm:flex flex-col items-end">
-            <div className="text-xs font-bold text-[#212529]">
+            <div className="text-xs font-bold text-[#222222]">
               {courseData.progress_percent || 0}% пройдено
             </div>
-            <div className="text-[10px] text-[#6C757D]">
+            <div className="text-[10px] text-[#777777]">
               {courseData.completed_lessons || 0} из {courseData.total_lessons || allLessons.length} уроков
             </div>
           </div>
-          <div className="w-20 sm:w-28 h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
+          <div className="w-20 sm:w-28 h-2 bg-[#EEEEEE] rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 transition-all duration-300"
               style={{ width: `${courseData.progress_percent || 0}%` }}
@@ -494,7 +494,7 @@ export const CoursePlayerPage = () => {
 
           <Link
             to="/courses"
-            className="p-2 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors"
+            className="p-2 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors"
             title="Выйти в каталог"
           >
             <X className="w-4 h-4" />
@@ -507,7 +507,7 @@ export const CoursePlayerPage = () => {
         {/* Mobile Backdrop Overlay */}
         {sidebarOpen && (
           <div
-            className="md:hidden fixed inset-0 bg-[#003B73]/40 backdrop-blur-xs z-40 animate-fade-in"
+            className="md:hidden fixed inset-0 bg-[#141414]/40 backdrop-blur-xs z-40 animate-fade-in"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -515,18 +515,18 @@ export const CoursePlayerPage = () => {
         {/* LEFT COLUMN: Navigation Sidebar */}
         <div
           className={`${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-0'
-            } shrink-0 transition-all duration-200 ease-in-out border-r border-[#E0E0E0] bg-white overflow-y-auto flex flex-col fixed md:static inset-y-0 left-0 z-50 md:z-auto shadow-2xl md:shadow-none`}
+            } shrink-0 transition-all duration-200 ease-in-out border-r border-[#EEEEEE] bg-white overflow-y-auto flex flex-col fixed md:static inset-y-0 left-0 z-50 md:z-auto shadow-2xl md:shadow-none`}
         >
           {sidebarOpen && (
             <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E0E0E0]">
-                <div className="text-xs font-bold uppercase tracking-wider text-[#003B73] flex items-center gap-1.5">
+              <div className="flex items-center justify-between pb-2 border-b border-[#EEEEEE]">
+                <div className="text-xs font-bold uppercase tracking-wider text-[#141414] flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4" />
                   Содержание курса
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="md:hidden p-1.5 rounded-lg text-[#6C757D] hover:bg-[#F4F5F7]"
+                  className="md:hidden p-1.5 rounded-lg text-[#777777] hover:bg-[#F5F5F7]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -541,11 +541,11 @@ export const CoursePlayerPage = () => {
                       <button
                         type="button"
                         onClick={() => toggleModuleCollapse(mod.id)}
-                        className="w-full flex items-center justify-between text-[11px] font-bold text-[#6C757D] uppercase tracking-wider px-2 py-1.5 rounded hover:bg-[#F4F5F7] transition-colors text-left group"
+                        className="w-full flex items-center justify-between text-[11px] font-bold text-[#777777] uppercase tracking-wider px-2 py-1.5 rounded hover:bg-[#F5F5F7] transition-colors text-left group"
                         title={isCollapsed ? 'Развернуть модуль' : 'Свернуть модуль'}
                       >
-                        <span className="truncate group-hover:text-[#212529] transition-colors">{mod.title}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 text-[#6C757D] transition-transform duration-300 shrink-0 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
+                        <span className="truncate group-hover:text-[#222222] transition-colors">{mod.title}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-[#777777] transition-transform duration-300 shrink-0 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
                       </button>
 
                       <div
@@ -569,26 +569,26 @@ export const CoursePlayerPage = () => {
                               key={les.id}
                               onClick={() => handleSelectLesson(les)}
                               className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all select-none min-h-[38px] ${isCurrent
-                                ? 'bg-[#F0F5FA] border border-[#B8D5ED] text-[#003B73] font-bold shadow-2xs'
+                                ? 'bg-[#F0F5FA] border border-[#B8D5ED] text-[#141414] font-bold shadow-2xs'
                                 : isLocked
-                                  ? 'opacity-40 text-[#6C757D] hover:bg-[#F4F5F7] cursor-not-allowed'
-                                  : 'text-[#212529] hover:bg-[#F4F5F7]'
+                                  ? 'opacity-40 text-[#777777] hover:bg-[#F5F5F7] cursor-not-allowed'
+                                  : 'text-[#222222] hover:bg-[#F5F5F7]'
                                 }`}
                             >
                               <div className="flex items-center gap-2 min-w-0 pr-2">
                                 {isCompleted ? (
                                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                                 ) : isLocked ? (
-                                  <Lock className="w-3.5 h-3.5 text-[#6C757D] shrink-0" />
+                                  <Lock className="w-3.5 h-3.5 text-[#777777] shrink-0" />
                                 ) : isCurrent ? (
-                                  <PlayCircle className="w-4 h-4 text-[#003B73] shrink-0" />
+                                  <PlayCircle className="w-4 h-4 text-[#141414] shrink-0" />
                                 ) : (
                                   <div className="w-3.5 h-3.5 rounded-full border border-[#CED4DA] shrink-0" />
                                 )}
                                 <span className="truncate">{les.title}</span>
                               </div>
 
-                              <div className="text-[#6C757D] shrink-0">
+                              <div className="text-[#777777] shrink-0">
                                 {iconMap[les.lesson_type] || <FileText className="w-3.5 h-3.5" />}
                               </div>
                             </div>
@@ -606,22 +606,22 @@ export const CoursePlayerPage = () => {
         {/* CENTRAL WORKSPACE: CONTENT LEARNING PLAYER */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between">
           {!activeLesson ? (
-            <div className="text-center py-20 text-[#6C757D] text-sm space-y-2">
+            <div className="text-center py-20 text-[#777777] text-sm space-y-2">
               <BookOpen className="w-8 h-8 mx-auto text-[#CED4DA]" />
               <div>Выберите урок в меню слева для начала изучения.</div>
             </div>
           ) : (
             <div className="max-w-4xl mx-auto w-full space-y-6">
               {/* Active Lesson Header Badge */}
-              <div className="flex items-center justify-between gap-2 border-b border-[#E0E0E0] pb-3">
+              <div className="flex items-center justify-between gap-2 border-b border-[#EEEEEE] pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#003B73] text-white">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#141414] text-white">
                     {activeLesson.lesson_type === 'article' && 'Лонгрид'}
                     {activeLesson.lesson_type === 'video' && 'Видеопрактикум'}
                     {activeLesson.lesson_type === 'presentation' && 'Презентация'}
                     {activeLesson.lesson_type === 'quiz' && 'Аттестация'}
                   </span>
-                  <span className="text-xs text-[#6C757D] font-medium">Шаг урока</span>
+                  <span className="text-xs text-[#777777] font-medium">Шаг урока</span>
                 </div>
 
                 {activeLesson.status === 'completed' && (
@@ -633,48 +633,48 @@ export const CoursePlayerPage = () => {
               </div>
 
               {/* Lesson Title */}
-              <h2 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 {activeLesson.title}
               </h2>
 
               {/* 1. ARTICLE / LONGREAD RENDERER */}
               {activeLesson.lesson_type === 'article' && (
-                <div className="bg-white border border-[#E0E0E0] rounded-2xl p-5 sm:p-8 shadow-card space-y-6">
+                <div className="bg-white border border-[#EEEEEE] rounded-2xl p-5 sm:p-8 shadow-card space-y-6">
                   <div className="space-y-5">
                     {parseBlocks(activeLesson.content_json).map((block, idx) => {
                       if (block.type === 'h1') {
                         return (
-                          <h3 key={idx} className="text-xl sm:text-2xl font-black text-[#212529] mt-6 pb-2 border-b border-[#E0E0E0]">
+                          <h3 key={idx} className="text-xl sm:text-2xl font-black text-[#222222] mt-6 pb-2 border-b border-[#EEEEEE]">
                             {block.text || ''}
                           </h3>
                         );
                       }
                       if (block.type === 'h2') {
                         return (
-                          <h4 key={idx} className="text-lg font-bold text-[#212529] mt-6">
+                          <h4 key={idx} className="text-lg font-bold text-[#222222] mt-6">
                             {block.text || ''}
                           </h4>
                         );
                       }
                       if (block.type === 'paragraph') {
                         return (
-                          <p key={idx} className="text-sm sm:text-base text-[#212529] leading-relaxed">
+                          <p key={idx} className="text-sm sm:text-base text-[#222222] leading-relaxed">
                             {block.text || ''}
                           </p>
                         );
                       }
                       if (block.type === 'callout') {
                         const calloutColors = {
-                          danger: 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613]',
+                          danger: 'bg-[#FCECEB] border-[#F8D3D0] text-[#E84C3D]',
                           warning: 'bg-amber-50 border-amber-200 text-amber-800',
-                          info: 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]',
+                          info: 'bg-[#F0F5FA] border-[#B8D5ED] text-[#141414]',
                           success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
                         };
                         const variant = block.variant || 'info';
                         const calloutIcons = {
-                          danger: <AlertCircle className="w-5 h-5 text-[#E30613] shrink-0" />,
+                          danger: <AlertCircle className="w-5 h-5 text-[#E84C3D] shrink-0" />,
                           warning: <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />,
-                          info: <Info className="w-5 h-5 text-[#003B73] shrink-0" />,
+                          info: <Info className="w-5 h-5 text-[#141414] shrink-0" />,
                           success: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />,
                         };
                         return (
@@ -699,8 +699,8 @@ export const CoursePlayerPage = () => {
                         return (
                           <ul key={idx} className="space-y-2 my-3 pl-2">
                             {(block.items || []).map((item, iIdx) => (
-                              <li key={iIdx} className="flex items-start gap-2 text-xs sm:text-sm text-[#212529]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] mt-2 shrink-0" />
+                              <li key={iIdx} className="flex items-start gap-2 text-xs sm:text-sm text-[#222222]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#E84C3D] mt-2 shrink-0" />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -713,16 +713,16 @@ export const CoursePlayerPage = () => {
                             <img
                               src={block.url}
                               alt={block.caption || 'Иллюстрация'}
-                              className="rounded-xl max-h-[500px] mx-auto border border-[#E0E0E0] shadow-md object-contain"
+                              className="rounded-xl max-h-[500px] mx-auto border border-[#EEEEEE] shadow-md object-contain"
                             />
                             {block.caption && (
-                              <div className="text-xs text-[#6C757D] italic">{block.caption}</div>
+                              <div className="text-xs text-[#777777] italic">{block.caption}</div>
                             )}
                           </div>
                         );
                       }
                       return (
-                        <p key={idx} className="text-sm sm:text-base text-[#212529] leading-relaxed">
+                        <p key={idx} className="text-sm sm:text-base text-[#222222] leading-relaxed">
                           {block.text || (typeof block === 'string' ? block : '')}
                         </p>
                       );
@@ -730,7 +730,7 @@ export const CoursePlayerPage = () => {
                   </div>
 
                   {/* Bottom Action: Finish Article */}
-                  <div className="pt-6 border-t border-[#E0E0E0] flex justify-end">
+                  <div className="pt-6 border-t border-[#EEEEEE] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
@@ -745,7 +745,7 @@ export const CoursePlayerPage = () => {
               {/* 2. VIDEO STREAMING PLAYER */}
               {activeLesson.lesson_type === 'video' && (
                 <div className="space-y-5 pt-2 animate-fade-in">
-                  <div className="w-full bg-black rounded-2xl overflow-hidden shadow-card flex items-center justify-center border border-[#E0E0E0]">
+                  <div className="w-full bg-black rounded-2xl overflow-hidden shadow-card flex items-center justify-center border border-[#EEEEEE]">
                     {activeLesson.file_url ? (
                       <video
                         key={activeLesson.file_url}
@@ -771,17 +771,17 @@ export const CoursePlayerPage = () => {
                         Ваш браузер не поддерживает встроенное видео.
                       </video>
                     ) : (
-                      <div className="w-full h-full min-h-[340px] flex flex-col items-center justify-center text-[#6C757D] gap-2 p-6 text-center">
+                      <div className="w-full h-full min-h-[340px] flex flex-col items-center justify-center text-[#777777] gap-2 p-6 text-center">
                         <Video className="w-12 h-12 text-[#CED4DA]" />
-                        <div className="text-sm font-bold text-[#212529]">Видеофайл еще не прикреплен</div>
+                        <div className="text-sm font-bold text-[#222222]">Видеофайл еще не прикреплен</div>
                         <div className="text-xs">Зайдите в конструктор курса и добавьте видеоматериал.</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#6C757D] shadow-2xs">
+                  <div className="p-4 rounded-xl bg-white border border-[#EEEEEE] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#777777] shadow-2xs">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-[#003B73] shrink-0" />
+                      <Clock className="w-4 h-4 text-[#141414] shrink-0" />
                       <span>
                         {activeLesson.last_timestamp_seconds > 0
                           ? `Восстановлено с ${Math.round(activeLesson.last_timestamp_seconds)} сек. Позиция сохраняется каждые 10 сек.`
@@ -790,15 +790,15 @@ export const CoursePlayerPage = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                      <span className="text-[#6C757D] text-[11px] font-semibold mr-1">Скорость:</span>
+                      <span className="text-[#777777] text-[11px] font-semibold mr-1">Скорость:</span>
                       {[0.75, 1, 1.25, 1.5, 2].map((rate) => (
                         <button
                           key={rate}
                           type="button"
                           onClick={() => handleSpeedChange(rate)}
                           className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${videoSpeed === rate
-                            ? 'bg-[#003B73] text-white'
-                            : 'bg-[#F4F5F7] text-[#495057] hover:bg-[#E0E0E0]'
+                            ? 'bg-[#141414] text-white'
+                            : 'bg-[#F5F5F7] text-[#495057] hover:bg-[#EEEEEE]'
                             }`}
                         >
                           {rate}x
@@ -807,7 +807,7 @@ export const CoursePlayerPage = () => {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
+                  <div className="pt-4 border-t border-[#EEEEEE] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
@@ -822,7 +822,7 @@ export const CoursePlayerPage = () => {
               {/* 3. PRESENTATION (PDF) VIEWER */}
               {activeLesson.lesson_type === 'presentation' && (
                 <div className="space-y-5 pt-2 animate-fade-in">
-                  <div className="rounded-2xl overflow-hidden border border-[#E0E0E0] bg-white min-h-[500px] shadow-card">
+                  <div className="rounded-2xl overflow-hidden border border-[#EEEEEE] bg-white min-h-[500px] shadow-card">
                     {activeLesson.file_url ? (
                       <iframe
                         src={activeLesson.file_url}
@@ -830,14 +830,14 @@ export const CoursePlayerPage = () => {
                         title="Презентация"
                       />
                     ) : (
-                      <div className="p-16 text-center text-[#6C757D] space-y-2">
+                      <div className="p-16 text-center text-[#777777] space-y-2">
                         <FileCode className="w-10 h-10 mx-auto text-[#CED4DA]" />
-                        <div className="text-sm font-bold text-[#212529]">Файл презентации еще не загружен</div>
+                        <div className="text-sm font-bold text-[#222222]">Файл презентации еще не загружен</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
+                  <div className="pt-4 border-t border-[#EEEEEE] flex justify-end">
                     <button
                       onClick={handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
@@ -853,20 +853,20 @@ export const CoursePlayerPage = () => {
               {activeLesson.lesson_type === 'quiz' && (
                 <div className="space-y-6 pt-2 animate-fade-in">
                   {quizLoading ? (
-                    <div className="py-16 text-center text-[#6C757D] text-xs flex flex-col items-center gap-3">
-                      <div className="w-7 h-7 rounded-full border-2 border-[#003B73] border-t-transparent animate-spin" />
+                    <div className="py-16 text-center text-[#777777] text-xs flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-full border-2 border-[#141414] border-t-transparent animate-spin" />
                       <span>Загрузка контрольного теста...</span>
                     </div>
                   ) : quizResult ? (
-                    <div className="p-8 rounded-2xl bg-white border border-[#E0E0E0] shadow-card text-center space-y-4 animate-fade-in">
+                    <div className="p-8 rounded-2xl bg-white border border-[#EEEEEE] shadow-card text-center space-y-4 animate-fade-in">
                       {quizResult.is_passed ? (
                         <div className="space-y-3">
                           <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-                          <h3 className="text-xl font-extrabold text-[#212529]">Тестирование успешно сдано!</h3>
+                          <h3 className="text-xl font-extrabold text-[#222222]">Тестирование успешно сдано!</h3>
                           <div className="text-sm text-emerald-700 font-bold">
                             Результат: {quizResult.score_percent}% (Проходной балл: {quizResult.test?.passing_score || 70}%)
                           </div>
-                          <p className="text-xs text-[#6C757D] max-w-sm mx-auto">
+                          <p className="text-xs text-[#777777] max-w-sm mx-auto">
                             Вы подтвердили квалификацию по этому разделу. Урок отмечен как пройденный!
                           </p>
                           <div className="pt-4">
@@ -880,12 +880,12 @@ export const CoursePlayerPage = () => {
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <AlertTriangle className="w-14 h-14 text-[#E30613] mx-auto" />
-                          <h3 className="text-xl font-extrabold text-[#212529]">Тест не сдан</h3>
-                          <div className="text-sm text-[#E30613] font-bold">
+                          <AlertTriangle className="w-14 h-14 text-[#E84C3D] mx-auto" />
+                          <h3 className="text-xl font-extrabold text-[#222222]">Тест не сдан</h3>
+                          <div className="text-sm text-[#E84C3D] font-bold">
                             Ваш результат: {quizResult.score_percent}% (требуется {quizResult.test?.passing_score || 70}%)
                           </div>
-                          <p className="text-xs text-[#6C757D] max-w-sm mx-auto">
+                          <p className="text-xs text-[#777777] max-w-sm mx-auto">
                             Повторите теоретический материал и попробуйте пройти тестирование снова.
                           </p>
                           <button
@@ -900,18 +900,18 @@ export const CoursePlayerPage = () => {
                     </div>
                   ) : quizAttempt ? (
                     <div className="space-y-6 animate-fade-in">
-                      <div className="p-4 rounded-xl bg-white border border-[#E0E0E0] shadow-2xs flex items-center justify-between text-xs gap-3">
+                      <div className="p-4 rounded-xl bg-white border border-[#EEEEEE] shadow-2xs flex items-center justify-between text-xs gap-3">
                         <div className="space-y-0.5">
-                          <div className="font-bold text-[#212529]">{quizAttempt.test?.title}</div>
-                          <div className="text-[#6C757D]">
+                          <div className="font-bold text-[#222222]">{quizAttempt.test?.title}</div>
+                          <div className="text-[#777777]">
                             Проходной порог: {quizAttempt.test?.passing_score}% • Вопросов: {quizAttempt.test?.questions?.length || 0}
                           </div>
                         </div>
 
                         {quizTimeLeft !== null && (
                           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs shrink-0 ${quizTimeLeft < 180
-                            ? 'bg-[#FEF2F2] border-[#FBD0D3] text-[#E30613] animate-pulse'
-                            : 'bg-[#F0F5FA] border-[#B8D5ED] text-[#003B73]'
+                            ? 'bg-[#FCECEB] border-[#F8D3D0] text-[#E84C3D] animate-pulse'
+                            : 'bg-[#F0F5FA] border-[#B8D5ED] text-[#141414]'
                             }`}>
                             <Clock className="w-3.5 h-3.5" />
                             <span>{formatTime(quizTimeLeft)}</span>
@@ -939,12 +939,12 @@ export const CoursePlayerPage = () => {
                               : (quizAnswers[q.id]?.answer_text || quizAnswers[q.id]?.text_answer || '');
 
                           return (
-                            <div key={q.id} className="p-5 rounded-2xl bg-white border border-[#E0E0E0] shadow-2xs space-y-3">
+                            <div key={q.id} className="p-5 rounded-2xl bg-white border border-[#EEEEEE] shadow-2xs space-y-3">
                               <div className="flex items-start gap-2.5">
-                                <span className="px-2 py-0.5 rounded bg-[#003B73] text-xs font-bold text-white shrink-0">
+                                <span className="px-2 py-0.5 rounded bg-[#141414] text-xs font-bold text-white shrink-0">
                                   {qIdx + 1}
                                 </span>
-                                <div className="text-sm font-bold text-[#212529]">{q.text}</div>
+                                <div className="text-sm font-bold text-[#222222]">{q.text}</div>
                               </div>
 
                               {isOpen ? (
@@ -966,13 +966,13 @@ export const CoursePlayerPage = () => {
                                         key={opt.id}
                                         onClick={() => handleSelectQuizOption(q.id, opt.id, isMultiple)}
                                         className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center gap-3 min-h-[44px] ${isChecked
-                                          ? 'bg-[#F0F5FA] border-[#003B73] text-[#003B73] font-bold ring-1 ring-[#003B73]'
-                                          : 'bg-white border-[#E0E0E0] text-[#212529] hover:bg-[#F8F9FA]'
+                                          ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-1 ring-[#141414]'
+                                          : 'bg-white border-[#EEEEEE] text-[#222222] hover:bg-[#F8F9FA]'
                                           }`}
                                       >
                                         <div
                                           className={`w-4 h-4 rounded flex items-center justify-center ${isMultiple ? 'rounded' : 'rounded-full'
-                                            } border ${isChecked ? 'border-[#003B73] bg-[#003B73]' : 'border-[#CED4DA] bg-white'
+                                            } border ${isChecked ? 'border-[#141414] bg-[#141414]' : 'border-[#CED4DA] bg-white'
                                             }`}
                                         >
                                           {isChecked && <Check className="w-3 h-3 text-white stroke-[3]" />}
@@ -989,7 +989,7 @@ export const CoursePlayerPage = () => {
                       </div>
 
                       {/* Submit Quiz */}
-                      <div className="pt-4 border-t border-[#E0E0E0] flex justify-end">
+                      <div className="pt-4 border-t border-[#EEEEEE] flex justify-end">
                         <button
                           onClick={handleSubmitQuiz}
                           disabled={quizSubmitting}
@@ -1001,7 +1001,7 @@ export const CoursePlayerPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-8 text-center text-[#6C757D] text-xs">
+                    <div className="p-8 text-center text-[#777777] text-xs">
                       К этому уроку еще не привязан тест.
                     </div>
                   )}

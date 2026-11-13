@@ -395,8 +395,8 @@ export const TestConstructorPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
-        <div className="w-8 h-8 border-3 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
+        <div className="w-8 h-8 border-3 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -408,23 +408,23 @@ export const TestConstructorPage = () => {
         <div>
           <Link
             to="/admin/tests"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6C757D] hover:text-[#003B73] transition-colors mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#777777] hover:text-[#141414] transition-colors mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Назад к списку тестов</span>
           </Link>
-          <h1 className="text-xl sm:text-2xl font-black text-[#212529]">
+          <h1 className="text-xl sm:text-2xl font-black text-[#222222]">
             {isEditing ? 'Редактирование теста' : 'Конструктор теста'}
           </h1>
-          <p className="text-[#6C757D] text-xs sm:text-sm mt-0.5">
+          <p className="text-[#777777] text-xs sm:text-sm mt-0.5">
             Настройка параметров, выбор типов вопросов и регламентов прохождения.
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E0E0E0] shadow-2xs text-xs">
-            <span className="text-[#6C757D]">Всего баллов: </span>
-            <span className="font-bold text-[#003B73]">{totalPoints} б.</span>
+          <div className="px-3 py-1.5 rounded-xl bg-white border border-[#EEEEEE] shadow-2xs text-xs">
+            <span className="text-[#777777]">Всего баллов: </span>
+            <span className="font-bold text-[#141414]">{totalPoints} б.</span>
           </div>
 
           <button
@@ -449,21 +449,21 @@ export const TestConstructorPage = () => {
       </div>
 
       {error && (
-        <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E30613] text-xs">
+        <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E84C3D] text-xs">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* General Parameters */}
-      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-5 sm:p-6 mb-6 space-y-4">
-        <h2 className="text-sm font-bold text-[#212529] border-b border-[#E0E0E0] pb-2.5">
+      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-5 sm:p-6 mb-6 space-y-4">
+        <h2 className="text-sm font-bold text-[#222222] border-b border-[#EEEEEE] pb-2.5">
           1. Общие параметры теста
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2 space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
               Название теста *
             </label>
             <input
@@ -477,7 +477,7 @@ export const TestConstructorPage = () => {
           </div>
 
           <div className="md:col-span-2 space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
               Описание / Инструкции для тестируемого
             </label>
             <textarea
@@ -490,7 +490,7 @@ export const TestConstructorPage = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
               Проходной порог (%)
             </label>
             <input
@@ -501,13 +501,13 @@ export const TestConstructorPage = () => {
               onChange={(e) => setPassingScore(e.target.value)}
               className="input-field bg-white"
             />
-            <span className="text-[11px] text-[#6C757D] block">
+            <span className="text-[11px] text-[#777777] block">
               Минимальный процент набранных баллов для зачета теста.
             </span>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
               Ограничение времени (минуты)
             </label>
             <div className="flex items-center gap-3">
@@ -520,12 +520,12 @@ export const TestConstructorPage = () => {
                 onChange={(e) => setTimeLimitMinutes(e.target.value)}
                 className="input-field disabled:opacity-40 bg-white"
               />
-              <label className="flex items-center gap-1.5 text-xs text-[#212529] font-medium whitespace-nowrap cursor-pointer min-h-[44px]">
+              <label className="flex items-center gap-1.5 text-xs text-[#222222] font-medium whitespace-nowrap cursor-pointer min-h-[44px]">
                 <input
                   type="checkbox"
                   checked={!hasTimeLimit}
                   onChange={(e) => setHasTimeLimit(!e.target.checked)}
-                  className="rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] w-4 h-4 cursor-pointer"
+                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
                 />
                 Без лимита
               </label>
@@ -533,38 +533,38 @@ export const TestConstructorPage = () => {
           </div>
 
           {/* Status & Guest Access Toggles */}
-          <div className="md:col-span-2 pt-3 border-t border-[#E0E0E0] space-y-3">
+          <div className="md:col-span-2 pt-3 border-t border-[#EEEEEE] space-y-3">
             <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px]">
               <input
                 type="checkbox"
                 checked={isPublished}
                 onChange={(e) => setIsPublished(e.target.checked)}
-                className="rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] w-4 h-4 cursor-pointer"
+                className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
               />
-              <span className="text-xs font-bold text-[#212529]">Опубликовать тест сразу</span>
-              <span className="text-[11px] text-[#6C757D]">
+              <span className="text-xs font-bold text-[#222222]">Опубликовать тест сразу</span>
+              <span className="text-[11px] text-[#777777]">
                 (Снимите галочку, чтобы сохранить как черновик `draft`)
               </span>
             </label>
 
             {/* Guest Access Toggle */}
-            <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={allowGuest}
                   onChange={(e) => setAllowGuest(e.target.checked)}
-                  className="rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] w-4 h-4 cursor-pointer"
+                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
                 />
-                <span className="text-xs font-bold text-[#212529] flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-[#003B73]" />
+                <span className="text-xs font-bold text-[#222222] flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#141414]" />
                   Разрешить прохождение по прямой ссылке без регистрации
                 </span>
               </label>
 
               {allowGuest && (
                 <div className="pt-1 pl-6">
-                  <p className="text-[11px] text-[#6C757D] mb-2 leading-relaxed">
+                  <p className="text-[11px] text-[#777777] mb-2 leading-relaxed">
                     Гости смогут проходить тест, указав только свое ФИО. Ссылка генерируется автоматически при сохранении теста.
                   </p>
                   {publicToken && (
@@ -573,7 +573,7 @@ export const TestConstructorPage = () => {
                         type="text"
                         readOnly
                         value={`${window.location.origin}/t/${publicToken}`}
-                        className="input-field text-xs font-mono py-1.5 text-[#212529] max-w-md select-all bg-white"
+                        className="input-field text-xs font-mono py-1.5 text-[#222222] max-w-md select-all bg-white"
                       />
                       <button
                         type="button"
@@ -599,28 +599,28 @@ export const TestConstructorPage = () => {
             </div>
 
             {/* Retake Limit Toggle */}
-            <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={disallowRetake}
                   onChange={(e) => setDisallowRetake(e.target.checked)}
-                  className="rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] w-4 h-4 cursor-pointer"
+                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
                 />
-                <span className="text-xs font-bold text-[#212529] flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-[#003B73]" />
+                <span className="text-xs font-bold text-[#222222] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-[#141414]" />
                   Запретить повторное прохождение
                 </span>
               </label>
-              <p className="text-[11px] text-[#6C757D] pl-6 leading-relaxed">
+              <p className="text-[11px] text-[#777777] pl-6 leading-relaxed">
                 Сотрудник сможет пройти тестирование только 1 раз. При включении тумблера повторные попытки будут строго заблокированы платформой.
               </p>
             </div>
 
             {/* Visibility / Access Mode Selection */}
-            <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#212529]">
-                <Users className="w-4 h-4 text-[#003B73]" />
+            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#222222]">
+                <Users className="w-4 h-4 text-[#141414]" />
                 <span>Видимость и права доступа к тесту</span>
               </div>
 
@@ -628,8 +628,8 @@ export const TestConstructorPage = () => {
                 <label
                   className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
                     isAssignedOnly
-                      ? 'bg-white border-[#003B73] shadow-sm ring-1 ring-[#003B73]/20'
-                      : 'bg-white/60 border-[#E0E0E0] text-[#6C757D] hover:border-[#003B73]/40'
+                      ? 'bg-white border-[#141414] shadow-sm ring-1 ring-[#141414]/20'
+                      : 'bg-white/60 border-[#EEEEEE] text-[#777777] hover:border-[#141414]/40'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -638,13 +638,13 @@ export const TestConstructorPage = () => {
                       name="access_mode"
                       checked={isAssignedOnly}
                       onChange={() => setIsAssignedOnly(true)}
-                      className="text-[#003B73] focus:ring-[#003B73] border-[#E0E0E0] w-4 h-4"
+                      className="text-[#141414] focus:ring-[#141414] border-[#EEEEEE] w-4 h-4"
                     />
-                    <span className="text-xs font-bold text-[#212529]">
+                    <span className="text-xs font-bold text-[#222222]">
                       Доступен только назначенным сотрудникам
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#6C757D] pl-6 leading-relaxed">
+                  <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
                     По умолчанию. Тест появится в каталоге исключительно у сотрудников, которым назначено персональное прохождение.
                   </span>
                 </label>
@@ -652,8 +652,8 @@ export const TestConstructorPage = () => {
                 <label
                   className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
                     !isAssignedOnly
-                      ? 'bg-white border-[#003B73] shadow-sm ring-1 ring-[#003B73]/20'
-                      : 'bg-white/60 border-[#E0E0E0] text-[#6C757D] hover:border-[#003B73]/40'
+                      ? 'bg-white border-[#141414] shadow-sm ring-1 ring-[#141414]/20'
+                      : 'bg-white/60 border-[#EEEEEE] text-[#777777] hover:border-[#141414]/40'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -662,13 +662,13 @@ export const TestConstructorPage = () => {
                       name="access_mode"
                       checked={!isAssignedOnly}
                       onChange={() => setIsAssignedOnly(false)}
-                      className="text-[#003B73] focus:ring-[#003B73] border-[#E0E0E0] w-4 h-4"
+                      className="text-[#141414] focus:ring-[#141414] border-[#EEEEEE] w-4 h-4"
                     />
-                    <span className="text-xs font-bold text-[#212529]">
+                    <span className="text-xs font-bold text-[#222222]">
                       Общий доступ для всех сотрудников компании
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#6C757D] pl-6 leading-relaxed">
+                  <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
                     Тест доступен для прохождения всем авторизованным сотрудникам без необходимости индивидуального назначения.
                   </span>
                 </label>
@@ -681,9 +681,9 @@ export const TestConstructorPage = () => {
       {/* Questions Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-[#212529] flex items-center gap-2">
+          <h2 className="text-sm font-bold text-[#222222] flex items-center gap-2">
             <span>2. Список вопросов</span>
-            <span className="text-xs font-normal text-[#6C757D]">({questions.length})</span>
+            <span className="text-xs font-normal text-[#777777]">({questions.length})</span>
           </h2>
 
           {/* Quick Add Question Buttons */}
@@ -691,12 +691,12 @@ export const TestConstructorPage = () => {
             <button
               type="button"
               onClick={openBankModal}
-              className="btn-secondary text-[11px] py-1.5 px-3 flex items-center gap-1.5 text-[#003B73] border-[#003B73]/30 hover:bg-[#003B73]/5 font-bold shadow-2xs min-h-[36px]"
+              className="btn-secondary text-[11px] py-1.5 px-3 flex items-center gap-1.5 text-[#141414] border-[#141414]/30 hover:bg-[#141414]/5 font-bold shadow-2xs min-h-[36px]"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Добавить из банка вопросов</span>
             </button>
-            <div className="w-px h-4 bg-[#E0E0E0] mx-1 hidden sm:block" />
+            <div className="w-px h-4 bg-[#EEEEEE] mx-1 hidden sm:block" />
             <button
               type="button"
               onClick={() => addQuestion('single_choice')}
@@ -724,7 +724,7 @@ export const TestConstructorPage = () => {
             <button
               type="button"
               onClick={() => addQuestion('text')}
-              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 text-[#6C757D] min-h-[36px]"
+              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 text-[#777777] min-h-[36px]"
             >
               <Plus className="w-3 h-3" />
               Ключевое слово
@@ -736,19 +736,19 @@ export const TestConstructorPage = () => {
         {questions.map((q, qIndex) => (
           <div
             key={q.id || qIndex}
-            className="bg-white rounded-2xl p-5 border border-[#E0E0E0] shadow-sm relative group space-y-3"
+            className="bg-white rounded-2xl p-5 border border-[#EEEEEE] shadow-sm relative group space-y-3"
           >
             {/* Top Bar */}
-            <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-[#E0E0E0] flex-wrap">
+            <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-[#EEEEEE] flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-[#003B73] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                <span className="w-6 h-6 rounded-md bg-[#141414] text-white flex items-center justify-center text-xs font-bold shrink-0">
                   {qIndex + 1}
                 </span>
 
                 <select
                   value={q.question_type}
                   onChange={(e) => updateQuestion(qIndex, 'question_type', e.target.value)}
-                  className="bg-[#F4F5F7] text-[#212529] text-xs font-bold rounded-lg border border-[#E0E0E0] py-1 px-2.5 focus:border-[#003B73] min-h-[34px]"
+                  className="bg-[#F5F5F7] text-[#222222] text-xs font-bold rounded-lg border border-[#EEEEEE] py-1 px-2.5 focus:border-[#141414] min-h-[34px]"
                 >
                   <option value="single_choice">Один вариант (1 правильный)</option>
                   <option value="multiple_choice">Несколько вариантов (чекбоксы)</option>
@@ -758,14 +758,14 @@ export const TestConstructorPage = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#F4F5F7] px-2.5 py-1 rounded-lg border border-[#E0E0E0]">
-                  <span className="text-[11px] font-bold text-[#6C757D]">Баллы:</span>
+                <div className="flex items-center gap-1 bg-[#F5F5F7] px-2.5 py-1 rounded-lg border border-[#EEEEEE]">
+                  <span className="text-[11px] font-bold text-[#777777]">Баллы:</span>
                   <input
                     type="number"
                     min="1"
                     value={q.points}
                     onChange={(e) => updateQuestion(qIndex, 'points', e.target.value)}
-                    className="w-10 bg-transparent text-xs font-bold text-[#003B73] text-center focus:outline-none"
+                    className="w-10 bg-transparent text-xs font-bold text-[#141414] text-center focus:outline-none"
                   />
                 </div>
 
@@ -773,7 +773,7 @@ export const TestConstructorPage = () => {
                   type="button"
                   onClick={() => moveQuestion(qIndex, -1)}
                   disabled={qIndex === 0}
-                  className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] disabled:opacity-20 transition-colors"
+                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
                   title="Поднять выше"
                 >
                   <MoveUp className="w-4 h-4" />
@@ -782,7 +782,7 @@ export const TestConstructorPage = () => {
                   type="button"
                   onClick={() => moveQuestion(qIndex, 1)}
                   disabled={qIndex === questions.length - 1}
-                  className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] disabled:opacity-20 transition-colors"
+                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
                   title="Опустить ниже"
                 >
                   <MoveDown className="w-4 h-4" />
@@ -791,7 +791,7 @@ export const TestConstructorPage = () => {
                 <button
                   type="button"
                   onClick={() => deleteQuestion(qIndex)}
-                  className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#E30613] hover:bg-red-50 transition-colors"
+                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-red-50 transition-colors"
                   title="Удалить вопрос"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -813,25 +813,25 @@ export const TestConstructorPage = () => {
             {/* Options based on type */}
             <div>
               {q.question_type === 'manual_review' ? (
-                <div className="p-3.5 rounded-xl bg-[#F4F5F7] border border-[#E0E0E0] text-xs">
-                  <div className="flex items-center gap-2 text-[#003B73] font-bold mb-1">
-                    <HelpCircle className="w-4 h-4 text-[#003B73]" />
+                <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] text-xs">
+                  <div className="flex items-center gap-2 text-[#141414] font-bold mb-1">
+                    <HelpCircle className="w-4 h-4 text-[#141414]" />
                     <span>Открытый вопрос со свободным текстовым ответом</span>
                   </div>
-                  <p className="text-[11px] text-[#6C757D] leading-relaxed">
+                  <p className="text-[11px] text-[#777777] leading-relaxed">
                     Сотрудник вводит развернутый текст ответа. Вопрос не оценивается автоматически. После сдачи теста попытка переходит в статус «Требует проверки», и проверяющий выставляет балл вручную (от 0 до {q.points}).
                   </p>
                 </div>
               ) : q.question_type === 'text' ? (
-                <div className="bg-[#F4F5F7] p-3.5 rounded-xl border border-[#E0E0E0]">
+                <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#EEEEEE]">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-[#212529]">
+                    <span className="text-[11px] font-bold text-[#222222]">
                       Принимаемые ключевые слова:
                     </span>
                     <button
                       type="button"
                       onClick={() => addOption(qIndex)}
-                      className="text-[11px] text-[#003B73] hover:underline font-bold"
+                      className="text-[11px] text-[#141414] hover:underline font-bold"
                     >
                       + Добавить синоним
                     </button>
@@ -850,7 +850,7 @@ export const TestConstructorPage = () => {
                           <button
                             type="button"
                             onClick={() => deleteOption(qIndex, optIndex)}
-                            className="p-1.5 text-[#6C757D] hover:text-[#E30613]"
+                            className="p-1.5 text-[#777777] hover:text-[#E84C3D]"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -858,13 +858,13 @@ export const TestConstructorPage = () => {
                       </div>
                     ))}
                   </div>
-                  <span className="text-[11px] text-[#6C757D] mt-1.5 block">
+                  <span className="text-[11px] text-[#777777] mt-1.5 block">
                     Регистр букв не учитывается.
                   </span>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="text-[11px] font-bold text-[#6C757D] flex items-center justify-between">
+                  <div className="text-[11px] font-bold text-[#777777] flex items-center justify-between">
                     <span>
                       {q.question_type === 'single_choice'
                         ? 'Выберите правильный вариант (радиокнопка):'
@@ -873,7 +873,7 @@ export const TestConstructorPage = () => {
                     <button
                       type="button"
                       onClick={() => addOption(qIndex)}
-                      className="text-[11px] text-[#003B73] hover:underline font-bold"
+                      className="text-[11px] text-[#141414] hover:underline font-bold"
                     >
                       + Добавить вариант
                     </button>
@@ -884,8 +884,8 @@ export const TestConstructorPage = () => {
                       key={optIndex}
                       className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all ${
                         opt.is_correct
-                          ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
-                          : 'bg-white border-[#E0E0E0] text-[#212529]'
+                          ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
+                          : 'bg-white border-[#EEEEEE] text-[#222222]'
                       }`}
                     >
                       <button
@@ -895,13 +895,13 @@ export const TestConstructorPage = () => {
                           q.question_type === 'single_choice'
                             ? `rounded-full border ${
                                 opt.is_correct
-                                  ? 'border-[#003B73] bg-[#003B73] text-white'
-                                  : 'border-[#E0E0E0] hover:border-[#003B73]'
+                                  ? 'border-[#141414] bg-[#141414] text-white'
+                                  : 'border-[#EEEEEE] hover:border-[#141414]'
                               }`
                             : `rounded-md border ${
                                 opt.is_correct
-                                  ? 'border-[#003B73] bg-[#003B73] text-white'
-                                  : 'border-[#E0E0E0] hover:border-[#003B73]'
+                                  ? 'border-[#141414] bg-[#141414] text-white'
+                                  : 'border-[#EEEEEE] hover:border-[#141414]'
                               }`
                         }`}
                       >
@@ -920,7 +920,7 @@ export const TestConstructorPage = () => {
                         <button
                           type="button"
                           onClick={() => deleteOption(qIndex, optIndex)}
-                          className="p-1.5 text-[#6C757D] hover:text-[#E30613] transition-colors"
+                          className="p-1.5 text-[#777777] hover:text-[#E84C3D] transition-colors"
                           title="Удалить вариант"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -937,28 +937,28 @@ export const TestConstructorPage = () => {
 
       {/* Модальное окно импорта вопросов из банка вопросов */}
       {isBankModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl relative my-8 flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E0E0E0] mb-4 flex-shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white border border-[#EEEEEE] rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl relative my-8 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EEEEEE] mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#003B73]" />
-                <h3 className="text-base font-bold text-[#212529]">
+                <BookOpen className="w-5 h-5 text-[#141414]" />
+                <h3 className="text-base font-bold text-[#222222]">
                   Импорт вопросов из банка вопросов
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsBankModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors"
+                className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Фильтры банка: Поиск + Отделы */}
-            <div className="space-y-3 pb-3 border-b border-[#E0E0E0] flex-shrink-0">
+            <div className="space-y-3 pb-3 border-b border-[#EEEEEE] flex-shrink-0">
               <div className="relative">
-                <Search className="w-4 h-4 text-[#6C757D] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#777777] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Поиск по тексту вопроса или теме..."
@@ -977,8 +977,8 @@ export const TestConstructorPage = () => {
                     onClick={() => setBankDept(dept)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors min-h-[34px] ${
                       bankDept === dept
-                        ? 'bg-[#003B73] text-white shadow-2xs'
-                        : 'bg-[#F4F5F7] text-[#6C757D] hover:text-[#212529] border border-[#E0E0E0]'
+                        ? 'bg-[#141414] text-white shadow-2xs'
+                        : 'bg-[#F5F5F7] text-[#777777] hover:text-[#222222] border border-[#EEEEEE]'
                     }`}
                   >
                     {dept}
@@ -986,11 +986,11 @@ export const TestConstructorPage = () => {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between text-xs text-[#6C757D] pt-1">
+              <div className="flex items-center justify-between text-xs text-[#777777] pt-1">
                 <button
                   type="button"
                   onClick={toggleSelectAllBank}
-                  className="text-[#003B73] hover:underline font-bold"
+                  className="text-[#141414] hover:underline font-bold"
                 >
                   {filteredBankQuestions.length > 0 &&
                   filteredBankQuestions.every((q) => selectedBankIds.includes(q.id))
@@ -1006,11 +1006,11 @@ export const TestConstructorPage = () => {
               {bankLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 rounded-xl bg-[#F4F5F7] animate-pulse" />
+                    <div key={i} className="h-16 rounded-xl bg-[#F5F5F7] animate-pulse" />
                   ))}
                 </div>
               ) : filteredBankQuestions.length === 0 ? (
-                <div className="p-8 text-center text-[#6C757D] text-xs">
+                <div className="p-8 text-center text-[#777777] text-xs">
                   {bankQuestions.length === 0
                     ? 'Банк вопросов пуст. Создайте вопросы в разделе «Банк вопросов».'
                     : 'По заданному фильтру и поисковому запросу ничего не найдено.'}
@@ -1024,8 +1024,8 @@ export const TestConstructorPage = () => {
                       onClick={() => toggleBankQuestionSelect(bq.id)}
                       className={`p-3.5 rounded-xl border transition-colors cursor-pointer flex items-start gap-3 ${
                         isSelected
-                          ? 'bg-[#003B73]/5 border-[#003B73] text-[#212529]'
-                          : 'bg-white border-[#E0E0E0] hover:bg-[#F4F5F7] text-[#212529]'
+                          ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
+                          : 'bg-white border-[#EEEEEE] hover:bg-[#F5F5F7] text-[#222222]'
                       }`}
                     >
                       <div className="pt-0.5">
@@ -1033,22 +1033,22 @@ export const TestConstructorPage = () => {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {}} // handled by parent onClick
-                          className="rounded border-[#E0E0E0] text-[#003B73] focus:ring-[#003B73] w-4 h-4 cursor-pointer"
+                          className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
                         />
                       </div>
                       <div className="flex-1 space-y-1 text-xs">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded font-bold bg-[#F4F5F7] text-[#003B73] border border-[#E0E0E0] text-[10px]">
+                          <span className="px-2 py-0.5 rounded font-bold bg-[#F5F5F7] text-[#141414] border border-[#EEEEEE] text-[10px]">
                             {bq.department}
                           </span>
-                          <span className="text-[#6C757D] text-[11px]">
+                          <span className="text-[#777777] text-[11px]">
                             {getQuestionTypeLabel(bq.question_type)}
                           </span>
-                          <span className="text-[#6C757D] font-mono text-[11px]">
+                          <span className="text-[#777777] font-mono text-[11px]">
                             {bq.points} б.
                           </span>
                         </div>
-                        <p className="text-[#212529] font-medium leading-relaxed">
+                        <p className="text-[#222222] font-medium leading-relaxed">
                           {bq.text}
                         </p>
                       </div>
@@ -1059,9 +1059,9 @@ export const TestConstructorPage = () => {
             </div>
 
             {/* Футер модалки */}
-            <div className="pt-3 border-t border-[#E0E0E0] flex items-center justify-between flex-shrink-0">
-              <div className="text-xs text-[#6C757D]">
-                Выбрано: <strong className="text-[#003B73] font-bold">{selectedBankIds.length}</strong>
+            <div className="pt-3 border-t border-[#EEEEEE] flex items-center justify-between flex-shrink-0">
+              <div className="text-xs text-[#777777]">
+                Выбрано: <strong className="text-[#141414] font-bold">{selectedBankIds.length}</strong>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1087,15 +1087,15 @@ export const TestConstructorPage = () => {
       )}
 
       {/* Sticky Bottom Save Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-[#E0E0E0] p-3 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-[#EEEEEE] p-3 shadow-lg">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-xs text-[#6C757D]">
+          <div className="flex items-center gap-3 text-xs text-[#777777]">
             <span>
-              Вопросов: <strong className="text-[#212529]">{questions.length}</strong>
+              Вопросов: <strong className="text-[#222222]">{questions.length}</strong>
             </span>
             <span className="hidden sm:inline">•</span>
             <span>
-              Баллов: <strong className="text-[#003B73]">{totalPoints} б.</strong>
+              Баллов: <strong className="text-[#141414]">{totalPoints} б.</strong>
             </span>
           </div>
 

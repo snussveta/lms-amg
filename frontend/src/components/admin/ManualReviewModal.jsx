@@ -102,17 +102,17 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#003B73]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-3xl w-full flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
+        <div className="p-4 sm:p-5 border-b border-[#EEEEEE] flex items-center justify-between bg-white">
           <div className="min-w-0 pr-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#212529] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#003B73] shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold text-[#222222] flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#141414] shrink-0" />
               <span>Проверка развернутых ответов</span>
             </h2>
             {attempt && (
-              <p className="text-xs text-[#6C757D] mt-0.5 truncate">
+              <p className="text-xs text-[#777777] mt-0.5 truncate">
                 {attempt.is_guest
                   ? `Гость: ${attempt.guest_name}`
                   : `Попытка #${attempt.id}`} • {attempt.test_title}
@@ -122,7 +122,7 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7] transition-colors shrink-0"
+            className="p-2 rounded-xl text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors shrink-0"
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -130,7 +130,7 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
         </div>
 
         {error && (
-          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E30613] text-xs">
+          <div className="mx-4 sm:mx-5 mt-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E84C3D] text-xs">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -146,10 +146,10 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
         <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-5">
           {loading ? (
             <div className="py-12 flex justify-center">
-              <div className="w-7 h-7 border-2 border-[#003B73] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-7 h-7 border-2 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : !attempt ? (
-            <div className="text-center py-8 text-xs text-[#6C757D]">Данные попытки недоступны.</div>
+            <div className="text-center py-8 text-xs text-[#777777]">Данные попытки недоступны.</div>
           ) : (
             <>
               {/* Questions review roster */}
@@ -166,17 +166,17 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
                       key={ans.question_id}
                       className={`p-4 rounded-xl border transition-colors ${
                         isManual
-                          ? 'bg-white border-[#E0E0E0] shadow-sm ring-1 ring-[#003B73]/10'
-                          : 'bg-[#F4F5F7] border-[#E0E0E0] opacity-80'
+                          ? 'bg-white border-[#EEEEEE] shadow-sm ring-1 ring-[#141414]/10'
+                          : 'bg-[#F5F5F7] border-[#EEEEEE] opacity-80'
                       }`}
                     >
                       {/* Question title & points badge */}
-                      <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-[#E0E0E0] flex-wrap">
+                      <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-[#EEEEEE] flex-wrap">
                         <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-[#003B73] text-white">
+                          <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-[#141414] text-white">
                             Вопрос {idx + 1}
                           </span>
-                          <span className="text-xs text-[#6C757D]">
+                          <span className="text-xs text-[#777777]">
                             {ans.question_type === 'manual_review'
                               ? 'Развернутый ответ (ручная проверка)'
                               : ans.question_type === 'single_choice'
@@ -187,32 +187,32 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
                           </span>
                         </div>
 
-                        <span className="text-xs font-bold text-[#003B73]">
+                        <span className="text-xs font-bold text-[#141414]">
                           Макс. балл: {ans.points_max}
                         </span>
                       </div>
 
-                      <h4 className="text-xs sm:text-sm font-semibold text-[#212529] mb-3 leading-snug">
+                      <h4 className="text-xs sm:text-sm font-semibold text-[#222222] mb-3 leading-snug">
                         {ans.question_text}
                       </h4>
 
                       {/* Employee submitted text */}
                       <div className="mb-3.5">
-                        <span className="text-[11px] font-bold text-[#6C757D] uppercase tracking-wider block mb-1">
+                        <span className="text-[11px] font-bold text-[#777777] uppercase tracking-wider block mb-1">
                           Ответ сотрудника:
                         </span>
-                        <div className="p-3 rounded-lg bg-[#F4F5F7] border border-[#E0E0E0] text-xs text-[#212529] font-mono whitespace-pre-wrap leading-relaxed">
+                        <div className="p-3 rounded-lg bg-[#F5F5F7] border border-[#EEEEEE] text-xs text-[#222222] font-mono whitespace-pre-wrap leading-relaxed">
                           {ans.user_text_answer || (
-                            <span className="italic text-[#6C757D]">Ответ не предоставлен</span>
+                            <span className="italic text-[#777777]">Ответ не предоставлен</span>
                           )}
                         </div>
                       </div>
 
                       {/* Admin grading controls for manual questions */}
                       {isManual ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#E0E0E0]">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#EEEEEE]">
                           <div>
-                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529] mb-1">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222] mb-1">
                               Балл (0 — {ans.points_max})
                             </label>
                             <input
@@ -228,7 +228,7 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
                           </div>
 
                           <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#212529] mb-1">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222] mb-1">
                               Комментарий / Заметка проверяющего
                             </label>
                             <input
@@ -243,9 +243,9 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-xs text-[#6C757D] pt-1 flex items-center justify-between">
+                        <div className="text-xs text-[#777777] pt-1 flex items-center justify-between">
                           <span>Автоматически проверено системой</span>
-                          <span className="font-bold text-[#212529]">
+                          <span className="font-bold text-[#222222]">
                             Начислено: {ans.points_awarded} / {ans.points_max} б.
                           </span>
                         </div>
@@ -259,7 +259,7 @@ export const ManualReviewModal = ({ attemptId, onClose, onReviewed }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#E0E0E0] flex items-center justify-end gap-2.5 bg-white">
+        <div className="p-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2.5 bg-white">
           <button type="button" onClick={onClose} className="btn-secondary text-xs min-h-[44px] px-4">
             Отмена
           </button>

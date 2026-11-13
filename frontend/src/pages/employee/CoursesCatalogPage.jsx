@@ -70,17 +70,17 @@ export const CoursesCatalogPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E0E0E0] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#003B73]/10 border border-[#003B73]/20 flex items-center justify-center text-[#003B73]">
+            <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-[#212529] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 Обучающие курсы AMG
               </h1>
-              <p className="text-xs text-[#6C757D] mt-0.5">
+              <p className="text-xs text-[#777777] mt-0.5">
                 Интерактивные программы квалификации: регламенты, видеоуроки, презентации и контрольные тесты
               </p>
             </div>
@@ -98,8 +98,8 @@ export const CoursesCatalogPage = () => {
               onClick={() => setSelectedDept(dept)}
               className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none min-h-[38px] ${
                 selectedDept === dept
-                  ? 'bg-[#003B73] text-white shadow-sm'
-                  : 'bg-white border border-[#E0E0E0] text-[#6C757D] hover:text-[#212529] hover:bg-[#F4F5F7]'
+                  ? 'bg-[#141414] text-white shadow-sm'
+                  : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
               }`}
             >
               {dept}
@@ -109,7 +109,7 @@ export const CoursesCatalogPage = () => {
 
         {/* Search */}
         <div className="w-full sm:w-80 relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6C757D]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" />
           <input
             type="text"
             className="input-field pl-9 text-xs sm:text-sm"
@@ -122,7 +122,7 @@ export const CoursesCatalogPage = () => {
 
       {/* Error State */}
       {error && (
-        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] text-xs sm:text-sm flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] text-xs sm:text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -130,22 +130,22 @@ export const CoursesCatalogPage = () => {
 
       {/* Assigned Alert Banner */}
       {!loading && courses.some((c) => c.is_assigned && c.user_status !== 'completed') && (
-        <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FBD0D3] text-[#212529] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs">
+        <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#222222] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#E84C3D]/10 text-[#E84C3D] flex items-center justify-center shrink-0">
               <GraduationCap className="w-4 h-4" />
             </div>
             <div>
-              <span className="font-bold text-[#E30613]">
+              <span className="font-bold text-[#E84C3D]">
                 Вам назначены обязательные курсы!
               </span>{' '}
-              <span className="text-[#6C757D]">
+              <span className="text-[#777777]">
                 (Курсов к прохождению:{' '}
                 {courses.filter((c) => c.is_assigned && c.user_status !== 'completed').length})
               </span>
             </div>
           </div>
-          <span className="text-[11px] font-bold text-[#E30613] uppercase tracking-wider bg-white px-2.5 py-1 rounded border border-[#FBD0D3]">
+          <span className="text-[11px] font-bold text-[#E84C3D] uppercase tracking-wider bg-white px-2.5 py-1 rounded border border-[#F8D3D0]">
             Приоритет обучения
           </span>
         </div>
@@ -155,19 +155,19 @@ export const CoursesCatalogPage = () => {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-xl p-4 space-y-4 border border-[#E0E0E0] h-80">
-              <div className="h-36 bg-[#F4F5F7] rounded-lg" />
-              <div className="h-4 bg-[#F4F5F7] rounded w-3/4" />
-              <div className="h-3 bg-[#F4F5F7] rounded w-full" />
-              <div className="h-3 bg-[#F4F5F7] rounded w-1/2" />
+            <div key={i} className="bg-white rounded-xl p-4 space-y-4 border border-[#EEEEEE] h-80">
+              <div className="h-36 bg-[#F5F5F7] rounded-lg" />
+              <div className="h-4 bg-[#F5F5F7] rounded w-3/4" />
+              <div className="h-3 bg-[#F5F5F7] rounded w-full" />
+              <div className="h-3 bg-[#F5F5F7] rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : filteredCourses.length === 0 ? (
-        <div className="bg-white border border-[#E0E0E0] rounded-2xl p-12 text-center text-[#6C757D] space-y-3 shadow-card animate-fade-in">
+        <div className="bg-white border border-[#EEEEEE] rounded-2xl p-12 text-center text-[#777777] space-y-3 shadow-card animate-fade-in">
           <Layers className="w-10 h-10 mx-auto text-[#CED4DA]" />
-          <div className="text-base font-bold text-[#212529]">Нет доступных курсов</div>
-          <p className="text-xs sm:text-sm text-[#6C757D] max-w-sm mx-auto">
+          <div className="text-base font-bold text-[#222222]">Нет доступных курсов</div>
+          <p className="text-xs sm:text-sm text-[#777777] max-w-sm mx-auto">
             {searchQuery
               ? 'По вашему запросу курсов не найдено. Попробуйте изменить формулировку.'
               : 'В этом подразделении пока нет опубликованных обучающих программ.'}
@@ -183,10 +183,10 @@ export const CoursesCatalogPage = () => {
             return (
               <div
                 key={course.id}
-                className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden shadow-card hover:shadow-card-hover hover:border-[#CED4DA] transition-all duration-200 flex flex-col justify-between group hover:-translate-y-0.5"
+                className="bg-white border border-[#EEEEEE] rounded-xl overflow-hidden shadow-card hover:shadow-card-hover hover:border-[#CED4DA] transition-all duration-200 flex flex-col justify-between group hover:-translate-y-0.5"
               >
                 {/* Banner */}
-                <div className="h-40 relative overflow-hidden bg-[#003B73] border-b border-[#E0E0E0]">
+                <div className="h-40 relative overflow-hidden bg-[#141414] border-b border-[#EEEEEE]">
                   {course.cover_image_url ? (
                     <img
                       src={course.cover_image_url}
@@ -194,17 +194,17 @@ export const CoursesCatalogPage = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#003B73] to-[#002447]">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#141414] to-[#1C1C1C]">
                       <GraduationCap className="w-12 h-12 text-white/30" />
                     </div>
                   )}
 
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-white/95 backdrop-blur border border-[#E0E0E0] text-[#003B73] uppercase tracking-wider shadow-2xs">
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-white/95 backdrop-blur border border-[#EEEEEE] text-[#141414] uppercase tracking-wider shadow-2xs">
                       {course.department_tag || 'Общий'}
                     </span>
                     {course.is_assigned && (
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black bg-[#FEF2F2] border border-[#FBD0D3] text-[#E30613] shadow-2xs">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-black bg-[#FCECEB] border border-[#F8D3D0] text-[#E84C3D] shadow-2xs">
                         Обязательный • Назначен вам
                       </span>
                     )}
@@ -223,10 +223,10 @@ export const CoursesCatalogPage = () => {
                 {/* Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-base font-bold text-[#212529] group-hover:text-[#003B73] transition-colors line-clamp-2">
+                    <h3 className="text-base font-bold text-[#222222] group-hover:text-[#141414] transition-colors line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-xs text-[#6C757D] line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#777777] line-clamp-2 leading-relaxed">
                       {course.description || 'Описание курса...'}
                     </p>
 
@@ -238,17 +238,17 @@ export const CoursesCatalogPage = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2 pt-3 border-t border-[#E0E0E0]">
-                    <div className="flex items-center justify-between text-xs text-[#6C757D]">
+                  <div className="space-y-2 pt-3 border-t border-[#EEEEEE]">
+                    <div className="flex items-center justify-between text-xs text-[#777777]">
                       <span>{course.modules_count || 1} разделов • {course.lessons_count || 1} уроков</span>
-                      <span className="font-bold text-[#212529]">{progress}%</span>
+                      <span className="font-bold text-[#222222]">{progress}%</span>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full h-1.5 bg-[#E0E0E0] rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-[#EEEEEE] rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
-                          isCompleted ? 'bg-emerald-500' : 'bg-[#E30613]'
+                          isCompleted ? 'bg-emerald-500' : 'bg-[#E84C3D]'
                         }`}
                         style={{ width: `${progress}%` }}
                       />
@@ -257,7 +257,7 @@ export const CoursesCatalogPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="p-4 bg-[#F4F5F7] border-t border-[#E0E0E0]">
+                <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE]">
                   <Link
                     to={`/courses/${course.id}/learn`}
                     className="btn-primary w-full text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2"
