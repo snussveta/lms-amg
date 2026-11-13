@@ -70,7 +70,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
       u.full_name?.toLowerCase().includes(term) ||
       u.email?.toLowerCase().includes(term);
 
-    const userDept = u.department || 'СТО';
+    const userDept = u.department || 'Без отдела';
     const matchesDept =
       selectedDept === 'Все отделы' || userDept === selectedDept;
 
@@ -483,7 +483,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                               <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
                                 <span>{u.email}</span>
                                 <span>•</span>
-                                <span>{u.department || 'СТО'}</span>
+                                <span>{u.department || 'Без отдела'}</span>
                               </div>
                             </div>
                           </div>
@@ -533,7 +533,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
                       <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5 flex-wrap">
                         <span>{a.email}</span>
                         <span>•</span>
-                        <span className="text-[#141414] font-semibold">{a.department || 'СТО'}</span>
+                        <span className="text-[#141414] font-semibold">{a.department || 'Без отдела'}</span>
                         <span>•</span>
                         <span>Дедлайн: {formatDate(a.deadline)}</span>
                       </div>

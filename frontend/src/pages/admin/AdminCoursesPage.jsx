@@ -27,7 +27,7 @@ export const AdminCoursesPage = () => {
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [assigningCourse, setAssigningCourse] = useState(null);
-  const [departments, setDepartments] = useState(['Все', 'СТО', 'Склад', 'Продажи', 'Общий']);
+  const [departments, setDepartments] = useState(['Все']);
 
   useEffect(() => {
     const loadDepts = async () => {
@@ -35,7 +35,7 @@ export const AdminCoursesPage = () => {
         const res = await api.get('/departments');
         if (res.data && res.data.length > 0) {
           const names = res.data.map((d) => d.name);
-          const uniqueNames = Array.from(new Set(['Все', ...names, 'Общий']));
+          const uniqueNames = Array.from(new Set(['Все', ...names]));
           setDepartments(uniqueNames);
         }
       } catch (err) {

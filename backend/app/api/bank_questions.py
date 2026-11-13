@@ -17,20 +17,23 @@ from app.schemas.bank_question import (
 
 router = APIRouter(prefix="/bank-questions", tags=["Question Bank"])
 
-DEFAULT_DEPARTMENTS = ["Общий", "Бухгалтерия", "Продажи", "IT", "Логистика"]
-
-
 @router.get("/departments", response_model=List[str])
 async def get_departments(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Список всех отделов / направлений для категоризации вопросов."""
-    stmt = select(distinct(BankQuestion.department))
-    res = await db.execute(stmt)
-    db_deps = [d for (d,) in res.all() if d]
+    from app.models.department import Department
 
-    all_deps = list(dict.fromkeys(DEFAULT_DEPARTMENTS + db_deps))
+    d_stmt = select(Department.name).order_by(Department.name.asc())
+    d_res = await db.execute(d_stmt)
+    db_dept_names = [d for (d,) in d_res.all() if d]
+
+    q_stmt = select(distinct(BankQuestion.department))
+    q_res = await db.execute(q_stmt)
+    q_deps = [d for (d,) in q_res.all() if d]
+
+    all_deps = list(dict.fromkeys(db_dept_names + q_deps))
     return all_deps
 
 

@@ -18,11 +18,9 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 
-const DEFAULT_DEPARTMENTS = ['Общий', 'СТО', 'Склад', 'Продажи', 'IT', 'Бухгалтерия', 'Логистика'];
-
 export const QuestionBankPage = () => {
   const [questions, setQuestions] = useState([]);
-  const [departments, setDepartments] = useState(DEFAULT_DEPARTMENTS);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
@@ -37,7 +35,7 @@ export const QuestionBankPage = () => {
   // Form State inside Modal
   const [formText, setFormText] = useState('');
   const [formType, setFormType] = useState('single_choice');
-  const [formDept, setFormDept] = useState('Общий');
+  const [formDept, setFormDept] = useState('');
   const [formCustomDept, setFormCustomDept] = useState('');
   const [formPoints, setFormPoints] = useState(10);
   const [formOptions, setFormOptions] = useState([

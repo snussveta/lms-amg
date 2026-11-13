@@ -23,7 +23,7 @@ export const CoursesCatalogPage = () => {
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
-  const [departments, setDepartments] = useState(['Все', 'СТО', 'Склад', 'Продажи', 'Общий']);
+  const [departments, setDepartments] = useState(['Все']);
   const [selectedCourseForAssign, setSelectedCourseForAssign] = useState(null);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export const CoursesCatalogPage = () => {
         const res = await api.get('/departments');
         if (res.data && res.data.length > 0) {
           const names = res.data.map((d) => d.name);
-          const uniqueNames = Array.from(new Set(['Все', ...names, 'Общий']));
+          const uniqueNames = Array.from(new Set(['Все', ...names]));
           setDepartments(uniqueNames);
         }
       } catch (err) {

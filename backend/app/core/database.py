@@ -89,17 +89,20 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                         id SERIAL PRIMARY KEY,
                         name VARCHAR(100) UNIQUE NOT NULL,
                         description TEXT DEFAULT '',
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        head_id INTEGER REFERENCES users(id) ON DELETE SET NULL
                     );""",
                     "CREATE INDEX IF NOT EXISTS ix_departments_name ON departments(name);",
+                    "ALTER TABLE departments ADD COLUMN IF NOT EXISTS head_id INTEGER REFERENCES users(id) ON DELETE SET NULL;",
+                    "CREATE INDEX IF NOT EXISTS ix_departments_head_id ON departments(head_id);",
                     # Users branch, department & department_id
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS branch VARCHAR(100);",
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'СТО';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id) ON DELETE SET NULL;",
                     "CREATE INDEX IF NOT EXISTS ix_users_department_id ON users(department_id);",
                     # Courses schema checks
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS cover_image_url VARCHAR(500);",
-                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS department_tag VARCHAR(100) DEFAULT 'СТО';",
+                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS department_tag VARCHAR(100);",
                     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE course_lessons ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT;",
                     "ALTER TABLE user_lesson_progress ADD COLUMN IF NOT EXISTS last_timestamp_seconds DOUBLE PRECISION DEFAULT 0.0;",

@@ -43,12 +43,12 @@ export const CourseConstructorPage = () => {
   const [courseId, setCourseId] = useState(isEditing ? parseInt(id, 10) : null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [departmentTag, setDepartmentTag] = useState('СТО');
+  const [departmentTag, setDepartmentTag] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [departmentsList, setDepartmentsList] = useState(['СТО', 'Склад', 'Продажи', 'Общий']);
+  const [departmentsList, setDepartmentsList] = useState([]);
 
   // Fetch departments list
   useEffect(() => {
@@ -57,8 +57,9 @@ export const CourseConstructorPage = () => {
         const res = await api.get('/departments');
         if (res.data && res.data.length > 0) {
           const names = res.data.map((d) => d.name);
-          const unique = Array.from(new Set([...names, 'СТО', 'Склад', 'Продажи', 'Общий']));
+          const unique = Array.from(new Set(names));
           setDepartmentsList(unique);
+          setDepartmentTag((prev) => prev || (unique.length > 0 ? unique[0] : ''));
         }
       } catch (err) {
         console.error('Ошибка загрузки отделов в конструкторе:', err);
@@ -156,7 +157,7 @@ export const CourseConstructorPage = () => {
       const data = res.data;
       setTitle(data.title);
       setDescription(data.description || '');
-      setDepartmentTag(data.department_tag || 'СТО');
+      setDepartmentTag(data.department_tag || '');
       setCoverImageUrl(data.cover_image_url || '');
       setIsPublished(Boolean(data.is_published));
       setIsPublic(Boolean(data.is_public));

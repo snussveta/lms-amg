@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   AlertCircle,
+  Briefcase,
   Building2,
   Check,
   Copy,
@@ -44,7 +45,7 @@ export const UserManagementPage = () => {
     full_name: '',
     email: '',
     password: '',
-    department: 'СТО',
+    department: '',
     department_id: null,
     role: 'employee',
   });
@@ -57,7 +58,7 @@ export const UserManagementPage = () => {
     full_name: '',
     email: '',
     password: '',
-    department: 'СТО',
+    department: '',
     department_id: null,
     role: 'employee',
   });
@@ -66,6 +67,15 @@ export const UserManagementPage = () => {
   // Department Modal State
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
+  const [deptForm, setDeptForm] = useState({ name: '', description: '', head_id: null });
+  const [isSubmittingDept, setIsSubmittingDept] = useState(false);
+
+  // Assign Department Head Modal State
+  const [headModalDept, setHeadModalDept] = useState(null);
+  const [selectedHeadUserId, setSelectedHeadUserId] = useState(null);
+  const [headSearchTerm, setHeadSearchTerm] = useState('');
+  const [isSubmittingHead, setIsSubmittingHead] = useState(false);
+
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
   const handleSendTestEmail = async () => {
@@ -83,8 +93,6 @@ export const UserManagementPage = () => {
       setIsSendingTestEmail(false);
     }
   };
-  const [deptForm, setDeptForm] = useState({ name: '', description: '' });
-  const [isSubmittingDept, setIsSubmittingDept] = useState(false);
 
   useEffect(() => {
     loadAllData();
@@ -127,14 +135,14 @@ export const UserManagementPage = () => {
   // Open Register Modal
   const openRegisterModal = () => {
     const initialDept = isDepartmentHead
-      ? departments.find((d) => d.name === currentUser?.department || d.id === currentUser?.department_id) || { name: currentUser?.department || 'СТО', id: currentUser?.department_id || null }
+      ? departments.find((d) => d.name === currentUser?.department || d.id === currentUser?.department_id) || null
       : (departments.length > 0 ? departments[0] : null);
 
     setRegisterForm({
       full_name: '',
       email: '',
       password: generateRandomPassword(),
-      department: initialDept ? initialDept.name : (currentUser?.department || 'СТО'),
+      department: initialDept ? initialDept.name : (currentUser?.department || ''),
       department_id: initialDept ? initialDept.id : (currentUser?.department_id || null),
       role: 'employee',
     });
@@ -187,7 +195,7 @@ export const UserManagementPage = () => {
     );
     const resolvedDeptName = matchedDept
       ? matchedDept.name
-      : (targetUser.department || (departments[0]?.name || 'Общий'));
+      : (targetUser.department || (departments[0]?.name || ''));
     const resolvedDeptId = matchedDept ? matchedDept.id : (departments[0]?.id || null);
 
     setEditForm({
@@ -288,13 +296,17 @@ export const UserManagementPage = () => {
   // Department CRUD
   const openCreateDeptModal = () => {
     setEditingDept(null);
-    setDeptForm({ name: '', description: '' });
+    setDeptForm({ name: '', description: '', head_id: null });
     setIsDeptModalOpen(true);
   };
 
   const openEditDeptModal = (dept) => {
     setEditingDept(dept);
-    setDeptForm({ name: dept.name, description: dept.description || '' });
+    setDeptForm({
+      name: dept.name,
+      description: dept.description || '',
+      head_id: dept.head_id || (dept.head ? dept.head.id : null),
+    });
     setIsDeptModalOpen(true);
   };
 
@@ -321,6 +333,8 @@ export const UserManagementPage = () => {
       }
       setIsDeptModalOpen(false);
       setTimeout(() => setSuccessMsg(''), 4000);
+      const uRes = await api.get('/users');
+      setUsers(uRes.data || []);
     } catch (err) {
       console.error('Ошибка сохранения отдела:', err);
       setError(err.response?.data?.detail || 'Не удалось сохранить отдел.');
@@ -329,8 +343,31 @@ export const UserManagementPage = () => {
     }
   };
 
+  const handleAssignHead = async (deptId, userId) => {
+    try {
+      setIsSubmittingHead(true);
+      setError('');
+      const res = await api.post(`/departments/${deptId}/head`, { user_id: userId });
+      setDepartments((prev) => prev.map((d) => (d.id === deptId ? res.data : d)));
+      setSuccessMsg(
+        userId
+          ? `Руководитель отдела «${res.data.name}» успешно назначен.`
+          : `Руководитель отдела «${res.data.name}» снят с должности.`
+      );
+      setTimeout(() => setSuccessMsg(''), 4000);
+      setHeadModalDept(null);
+      const uRes = await api.get('/users');
+      setUsers(uRes.data || []);
+    } catch (err) {
+      console.error('Ошибка назначения руководителя отдела:', err);
+      setError(err.response?.data?.detail || 'Не удалось назначить руководителя отдела.');
+    } finally {
+      setIsSubmittingHead(false);
+    }
+  };
+
   const handleDeleteDept = async (dept) => {
-    if (!window.confirm(`Вы уверены, что хотите удалить отдел «${dept.name}»? Прикрепленные сотрудники перейдут в общий отдел.`)) {
+    if (!window.confirm(`Вы уверены, что хотите удалить отдел «${dept.name}»?`)) {
       return;
     }
 
@@ -346,6 +383,17 @@ export const UserManagementPage = () => {
       setError(err.response?.data?.detail || 'Не удалось удалить отдел.');
     }
   };
+
+  const candidateUsers = users.filter((u) => {
+    if (!headModalDept) return false;
+    const term = (headSearchTerm || '').toLowerCase().trim();
+    if (!term) return true;
+    return (
+      u.full_name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) ||
+      (u.department && u.department.toLowerCase().includes(term))
+    );
+  });
 
   const canDeleteUser = (u) => {
     if (!u || u.id === currentUser?.id) return false;
@@ -623,7 +671,7 @@ export const UserManagementPage = () => {
                           <td className="py-3.5 px-5">
                             <span className="inline-flex items-center gap-1.5 font-semibold text-[#141414]">
                               <Building2 className="w-3.5 h-3.5 text-[#141414]" />
-                              {u.department || 'СТО'}
+                              {u.department || 'Без отдела'}
                             </span>
                           </td>
 
@@ -688,83 +736,208 @@ export const UserManagementPage = () => {
       {/* TAB 2: DEPARTMENTS */}
       {/* ============================================================== */}
       {activeTab === 'departments' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {departments.map((dept) => {
-              const deptEmployees = users.filter(
-                (u) => u.department_id === dept.id || u.department === dept.name
-              );
+        <div className="space-y-5">
+          {/* Summary / Stats header */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-[#EEEEEE] p-4 shadow-xs">
+              <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                Всего отделов
+              </div>
+              <div className="text-2xl font-black text-[#141414] mt-1">
+                {departments.length}
+              </div>
+            </div>
 
-              return (
-                <div
-                  key={dept.id}
-                  className="bg-white rounded-2xl border border-[#EEEEEE] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
-                          <Building2 className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-base text-[#222222]">
-                            {dept.name}
-                          </h3>
-                          <span className="text-[11px] font-semibold text-[#141414]">
-                            {deptEmployees.length} {deptEmployees.length === 1 ? 'сотрудник' : deptEmployees.length >= 2 && deptEmployees.length <= 4 ? 'сотрудника' : 'сотрудников'}
-                          </span>
-                        </div>
-                      </div>
+            <div className="bg-white rounded-xl border border-[#EEEEEE] p-4 shadow-xs">
+              <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                С руководителем
+              </div>
+              <div className="text-2xl font-black text-emerald-600 mt-1">
+                {departments.filter((d) => d.head_id || d.head).length}
+              </div>
+            </div>
 
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openEditDeptModal(dept)}
-                          className="p-1.5 rounded-lg text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] transition-colors"
-                          title="Редактировать отдел"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDept(dept)}
-                          className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
-                          title="Удалить отдел"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+            <div className="bg-white rounded-xl border border-[#EEEEEE] p-4 shadow-xs">
+              <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                Без руководителя
+              </div>
+              <div className="text-2xl font-black text-amber-600 mt-1">
+                {departments.filter((d) => !d.head_id && !d.head).length}
+              </div>
+            </div>
+          </div>
 
-                    <p className="text-xs text-[#777777] line-clamp-2 mt-2 min-h-[32px]">
-                      {dept.description || 'Корпоративное подразделение компании'}
-                    </p>
+          {departments.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] p-12 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-[#141414]/5 text-[#141414] flex items-center justify-center mx-auto mb-3">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-[#222222]">Отделы еще не созданы</h3>
+              <p className="text-xs text-[#777777] max-w-sm mx-auto mt-1 mb-4">
+                Создайте структуру отделов вашей компании и назначьте руководителей для управления сотрудниками.
+              </p>
+              <button
+                onClick={openCreateDeptModal}
+                className="btn-primary text-xs py-2.5 px-4 inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Создать первый отдел</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {departments.map((dept) => {
+                const deptEmployees = users.filter(
+                  (u) => u.department_id === dept.id || u.department === dept.name
+                );
+                const currentHead = dept.head;
 
-                    {/* Employee preview avatars/names */}
-                    <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
-                      <div className="text-[11px] font-semibold text-[#777777] mb-2">
-                        Сотрудники отдела:
-                      </div>
-                      {deptEmployees.length === 0 ? (
-                        <div className="text-[11px] text-[#777777] italic">
-                          Пока нет прикрепленных сотрудников
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                          {deptEmployees.map((emp) => (
-                            <span
-                              key={emp.id}
-                              className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F5F5F7] text-[11px] text-[#222222] font-medium border border-[#EEEEEE]"
-                            >
-                              {emp.full_name}
+                return (
+                  <div
+                    key={dept.id}
+                    className="bg-white rounded-2xl border border-[#EEEEEE] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Top Bar: Dept Name + Actions */}
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-[#141414] text-white flex items-center justify-center shrink-0 shadow-sm">
+                            <Building2 className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-base text-[#222222] truncate">
+                              {dept.name}
+                            </h3>
+                            <span className="text-[11px] font-semibold text-[#777777]">
+                              {deptEmployees.length} {deptEmployees.length === 1 ? 'сотрудник' : deptEmployees.length >= 2 && deptEmployees.length <= 4 ? 'сотрудника' : 'сотрудников'}
                             </span>
-                          ))}
+                          </div>
                         </div>
-                      )}
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => openEditDeptModal(dept)}
+                            className="p-1.5 rounded-lg text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] transition-colors"
+                            title="Редактировать отдел"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDept(dept)}
+                            className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
+                            title="Удалить отдел"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#777777] line-clamp-2 mt-2 min-h-[32px]">
+                        {dept.description || 'Корпоративное подразделение компании'}
+                      </p>
+
+                      {/* Руководитель отдела карточка */}
+                      <div className="mt-4 p-3 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-[#777777] uppercase tracking-wider flex items-center gap-1.5">
+                            <Briefcase className="w-3.5 h-3.5 text-[#E84C3D]" />
+                            Руководитель отдела
+                          </span>
+                          {currentHead && isAdmin && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Снять ${currentHead.full_name} с должности руководителя отдела «${dept.name}»?`)) {
+                                  handleAssignHead(dept.id, null);
+                                }
+                              }}
+                              className="text-[11px] text-[#777777] hover:text-[#E84C3D] font-medium transition-colors"
+                            >
+                              Снять
+                            </button>
+                          )}
+                        </div>
+
+                        {currentHead ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-[#141414] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                                {currentHead.full_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-xs text-[#222222] truncate">
+                                  {currentHead.full_name}
+                                </div>
+                                <div className="text-[11px] text-[#777777] truncate">
+                                  {currentHead.email}
+                                </div>
+                              </div>
+                            </div>
+                            {isAdmin && (
+                              <button
+                                onClick={() => {
+                                  setHeadModalDept(dept);
+                                  setSelectedHeadUserId(currentHead.id);
+                                  setHeadSearchTerm('');
+                                }}
+                                className="text-xs px-2.5 py-1 rounded-lg border border-[#333333] hover:border-[#E84C3D] hover:text-[#E84C3D] font-medium transition-all shrink-0 bg-white"
+                              >
+                                Сменить
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-2 py-0.5">
+                            <span className="text-xs text-[#777777] italic">Не назначен</span>
+                            {isAdmin && (
+                              <button
+                                onClick={() => {
+                                  setHeadModalDept(dept);
+                                  setSelectedHeadUserId(null);
+                                  setHeadSearchTerm('');
+                                }}
+                                className="text-xs px-3 py-1.5 rounded-lg bg-[#141414] hover:bg-[#E84C3D] text-white font-medium transition-colors flex items-center gap-1 shadow-sm"
+                              >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                <span>Назначить</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Employee preview avatars/names */}
+                      <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
+                        <div className="text-[11px] font-semibold text-[#777777] mb-2">
+                          Сотрудники отдела:
+                        </div>
+                        {deptEmployees.length === 0 ? (
+                          <div className="text-[11px] text-[#777777] italic">
+                            Пока нет прикрепленных сотрудников
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                            {deptEmployees.map((emp) => (
+                              <span
+                                key={emp.id}
+                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${
+                                  currentHead && currentHead.id === emp.id
+                                    ? 'bg-[#141414] text-white border-[#141414]'
+                                    : 'bg-[#F5F5F7] text-[#222222] border-[#EEEEEE]'
+                                }`}
+                              >
+                                {emp.full_name}
+                                {currentHead && currentHead.id === emp.id && ' (Руководитель)'}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -879,11 +1052,15 @@ export const UserManagementPage = () => {
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
+                    {departments.length === 0 ? (
+                      <option value="">Нет созданных отделов</option>
+                    ) : (
+                      departments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))
+                    )}
                     {registerForm.department &&
                       !departments.some((d) => d.name === registerForm.department) && (
                         <option value={registerForm.department}>
@@ -1074,11 +1251,15 @@ export const UserManagementPage = () => {
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
+                    {departments.length === 0 ? (
+                      <option value="">Нет созданных отделов</option>
+                    ) : (
+                      departments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))
+                    )}
                     {editForm.department &&
                       !departments.some((d) => d.name === editForm.department) && (
                         <option value={editForm.department}>
@@ -1180,6 +1361,32 @@ export const UserManagementPage = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Руководитель отдела (опционально)
+                </label>
+                <select
+                  value={deptForm.head_id || ''}
+                  onChange={(e) =>
+                    setDeptForm({
+                      ...deptForm,
+                      head_id: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                  className="input-field text-xs w-full bg-white"
+                >
+                  <option value="">-- Без руководителя (назначить позже) --</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.full_name} ({u.email}) {u.department ? `— [${u.department}]` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-[#777777] mt-1">
+                  Выбранный сотрудник получит роль «Руководитель отдела» и права на управление этим отделом.
+                </p>
+              </div>
+
               <div className="pt-4 border-t border-[#EEEEEE] flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -1198,6 +1405,183 @@ export const UserManagementPage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL 4: ASSIGN / CHANGE DEPARTMENT HEAD */}
+      {/* ============================================================== */}
+      {headModalDept && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#EEEEEE] flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#E84C3D] flex items-center justify-center text-white shadow-sm">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base leading-tight">
+                    Назначить руководителя отдела
+                  </h3>
+                  <p className="text-[11px] text-white/70">
+                    Отдел «{headModalDept.name}»
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setHeadModalDept(null)}
+                className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Current Head Status Banner */}
+              <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#777777]">
+                    Текущий статус
+                  </div>
+                  <div className="text-xs font-semibold text-[#222222] mt-0.5 truncate">
+                    {headModalDept.head ? (
+                      <span className="text-emerald-700 flex items-center gap-1.5 font-bold">
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        {headModalDept.head.full_name} ({headModalDept.head.email})
+                      </span>
+                    ) : (
+                      <span className="text-[#777777] italic">Руководитель еще не назначен</span>
+                    )}
+                  </div>
+                </div>
+
+                {headModalDept.head && (
+                  <button
+                    type="button"
+                    disabled={isSubmittingHead}
+                    onClick={() => handleAssignHead(headModalDept.id, null)}
+                    className="text-xs text-[#E84C3D] hover:underline font-bold shrink-0"
+                  >
+                    Снять
+                  </button>
+                )}
+              </div>
+
+              {/* Candidate Search & Selection */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1.5">
+                  Выберите сотрудника для назначения
+                </label>
+                <div className="relative mb-2">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" />
+                  <input
+                    type="text"
+                    placeholder="Поиск по ФИО, логину или отделу..."
+                    value={headSearchTerm}
+                    onChange={(e) => setHeadSearchTerm(e.target.value)}
+                    className="input-field pl-9 text-xs w-full"
+                  />
+                </div>
+
+                <div className="max-h-60 overflow-y-auto space-y-1.5 border border-[#EEEEEE] rounded-xl p-2 bg-[#FAFAFA]">
+                  {candidateUsers.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-[#777777]">
+                      Сотрудники не найдены
+                    </div>
+                  ) : (
+                    candidateUsers.map((u) => {
+                      const isSelected = selectedHeadUserId === u.id;
+                      const isCurrentDept =
+                        u.department_id === headModalDept.id ||
+                        (u.department && u.department.toLowerCase() === headModalDept.name.toLowerCase());
+                      const isAlreadyHead = u.role === 'department_head';
+
+                      return (
+                        <div
+                          key={u.id}
+                          onClick={() => setSelectedHeadUserId(u.id)}
+                          className={`p-2.5 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-all ${
+                            isSelected
+                              ? 'border-[#E84C3D] bg-[#FCECEB] ring-1 ring-[#E84C3D]'
+                              : 'border-[#EEEEEE] bg-white hover:border-[#CCCCCC]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                                isSelected ? 'bg-[#E84C3D] text-white' : 'bg-[#141414] text-white'
+                              }`}
+                            >
+                              {u.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-xs text-[#222222] truncate flex items-center gap-1.5">
+                                <span>{u.full_name}</span>
+                                {isCurrentDept && (
+                                  <span className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-medium">
+                                    в этом отделе
+                                  </span>
+                                )}
+                                {isAlreadyHead && (
+                                  <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-medium">
+                                    руководитель
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-[#777777] truncate">
+                                {u.email} {u.department ? `• [${u.department}]` : '• [Без отдела]'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 ml-2">
+                            {isSelected ? (
+                              <span className="w-5 h-5 rounded-full bg-[#E84C3D] text-white flex items-center justify-center text-xs font-bold">
+                                ✓
+                              </span>
+                            ) : (
+                              <span className="text-xs text-[#777777] hover:text-[#141414] font-medium">
+                                Выбрать
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Informative Note */}
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100 text-[11px] text-blue-900 leading-relaxed flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <span>
+                  Сотрудник получит роль <strong>«Руководитель отдела»</strong>, будет прикреплен к отделу <strong>«{headModalDept.name}»</strong> и сможет добавлять и удалять сотрудников своего отдела, а также назначать им курсы и тесты.
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE] flex items-center justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setHeadModalDept(null)}
+                className="px-4 py-2.5 rounded-xl border border-[#CCCCCC] text-xs font-semibold text-[#777777] hover:bg-white min-h-[42px]"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                disabled={!selectedHeadUserId || isSubmittingHead}
+                onClick={() => handleAssignHead(headModalDept.id, selectedHeadUserId)}
+                className="btn-primary text-xs py-2.5 px-5 flex items-center gap-1.5 min-h-[42px] disabled:opacity-50"
+              >
+                {isSubmittingHead && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>Назначить руководителем</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

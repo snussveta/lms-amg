@@ -5,7 +5,6 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.core.security import get_password_hash
-from app.models.department import Department
 from app.models.user import User
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -18,24 +17,7 @@ async def seed_data() -> None:
     await init_db()
 
     async with AsyncSessionLocal() as db:
-        # 2. Seed Default Departments (только отделы компании, без лишних филиалов и демо-данных)
-        default_departments = [
-            ("СТО", "Станция технического обслуживания и слесарный цех"),
-            ("Склад", "Склад запчастей, комплектующих и инструментов"),
-            ("Продажи", "Отдел продаж автомобилей и сервисных услуг"),
-            ("Бухгалтерия", "Бухгалтерский учет и финансы"),
-            ("Логистика", "Транспортная логистика и снабжение"),
-            ("IT", "Информационные технологии и системное администрирование"),
-            ("Общий", "Общекорпоративный отдел"),
-        ]
-        for name, desc in default_departments:
-            d_res = await db.execute(select(Department).where(Department.name == name))
-            if not d_res.scalar_one_or_none():
-                logger.info(f"Создание отдела: {name}")
-                db.add(Department(name=name, description=desc))
-        await db.flush()
-
-        # 3. Seed Superadmin
+        # 2. Seed Superadmin (без автоматической генерации отделов или филиалов)
         superadmin_email = settings.FIRST_SUPERADMIN_EMAIL.lower().strip()
         res = await db.execute(select(User).where(User.email == superadmin_email))
         superadmin = res.scalar_one_or_none()
@@ -48,7 +30,8 @@ async def seed_data() -> None:
                 hashed_password=get_password_hash(settings.FIRST_SUPERADMIN_PASSWORD),
                 role="superadmin",
                 is_active=True,
-                department="IT",
+                department=None,
+                department_id=None,
             )
             db.add(superadmin)
             await db.flush()
@@ -60,7 +43,7 @@ async def seed_data() -> None:
             await db.flush()
 
         await db.commit()
-        logger.info("Инициализация успешно завершена: созданы отделы и суперадминистратор.")
+        logger.info("Инициализация успешно завершена: суперадминистратор проверен.")
 
 
 if __name__ == "__main__":

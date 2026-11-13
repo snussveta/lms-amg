@@ -1425,13 +1425,7 @@ export const KnowledgeBasePage = () => {
                           </option>
                         ))
                       ) : (
-                        ['СТО', 'Склад', 'Продажи', 'Бухгалтерия', 'Логистика', 'IT', 'Общий'].map(
-                          (dept) => (
-                            <option key={dept} value={dept}>
-                              {dept}
-                            </option>
-                          )
-                        )
+                        <option value="">Нет созданных отделов</option>
                       )}
                     </select>
                   </div>
@@ -1461,7 +1455,7 @@ export const KnowledgeBasePage = () => {
                             }`}
                           >
                             <span className="truncate">{emp.full_name}</span>
-                            <span className="text-[10px] text-[#777777]">{emp.department || 'СТО'}</span>
+                            <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
                           </div>
                         );
                       })}
@@ -1652,13 +1646,7 @@ export const KnowledgeBasePage = () => {
                           </option>
                         ))
                       ) : (
-                        ['СТО', 'Склад', 'Продажи', 'Бухгалтерия', 'Логистика', 'IT', 'Общий'].map(
-                          (dept) => (
-                            <option key={dept} value={dept}>
-                              {dept}
-                            </option>
-                          )
-                        )
+                        <option value="">Нет созданных отделов</option>
                       )}
                     </select>
                   </div>
@@ -1688,7 +1676,7 @@ export const KnowledgeBasePage = () => {
                             }`}
                           >
                             <span className="truncate">{emp.full_name}</span>
-                            <span className="text-[10px] text-[#777777]">{emp.department || 'СТО'}</span>
+                            <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
                           </div>
                         );
                       })}

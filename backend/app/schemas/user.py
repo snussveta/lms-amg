@@ -7,7 +7,7 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
     branch: Optional[str] = None
-    department: Optional[str] = "СТО"
+    department: Optional[str] = None
     department_id: Optional[int] = None
 
 
@@ -22,7 +22,7 @@ class UserAdminCreate(BaseModel):
     password: str = Field(..., min_length=6, max_length=128)
     role: str = Field(default="employee", pattern="^(superadmin|admin|department_head|employee)$")
     branch: Optional[str] = None
-    department: Optional[str] = "СТО"
+    department: Optional[str] = None
     department_id: Optional[int] = None
 
 

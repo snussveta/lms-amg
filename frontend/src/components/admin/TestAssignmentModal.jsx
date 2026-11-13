@@ -434,7 +434,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                                 <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
                                   <span>{u.email}</span>
                                   <span>•</span>
-                                  <span>{u.department || 'СТО'}</span>
+                                  <span>{u.department || 'Без отдела'}</span>
                                 </div>
                               </div>
                             </div>
