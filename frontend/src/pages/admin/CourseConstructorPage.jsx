@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const CourseConstructorPage = () => {
   const { id } = useParams();
@@ -49,6 +50,7 @@ export const CourseConstructorPage = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [departmentsList, setDepartmentsList] = useState([]);
+  const [confirmState, setConfirmState] = useState(null);
 
   // Fetch departments list
   useEffect(() => {
@@ -350,29 +352,36 @@ export const CourseConstructorPage = () => {
     }
   };
 
-  const handleDeleteModule = async (moduleId) => {
-    if (!window.confirm('Удалить этот раздел и все входящие в него уроки?')) return;
-
-    if (isEditing && courseId && typeof moduleId === 'number') {
-      try {
-        await api.delete(`/courses/${courseId}/modules/${moduleId}`);
-      } catch (err) {
-        setError(getErrorMessage(err, 'Не удалось удалить раздел.'));
-        return;
-      }
-    }
-
-    const updated = modules.filter((m) => m.id !== moduleId);
-    setModules(updated);
-    if (activeModuleId === moduleId) {
-      if (updated.length > 0) {
-        setActiveModuleId(updated[0].id);
-        setActiveLesson(updated[0].lessons?.[0] || null);
-      } else {
-        setActiveModuleId(null);
-        setActiveLesson(null);
-      }
-    }
+  const handleDeleteModule = (moduleId) => {
+    setConfirmState({
+      title: 'Удаление раздела курса',
+      message: 'Удалить этот раздел и все входящие в него уроки?',
+      description: 'Все материалы, видео и тесты внутри данного раздела будут удалены из курса.',
+      confirmText: 'Удалить раздел',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          if (isEditing && courseId && typeof moduleId === 'number') {
+            await api.delete(`/courses/${courseId}/modules/${moduleId}`);
+          }
+          const updated = modules.filter((m) => m.id !== moduleId);
+          setModules(updated);
+          if (activeModuleId === moduleId) {
+            if (updated.length > 0) {
+              setActiveModuleId(updated[0].id);
+              setActiveLesson(updated[0].lessons?.[0] || null);
+            } else {
+              setActiveModuleId(null);
+              setActiveLesson(null);
+            }
+          }
+        } catch (err) {
+          setError(getErrorMessage(err, 'Не удалось удалить раздел.'));
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const handleAddLesson = async (moduleId, type = 'article') => {
@@ -432,29 +441,35 @@ export const CourseConstructorPage = () => {
     }
   };
 
-  const handleDeleteLesson = async (moduleId, lessonId) => {
-    if (!window.confirm('Удалить этот урок?')) return;
-
-    if (isEditing && courseId && typeof lessonId === 'number') {
-      try {
-        await api.delete(`/courses/${courseId}/lessons/${lessonId}`);
-      } catch (err) {
-        setError(getErrorMessage(err, 'Не удалось удалить урок.'));
-        return;
-      }
-    }
-
-    setModules((prev) =>
-      prev.map((m) =>
-        m.id === moduleId
-          ? { ...m, lessons: (m.lessons || []).filter((l) => l.id !== lessonId) }
-          : m
-      )
-    );
-
-    if (activeLesson?.id === lessonId) {
-      setActiveLesson(null);
-    }
+  const handleDeleteLesson = (moduleId, lessonId) => {
+    setConfirmState({
+      title: 'Удаление урока',
+      message: 'Удалить этот урок из раздела?',
+      description: 'Материалы урока будут исключены из программы курса.',
+      confirmText: 'Удалить урок',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          if (isEditing && courseId && typeof lessonId === 'number') {
+            await api.delete(`/courses/${courseId}/lessons/${lessonId}`);
+          }
+          setModules((prev) =>
+            prev.map((m) =>
+              m.id === moduleId
+                ? { ...m, lessons: (m.lessons || []).filter((l) => l.id !== lessonId) }
+                : m
+            )
+          );
+          if (activeLesson?.id === lessonId) {
+            setActiveLesson(null);
+          }
+        } catch (err) {
+          setError(getErrorMessage(err, 'Не удалось удалить урок.'));
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   // Move Module Up / Down
@@ -1984,6 +1999,21 @@ export const CourseConstructorPage = () => {
         <AssignCourseModal
           course={{ id: courseId, title, department_tag: departmentTag }}
           onClose={() => setShowAssignModal(false)}
+        />
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmState && (
+        <ConfirmModal
+          isOpen={Boolean(confirmState)}
+          onClose={() => setConfirmState(null)}
+          onConfirm={confirmState.onConfirm}
+          title={confirmState.title}
+          message={confirmState.message}
+          description={confirmState.description}
+          confirmText={confirmState.confirmText || 'Удалить'}
+          cancelText={confirmState.cancelText || 'Отмена'}
+          variant={confirmState.variant || 'danger'}
         />
       )}
     </div>

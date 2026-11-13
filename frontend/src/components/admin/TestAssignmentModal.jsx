@@ -16,6 +16,7 @@ import {
   Building2,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { ConfirmModal } from '../ConfirmModal';
 
 export const TestAssignmentModal = ({ test, onClose }) => {
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
@@ -31,6 +32,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [revokeUserId, setRevokeUserId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -158,16 +160,8 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     }
   };
 
-  const handleRevoke = async (userId) => {
-    if (!window.confirm('Отозвать назначение у данного сотрудника?')) return;
-
-    try {
-      await api.delete(`/tests/${test.id}/assignments/${userId}`);
-      setAssignments((prev) => prev.filter((a) => a.user_id !== userId));
-    } catch (err) {
-      console.error('Ошибка отзыва назначения:', err);
-      alert(getErrorMessage(err, 'Не удалось отозвать назначение.'));
-    }
+  const handleRevoke = (userId) => {
+    setRevokeUserId(userId);
   };
 
   const formatDate = (isoString) => {
@@ -517,6 +511,30 @@ export const TestAssignmentModal = ({ test, onClose }) => {
           )}
         </div>
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {revokeUserId && (
+        <ConfirmModal
+          isOpen={Boolean(revokeUserId)}
+          onClose={() => setRevokeUserId(null)}
+          onConfirm={async () => {
+            try {
+              await api.delete(`/tests/${test.id}/assignments/${revokeUserId}`);
+              setAssignments((prev) => prev.filter((a) => a.user_id !== revokeUserId));
+            } catch (err) {
+              console.error('Ошибка отзыва назначения:', err);
+              alert(getErrorMessage(err, 'Не удалось отозвать назначение.'));
+            } finally {
+              setRevokeUserId(null);
+            }
+          }}
+          title="Отзыв назначения теста"
+          message="Отозвать назначение теста у данного сотрудника?"
+          description="Сотрудник потеряет персональный доступ к этому тесту."
+          confirmText="Отозвать тест"
+          variant="danger"
+        />
+      )}
     </div>
   );
 };

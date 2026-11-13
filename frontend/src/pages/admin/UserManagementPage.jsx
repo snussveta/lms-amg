@@ -25,6 +25,7 @@ import {
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { RoleBadge } from '../../components/RoleBadge';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const UserManagementPage = () => {
   const { user: currentUser, isSuperAdmin, isAdmin, isDepartmentHead, isManager } = useAuth();
@@ -38,6 +39,7 @@ export const UserManagementPage = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [confirmState, setConfirmState] = useState(null);
 
   // Register Employee Modal State
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -272,25 +274,31 @@ export const UserManagementPage = () => {
     }
   };
 
-  const handleDeleteUser = async (targetUser) => {
-    if (!window.confirm(`Вы уверены, что хотите удалить сотрудника "${targetUser.full_name}"?`)) {
-      return;
-    }
-
-    try {
-      setUpdatingId(targetUser.id);
-      await api.delete(`/users/${targetUser.id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
-      setSuccessMsg(`Пользователь ${targetUser.full_name} удален.`);
-      setTimeout(() => setSuccessMsg(''), 4000);
-      const dRes = await api.get('/departments');
-      setDepartments(dRes.data || []);
-    } catch (err) {
-      console.error('Ошибка удаления пользователя:', err);
-      setError(err.response?.data?.detail || 'Не удалось удалить пользователя.');
-    } finally {
-      setUpdatingId(null);
-    }
+  const requestDeleteUser = (targetUser) => {
+    setConfirmState({
+      title: 'Удаление сотрудника',
+      message: `Вы уверены, что хотите удалить сотрудника «${targetUser.full_name}»?`,
+      description: `Email: ${targetUser.email}. Доступ к платформе будет аннулирован, а история прохождения курсов и тестов удалена. Это действие необратимо.`,
+      confirmText: 'Удалить сотрудника',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          setUpdatingId(targetUser.id);
+          await api.delete(`/users/${targetUser.id}`);
+          setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+          setSuccessMsg(`Пользователь ${targetUser.full_name} успешно удален.`);
+          setTimeout(() => setSuccessMsg(''), 4000);
+          const dRes = await api.get('/departments');
+          setDepartments(dRes.data || []);
+        } catch (err) {
+          console.error('Ошибка удаления пользователя:', err);
+          setError(err.response?.data?.detail || 'Не удалось удалить пользователя.');
+        } finally {
+          setUpdatingId(null);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   // Department CRUD
@@ -366,22 +374,47 @@ export const UserManagementPage = () => {
     }
   };
 
-  const handleDeleteDept = async (dept) => {
-    if (!window.confirm(`Вы уверены, что хотите удалить отдел «${dept.name}»?`)) {
-      return;
-    }
+  const requestDeleteDept = (dept) => {
+    setConfirmState({
+      title: 'Удаление отдела компании',
+      message: `Вы уверены, что хотите удалить отдел «${dept.name}»?`,
+      description: 'Все сотрудники этого отдела останутся в системе, но их принадлежность к отделу будет сброшена. Это действие необратимо.',
+      confirmText: 'Удалить отдел',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          setError('');
+          await api.delete(`/departments/${dept.id}`);
+          setDepartments((prev) => prev.filter((d) => d.id !== dept.id));
+          setSuccessMsg(`Отдел «${dept.name}» успешно удален.`);
+          setTimeout(() => setSuccessMsg(''), 4000);
+          loadAllData();
+        } catch (err) {
+          console.error('Ошибка удаления отдела:', err);
+          setError(err.response?.data?.detail || 'Не удалось удалить отдел.');
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
+  };
 
-    try {
-      setError('');
-      await api.delete(`/departments/${dept.id}`);
-      setDepartments((prev) => prev.filter((d) => d.id !== dept.id));
-      setSuccessMsg(`Отдел «${dept.name}» удален.`);
-      setTimeout(() => setSuccessMsg(''), 4000);
-      loadAllData();
-    } catch (err) {
-      console.error('Ошибка удаления отдела:', err);
-      setError(err.response?.data?.detail || 'Не удалось удалить отдел.');
-    }
+  const requestDismissHead = (dept, headUser) => {
+    if (!headUser) return;
+    setConfirmState({
+      title: 'Снятие руководителя отдела',
+      message: `Снять ${headUser.full_name} с должности руководителя отдела «${dept.name}»?`,
+      description: 'Полномочия руководителя отдела будут аннулированы, а роль сотрудника изменится на «Сотрудник».',
+      confirmText: 'Снять с должности',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await handleAssignHead(dept.id, null);
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const candidateUsers = users.filter((u) => {
@@ -711,7 +744,7 @@ export const UserManagementPage = () => {
 
                               {canDeleteUser(u) && (
                                 <button
-                                  onClick={() => handleDeleteUser(u)}
+                                  onClick={() => requestDeleteUser(u)}
                                   disabled={updatingId === u.id}
                                   className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
                                   title="Удалить сотрудника"
@@ -823,7 +856,7 @@ export const UserManagementPage = () => {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteDept(dept)}
+                            onClick={() => requestDeleteDept(dept)}
                             className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
                             title="Удалить отдел"
                           >
@@ -845,11 +878,7 @@ export const UserManagementPage = () => {
                           </span>
                           {currentHead && isAdmin && (
                             <button
-                              onClick={() => {
-                                if (window.confirm(`Снять ${currentHead.full_name} с должности руководителя отдела «${dept.name}»?`)) {
-                                  handleAssignHead(dept.id, null);
-                                }
-                              }}
+                              onClick={() => requestDismissHead(dept, currentHead)}
                               className="text-[11px] text-[#777777] hover:text-[#E84C3D] font-medium transition-colors"
                             >
                               Снять
@@ -1461,7 +1490,7 @@ export const UserManagementPage = () => {
                   <button
                     type="button"
                     disabled={isSubmittingHead}
-                    onClick={() => handleAssignHead(headModalDept.id, null)}
+                    onClick={() => requestDismissHead(headModalDept, headModalDept.head)}
                     className="text-xs text-[#E84C3D] hover:underline font-bold shrink-0"
                   >
                     Снять
@@ -1584,6 +1613,21 @@ export const UserManagementPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmState && (
+        <ConfirmModal
+          isOpen={Boolean(confirmState)}
+          onClose={() => setConfirmState(null)}
+          onConfirm={confirmState.onConfirm}
+          title={confirmState.title}
+          message={confirmState.message}
+          description={confirmState.description}
+          confirmText={confirmState.confirmText || 'Удалить'}
+          cancelText={confirmState.cancelText || 'Отмена'}
+          variant={confirmState.variant || 'danger'}
+        />
       )}
     </div>
   );

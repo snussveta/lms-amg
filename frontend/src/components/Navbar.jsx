@@ -57,7 +57,7 @@ export const Navbar = () => {
             <div className="flex items-center gap-6 lg:gap-8">
               <Link to="/" className="flex items-center gap-3 group focus:outline-none">
                 <div className="w-9 h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center text-white group-hover:bg-[#2e2e2e] transition-all relative shadow-sm">
-                  <span className="font-black text-sm tracking-wider">AMG</span>
+                  <GraduationCap className="w-5 h-5 text-white" />
                   <span className="w-2 h-2 rounded-full bg-[#E84C3D] absolute -top-0.5 -right-0.5 ring-2 ring-[#141414]" />
                 </div>
                 <div className="flex flex-col">

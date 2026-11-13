@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const AdminCoursesPage = () => {
   const [courses, setCourses] = useState([]);
@@ -27,6 +28,7 @@ export const AdminCoursesPage = () => {
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [assigningCourse, setAssigningCourse] = useState(null);
+  const [confirmDeleteCourse, setConfirmDeleteCourse] = useState(null);
   const [departments, setDepartments] = useState(['Все']);
 
   useEffect(() => {
@@ -95,17 +97,20 @@ export const AdminCoursesPage = () => {
     }
   };
 
-  const handleDeleteCourse = async (courseId, title) => {
-    if (!window.confirm(`Вы уверены, что хотите удалить курс «${title}» со всеми материалами?`)) {
-      return;
-    }
-
-    try {
-      await api.delete(`/courses/${courseId}`);
-      setCourses((prev) => prev.filter((c) => c.id !== courseId));
-    } catch (err) {
-      alert(getErrorMessage(err, 'Ошибка при удалении курса.'));
-    }
+  const requestDeleteCourse = (course) => {
+    setConfirmDeleteCourse({
+      course,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/courses/${course.id}`);
+          setCourses((prev) => prev.filter((c) => c.id !== course.id));
+        } catch (err) {
+          alert(getErrorMessage(err, 'Ошибка при удалении курса.'));
+        } finally {
+          setConfirmDeleteCourse(null);
+        }
+      },
+    });
   };
 
   const filteredCourses = courses.filter((c) =>
@@ -315,7 +320,7 @@ export const AdminCoursesPage = () => {
                   </Link>
 
                   <button
-                    onClick={() => handleDeleteCourse(course.id, course.title)}
+                    onClick={() => requestDeleteCourse(course)}
                     className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
                     title="Удалить курс"
                   >
@@ -334,6 +339,20 @@ export const AdminCoursesPage = () => {
           course={assigningCourse}
           onClose={() => setAssigningCourse(null)}
           onAssigned={fetchCourses}
+        />
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmDeleteCourse && (
+        <ConfirmModal
+          isOpen={Boolean(confirmDeleteCourse)}
+          onClose={() => setConfirmDeleteCourse(null)}
+          onConfirm={confirmDeleteCourse.onConfirm}
+          title="Удаление обучающего курса"
+          message={`Вы уверены, что хотите удалить курс «${confirmDeleteCourse.course.title}»?`}
+          description="Все разделы, лекции, видеоматериалы, тесты и прогресс сотрудников по этому курсу будут безвозвратно удалены."
+          confirmText="Удалить курс"
+          variant="danger"
         />
       )}
     </div>

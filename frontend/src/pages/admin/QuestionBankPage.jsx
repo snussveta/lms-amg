@@ -17,6 +17,7 @@ import {
   CheckSquare,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const QuestionBankPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -25,6 +26,7 @@ export const QuestionBankPage = () => {
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDeleteQId, setConfirmDeleteQId] = useState(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -229,18 +231,8 @@ export const QuestionBankPage = () => {
     }
   };
 
-  const handleDeleteQuestion = async (id) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот вопрос из банка?')) {
-      return;
-    }
-    try {
-      await api.delete(`/bank-questions/${id}`);
-      setQuestions((prev) => prev.filter((q) => q.id !== id));
-      await fetchDepartments();
-    } catch (err) {
-      console.error('Ошибка удаления вопроса:', err);
-      alert(getErrorMessage(err, 'Не удалось удалить вопрос из банка.'));
-    }
+  const handleDeleteQuestion = (id) => {
+    setConfirmDeleteQId(id);
   };
 
   const getQuestionTypeLabel = (type) => {
@@ -658,6 +650,31 @@ export const QuestionBankPage = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmDeleteQId && (
+        <ConfirmModal
+          isOpen={Boolean(confirmDeleteQId)}
+          onClose={() => setConfirmDeleteQId(null)}
+          onConfirm={async () => {
+            try {
+              await api.delete(`/bank-questions/${confirmDeleteQId}`);
+              setQuestions((prev) => prev.filter((q) => q.id !== confirmDeleteQId));
+              await fetchDepartments();
+            } catch (err) {
+              console.error('Ошибка удаления вопроса:', err);
+              alert(getErrorMessage(err, 'Не удалось удалить вопрос из банка.'));
+            } finally {
+              setConfirmDeleteQId(null);
+            }
+          }}
+          title="Удаление вопроса из банка"
+          message="Вы уверены, что хотите удалить этот вопрос?"
+          description="Вопрос будет удален из централизованного банка. Вопросы, уже включенные в созданные тесты, останутся в них."
+          confirmText="Удалить вопрос"
+          variant="danger"
+        />
       )}
     </div>
   );

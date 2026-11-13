@@ -18,6 +18,7 @@ import {
   Percent,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
+import { ConfirmModal } from '../ConfirmModal';
 
 export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
@@ -34,6 +35,7 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [revokeUserId, setRevokeUserId] = useState(null);
 
   useEffect(() => {
     if (course?.id) {
@@ -169,19 +171,8 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
     }
   };
 
-  const handleRevoke = async (userId) => {
-    if (!window.confirm('Отозвать назначение курса у данного сотрудника?')) return;
-
-    try {
-      await api.delete(`/courses/${course.id}/assign/${userId}`);
-      setAssignments((prev) => prev.filter((a) => a.user_id !== userId));
-      if (onAssigned) {
-        onAssigned();
-      }
-    } catch (err) {
-      console.error('Ошибка отзыва назначения курса:', err);
-      alert(getErrorMessage(err, 'Не удалось отозвать назначение.'));
-    }
+  const handleRevoke = (userId) => {
+    setRevokeUserId(userId);
   };
 
   const formatDate = (isoString) => {
@@ -568,6 +559,31 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
           </div>
         )}
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {revokeUserId && (
+        <ConfirmModal
+          isOpen={Boolean(revokeUserId)}
+          onClose={() => setRevokeUserId(null)}
+          onConfirm={async () => {
+            try {
+              await api.delete(`/courses/${course.id}/assign/${revokeUserId}`);
+              setAssignments((prev) => prev.filter((a) => a.user_id !== revokeUserId));
+              if (onAssigned) onAssigned();
+            } catch (err) {
+              console.error('Ошибка отзыва назначения курса:', err);
+              alert(getErrorMessage(err, 'Не удалось отозвать назначение.'));
+            } finally {
+              setRevokeUserId(null);
+            }
+          }}
+          title="Отзыв назначения курса"
+          message="Отозвать назначение курса у данного сотрудника?"
+          description="Сотрудник потеряет персональный доступ к этому курсу и дедлайн будет сброшен."
+          confirmText="Отозвать курс"
+          variant="danger"
+        />
+      )}
     </div>
   );
 };

@@ -17,12 +17,14 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const AdminTestsPage = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [assigningTest, setAssigningTest] = useState(null);
+  const [confirmDeleteTest, setConfirmDeleteTest] = useState(null);
   const [copiedToken, setCopiedToken] = useState(null);
 
   useEffect(() => {
@@ -55,25 +57,23 @@ export const AdminTestsPage = () => {
     }
   };
 
-  const handleDelete = async (testId) => {
-    if (
-      !window.confirm(
-        'Вы действительно хотите удалить этот тест? Все связанные вопросы, назначения и попытки сотрудников будут удалены навсегда.'
-      )
-    ) {
-      return;
-    }
-
-    try {
-      setDeletingId(testId);
-      await api.delete(`/tests/${testId}`);
-      setTests((prev) => prev.filter((t) => t.id !== testId));
-    } catch (err) {
-      console.error('Ошибка удаления теста:', err);
-      alert(getErrorMessage(err, 'Не удалось удалить тест.'));
-    } finally {
-      setDeletingId(null);
-    }
+  const requestDeleteTest = (test) => {
+    setConfirmDeleteTest({
+      test,
+      onConfirm: async () => {
+        try {
+          setDeletingId(test.id);
+          await api.delete(`/tests/${test.id}`);
+          setTests((prev) => prev.filter((t) => t.id !== test.id));
+        } catch (err) {
+          console.error('Ошибка удаления теста:', err);
+          alert(getErrorMessage(err, 'Не удалось удалить тест.'));
+        } finally {
+          setDeletingId(null);
+          setConfirmDeleteTest(null);
+        }
+      },
+    });
   };
 
   const handleCopyPublicLink = (publicToken) => {
@@ -260,7 +260,7 @@ export const AdminTestsPage = () => {
                         </Link>
 
                         <button
-                          onClick={() => handleDelete(t.id)}
+                          onClick={() => requestDeleteTest(t)}
                           disabled={deletingId === t.id}
                           className="p-2 rounded-lg bg-[#FCECEB] hover:bg-[#FDE8E9] text-[#E84C3D] border border-[#F8D3D0] transition-colors"
                           title="Удалить тест"
@@ -285,6 +285,20 @@ export const AdminTestsPage = () => {
             setAssigningTest(null);
             fetchTests();
           }}
+        />
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmDeleteTest && (
+        <ConfirmModal
+          isOpen={Boolean(confirmDeleteTest)}
+          onClose={() => setConfirmDeleteTest(null)}
+          onConfirm={confirmDeleteTest.onConfirm}
+          title="Удаление тестирования"
+          message={`Вы уверены, что хотите удалить тест «${confirmDeleteTest.test.title}»?`}
+          description="Все связанные вопросы, персональные назначения и результаты прохождения сотрудников будут безвозвратно удалены."
+          confirmText="Удалить тест"
+          variant="danger"
         />
       )}
     </div>
