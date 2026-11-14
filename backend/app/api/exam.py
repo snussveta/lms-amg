@@ -45,6 +45,9 @@ def _map_participant_response(p: ExamParticipant) -> ExamParticipantResponse:
     full_name = p.user.full_name if p.user else (p.guest_name or "Гость")
     email = p.user.email if p.user else None
     dept = p.user.department if p.user else None
+    is_needs_review = False
+    if hasattr(p, "attempt") and p.attempt and p.attempt.status == "needs_review":
+        is_needs_review = True
 
     return ExamParticipantResponse(
         id=p.id,
@@ -58,10 +61,11 @@ def _map_participant_response(p: ExamParticipant) -> ExamParticipantResponse:
         progress_percent=p.progress_percent,
         tab_switches_count=p.tab_switches_count,
         right_clicks_count=getattr(p, "right_clicks_count", 0),
-        score=p.score,
-        points_earned=p.points_earned,
+        score=p.score if not is_needs_review else 0.0,
+        points_earned=p.points_earned if not is_needs_review else 0,
         total_points=p.total_points,
-        passed=p.passed,
+        passed=p.passed if not is_needs_review else False,
+        needs_review=is_needs_review,
         attempt_id=p.attempt_id,
         joined_at=p.joined_at,
         finished_at=p.finished_at,
@@ -350,7 +354,7 @@ async def join_exam_session(
 async def start_exam_session(
     session_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+    current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """Синхронный запуск экзамена для всех подключенных участников в комнате."""
     stmt = (
@@ -391,7 +395,7 @@ async def extend_exam_session_time(
     session_id: int,
     added_minutes: int = Query(5, ge=1, le=60),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+    current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """Продление времени экзамена экзаменатором на X минут."""
     res = await db.execute(select(ExamSession).where(ExamSession.id == session_id))
@@ -418,7 +422,7 @@ async def extend_exam_session_time(
 async def finish_exam_session(
     session_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+    current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """Принудительное завершение экзамена экзаменатором для всей группы."""
     res = await db.execute(select(ExamSession).where(ExamSession.id == session_id))
@@ -447,7 +451,7 @@ async def disqualify_participant(
     session_id: int,
     participant_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+    current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """Дисквалификация сотрудника за нарушение правил (списывание)."""
     p_res = await db.execute(
@@ -732,18 +736,18 @@ async def submit_exam_answers(
     score_percent = round((earned_points / total_possible_points * 100), 1) if total_possible_points > 0 else 0.0
     passed = (score_percent >= session.passing_score) if not has_unreviewed else False
 
-    attempt.score = int(round(score_percent))
+    attempt.score = int(round(score_percent)) if not has_unreviewed else 0
     attempt.max_score = int(total_possible_points)
-    attempt.is_passed = passed
+    attempt.is_passed = passed if not has_unreviewed else False
     attempt.status = "needs_review" if has_unreviewed else "submitted"
     attempt.submitted_at = now
 
-    # Update participant
+    # Update participant: if needs manual review, score and passed are not set until reviewed
     participant.status = "submitted"
-    participant.score = score_percent
-    participant.points_earned = earned_points
+    participant.score = score_percent if not has_unreviewed else 0.0
+    participant.points_earned = earned_points if not has_unreviewed else 0
     participant.total_points = total_possible_points
-    participant.passed = passed
+    participant.passed = passed if not has_unreviewed else False
     participant.attempt_id = attempt.id
     participant.progress_percent = 100
     participant.finished_at = now
@@ -761,11 +765,12 @@ async def submit_exam_answers(
     )
 
     return {
-        "status": "submitted",
-        "score": score_percent,
-        "points_earned": earned_points,
+        "status": "needs_review" if has_unreviewed else "submitted",
+        "score": None if has_unreviewed else score_percent,
+        "points_earned": None if has_unreviewed else earned_points,
         "total_points": total_possible_points,
-        "passed": passed,
+        "passed": None if has_unreviewed else passed,
+        "needs_review": has_unreviewed,
         "attempt_id": attempt.id,
     }
 
@@ -880,17 +885,17 @@ async def get_exam_statistics(
         is_needs_review = att.status == "needs_review" if att else False
 
         if p.status == "submitted":
-            submitted_count += 1
-            total_score_sum += p.score
-            if p.passed:
-                passed_count += 1
+            if is_needs_review:
+                needs_review_count += 1
             else:
-                failed_count += 1
+                submitted_count += 1
+                total_score_sum += p.score
+                if p.passed:
+                    passed_count += 1
+                else:
+                    failed_count += 1
         elif p.status == "disqualified":
             disqualified_count += 1
-
-        if is_needs_review:
-            needs_review_count += 1
 
         total_violations += (p.tab_switches_count or 0) + (getattr(p, "right_clicks_count", 0) or 0)
 
@@ -906,11 +911,11 @@ async def get_exam_statistics(
             "full_name": full_name,
             "email": email,
             "department": dept,
-            "status": p.status,
-            "score": p.score,
-            "points_earned": p.points_earned,
+            "status": "needs_review" if is_needs_review else p.status,
+            "score": p.score if not is_needs_review else None,
+            "points_earned": p.points_earned if not is_needs_review else None,
             "total_points": p.total_points,
-            "passed": p.passed,
+            "passed": p.passed if not is_needs_review else None,
             "tab_switches_count": p.tab_switches_count,
             "right_clicks_count": getattr(p, "right_clicks_count", 0),
             "attempt_id": p.attempt_id,

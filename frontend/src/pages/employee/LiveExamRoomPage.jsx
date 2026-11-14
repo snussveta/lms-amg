@@ -489,57 +489,94 @@ export const LiveExamRoomPage = () => {
 
   // 2. RESULTS / FINISHED SCREEN
   if (result) {
+    const isNeedsReview = result.needs_review || result.status === 'needs_review';
+
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full bg-white rounded-3xl border border-[#EEEEEE] shadow-2xl p-8 text-center space-y-5 animate-fade-in">
-          <div
-            className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto border ${result.passed
-              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-              : 'bg-red-50 text-[#E84C3D] border-red-200'
-              }`}
-          >
-            {result.passed ? (
-              <CheckCircle2 className="w-9 h-9" />
-            ) : (
-              <XCircle className="w-9 h-9" />
-            )}
-          </div>
+          {isNeedsReview ? (
+            <>
+              <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto border bg-amber-50 text-amber-700 border-amber-300 shadow-sm">
+                <Clock className="w-9 h-9" />
+              </div>
 
-          <div>
-            <span
-              className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${result.passed
-                ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-red-100 text-red-800'
-                }`}
-            >
-              {result.passed ? 'Экзамен сдан' : 'Не сдан'}
-            </span>
-            <h2 className="text-2xl font-black text-[#222222] mt-3">
-              {result.passed ? 'Поздравляем!' : 'Тестирование завершено'}
-            </h2>
-            <p className="text-xs text-[#777777] mt-1">
-              Ваши ответы успешно отправлены и зафиксированы в протоколе.
-            </p>
-          </div>
+              <div>
+                <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                  Ожидает проверки администратором
+                </span>
+                <h2 className="text-2xl font-black text-[#222222] mt-3">
+                  Экзамен сдан на проверку
+                </h2>
+                <p className="text-xs text-[#777777] mt-1 leading-relaxed">
+                  Ваша работа содержит вопросы с развернутым ответом, которые требуют ручной проверки экзаменатором.
+                </p>
+              </div>
 
-          <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] grid grid-cols-2 gap-3 text-center">
-            <div>
-              <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
-                Итоговый балл
+              <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] text-center space-y-2">
+                <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                  Итоговая оценка
+                </div>
+                <div className="text-sm sm:text-base font-black text-amber-800 flex items-center justify-center gap-2 py-1">
+                  <Clock className="w-4 h-4 text-amber-700 animate-spin" />
+                  <span>Формируется после проверки</span>
+                </div>
+                <p className="text-[11px] text-[#777777] pt-2 border-t border-[#E5E5E5] leading-snug">
+                  Баллы и результат появятся в личном кабинете после проверки всех открытых вопросов администратором.
+                </p>
               </div>
-              <div className="text-2xl font-black text-[#141414] mt-0.5">
-                {result.score}%
+            </>
+          ) : (
+            <>
+              <div
+                className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto border ${result.passed
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                  : 'bg-red-50 text-[#E84C3D] border-red-200'
+                  }`}
+              >
+                {result.passed ? (
+                  <CheckCircle2 className="w-9 h-9" />
+                ) : (
+                  <XCircle className="w-9 h-9" />
+                )}
               </div>
-            </div>
-            <div>
-              <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
-                Баллов набрано
+
+              <div>
+                <span
+                  className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${result.passed
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}
+                >
+                  {result.passed ? 'Экзамен сдан' : 'Не сдан'}
+                </span>
+                <h2 className="text-2xl font-black text-[#222222] mt-3">
+                  {result.passed ? 'Поздравляем!' : 'Тестирование завершено'}
+                </h2>
+                <p className="text-xs text-[#777777] mt-1">
+                  Ваши ответы успешно отправлены и зафиксированы в протоколе.
+                </p>
               </div>
-              <div className="text-2xl font-black text-[#141414] mt-0.5">
-                {result.points_earned} / {result.total_points}
+
+              <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] grid grid-cols-2 gap-3 text-center">
+                <div>
+                  <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                    Итоговый балл
+                  </div>
+                  <div className="text-2xl font-black text-[#141414] mt-0.5">
+                    {result.score}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-[#777777] uppercase tracking-wider">
+                    Баллов набрано
+                  </div>
+                  <div className="text-2xl font-black text-[#141414] mt-0.5">
+                    {result.points_earned} / {result.total_points}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
           <div className="pt-2">
             <Link

@@ -102,7 +102,7 @@ export const AdminTestsPage = () => {
           className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#777777] hover:text-[#141414] hover:bg-white transition-all flex items-center gap-2 border border-transparent"
         >
           <BarChart3 className="w-4 h-4 text-[#777777]" />
-          <span>Статистика очных экзаменов</span>
+          <span>Прошедшие экзамены и проверка</span>
         </Link>
       </div>
 

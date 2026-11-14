@@ -166,20 +166,26 @@ export const MyAttemptsPage = () => {
                       </td>
 
                       <td className="py-4 px-5 font-mono text-xs">
-                        <span className="font-bold text-[#222222] text-sm">{att.score}</span> / {att.max_score} б.
+                        {isNeedsReview ? (
+                          <span className="text-amber-700 font-bold">—</span>
+                        ) : (
+                          <>
+                            <span className="font-bold text-[#222222] text-sm">{att.score}</span> / {att.max_score} б.
+                          </>
+                        )}
                       </td>
 
                       <td className="py-4 px-5">
                         <span
                           className={`font-bold ${
                             isNeedsReview
-                              ? 'text-amber-700'
+                              ? 'text-amber-700 text-xs'
                               : isPassed
                               ? 'text-emerald-700'
                               : 'text-[#E84C3D]'
                           }`}
                         >
-                          {att.percentage}%
+                          {isNeedsReview ? 'Ожидает проверки' : `${att.percentage}%`}
                         </span>
                       </td>
 

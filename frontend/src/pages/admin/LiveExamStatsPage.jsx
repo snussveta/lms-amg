@@ -130,7 +130,12 @@ export const LiveExamStatsPage = () => {
           className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white text-[#141414] shadow-xs border border-[#E5E5E5] flex items-center gap-2"
         >
           <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
-          <span>Статистика очных экзаменов</span>
+          <span>Прошедшие экзамены и проверка</span>
+          {summary.needs_review_count > 0 && isAdmin && (
+            <span className="w-5 h-5 rounded-full bg-[#E84C3D] text-white text-[10px] font-black flex items-center justify-center animate-pulse">
+              {summary.needs_review_count}
+            </span>
+          )}
         </Link>
       </div>
 
@@ -144,7 +149,7 @@ export const LiveExamStatsPage = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
-                  Статистика очных экзаменов
+                  Прошедшие экзамены: статистика и проверка ответов
                 </h1>
                 {isHead ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
@@ -160,8 +165,8 @@ export const LiveExamStatsPage = () => {
               </div>
               <p className="text-xs text-[#777777] mt-0.5">
                 {isHead
-                  ? `Журнал результатов и контроль честности сдачи сотрудников отдела «${user?.department || 'Ваш отдел'}» (режим просмотра)`
-                  : 'Сводные данные, аудит честности сдачи (античит) и проверка развернутых ответов сотрудников'}
+                  ? `Журнал результатов и контроль честности сдачи сотрудников отдела «${user?.department || 'Ваш отдел'}» (режим просмотра статистики)`
+                  : 'Сводные данные, аудит честности сдачи (античит) и ручная проверка развернутых ответов сотрудников'}
               </p>
             </div>
           </div>
@@ -453,7 +458,16 @@ export const LiveExamStatsPage = () => {
 
                       {/* Score */}
                       <td className="py-3.5 px-4 text-center">
-                        {isSubmitted ? (
+                        {isNeedsReview ? (
+                          <div className="inline-flex flex-col items-center">
+                            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
+                              На проверке
+                            </span>
+                            <span className="text-[10px] text-[#777777] mt-0.5">
+                              Оценка формируется
+                            </span>
+                          </div>
+                        ) : isSubmitted ? (
                           <div className="inline-flex flex-col items-center">
                             <span
                               className={`text-sm font-black ${
@@ -537,18 +551,18 @@ export const LiveExamStatsPage = () => {
                                 <button
                                   type="button"
                                   onClick={() => setReviewingAttemptId(row.attempt_id)}
-                                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
-                                  title="Проверить развернутые ответы"
+                                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#E84C3D] hover:bg-[#D33829] active:scale-95 transition-all flex items-center gap-1.5 shadow-sm animate-pulse"
+                                  title="Проверить развернутые ответы и выставить оценку"
                                 >
                                   <FileCheck className="w-3.5 h-3.5" />
-                                  <span>Проверить</span>
+                                  <span>Проверить работу</span>
                                 </button>
                               ) : row.attempt_id ? (
                                 <button
                                   type="button"
                                   onClick={() => setReviewingAttemptId(row.attempt_id)}
                                   className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#555555] bg-[#F5F5F7] hover:bg-[#EEEEEE] hover:text-[#141414] transition-colors flex items-center gap-1 border border-[#EEEEEE]"
-                                  title="Посмотреть протокол и ответы"
+                                  title="Посмотреть проверенный протокол"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                   <span>Протокол</span>

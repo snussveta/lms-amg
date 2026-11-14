@@ -10,6 +10,7 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  Eye,
   Flame,
   Minus,
   Play,
@@ -27,10 +28,12 @@ import {
   Zap,
 } from 'lucide-react';
 import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const LiveExamControlPage = () => {
   const { sessionId } = useParams();
+  const { user, isAdmin } = useAuth();
 
   const [session, setSession] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -338,47 +341,56 @@ export const LiveExamControlPage = () => {
           </p>
         </div>
 
-        {/* Live Controls */}
+        {/* Live Controls (Admins only) */}
         <div className="flex items-center gap-2 flex-wrap">
-          {isInProgress && (
+          {isAdmin ? (
             <>
-              <button
-                type="button"
-                onClick={() => handleExtendTime(5)}
-                disabled={actionLoading}
-                className="btn-secondary text-xs px-3.5 py-2 flex items-center gap-1.5 min-h-[42px] font-bold"
-                title="Добавить 5 минут к общему таймеру"
-              >
-                <Plus className="w-4 h-4 text-[#E84C3D]" />
-                <span>+5 мин.</span>
-              </button>
+              {isInProgress && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleExtendTime(5)}
+                    disabled={actionLoading}
+                    className="btn-secondary text-xs px-3.5 py-2 flex items-center gap-1.5 min-h-[42px] font-bold"
+                    title="Добавить 5 минут к общему таймеру"
+                  >
+                    <Plus className="w-4 h-4 text-[#E84C3D]" />
+                    <span>+5 мин.</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={requestFinishExam}
-                disabled={actionLoading}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 min-h-[42px]"
-              >
-                <StopCircle className="w-4 h-4" />
-                <span>Завершить для всех</span>
-              </button>
-            </>
-          )}
-
-          {isWaiting && (
-            <button
-              type="button"
-              onClick={handleStartExam}
-              disabled={actionLoading || participants.length === 0}
-              className="btn-primary text-xs sm:text-sm px-6 py-2.5 flex items-center gap-2 font-black shadow-lg min-h-[44px] disabled:opacity-50"
-            >
-              {actionLoading ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Play className="w-4 h-4 fill-current" />
+                  <button
+                    type="button"
+                    onClick={requestFinishExam}
+                    disabled={actionLoading}
+                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 min-h-[42px]"
+                  >
+                    <StopCircle className="w-4 h-4" />
+                    <span>Завершить для всех</span>
+                  </button>
+                </>
               )}
-              <span>НАЧАТЬ ЭКЗАМЕН ДЛЯ ВСЕХ ({participants.length})</span>
-            </button>
+
+              {isWaiting && (
+                <button
+                  type="button"
+                  onClick={handleStartExam}
+                  disabled={actionLoading || participants.length === 0}
+                  className="btn-primary text-xs sm:text-sm px-6 py-2.5 flex items-center gap-2 font-black shadow-lg min-h-[44px] disabled:opacity-50"
+                >
+                  {actionLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4 fill-current" />
+                  )}
+                  <span>НАЧАТЬ ЭКЗАМЕН ДЛЯ ВСЕХ ({participants.length})</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold flex items-center gap-1.5 shadow-xs">
+              <Eye className="w-3.5 h-3.5 text-amber-600" />
+              <span>Режим наблюдателя (просмотр хода экзамена)</span>
+            </div>
           )}
         </div>
       </div>
@@ -614,26 +626,33 @@ export const LiveExamControlPage = () => {
 
                       <td className="py-3.5 px-5">
                         {isSubmitted ? (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2.5 py-1 rounded-lg text-xs font-black ${p.passed
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-red-100 text-red-800'
-                                }`}
-                            >
-                              {p.score}% ({p.passed ? 'Сдал' : 'Не сдал'})
+                          p.needs_review ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                              <Clock className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                              <span>На проверке админом</span>
                             </span>
-                            <span className="text-[11px] text-[#777777]">
-                              {p.points_earned} / {p.total_points} б.
-                            </span>
-                          </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2.5 py-1 rounded-lg text-xs font-black ${p.passed
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-red-100 text-red-800'
+                                  }`}
+                              >
+                                {p.score}% ({p.passed ? 'Сдал' : 'Не сдал'})
+                              </span>
+                              <span className="text-[11px] text-[#777777]">
+                                {p.points_earned} / {p.total_points} б.
+                              </span>
+                            </div>
+                          )
                         ) : (
                           <span className="text-[#777777]">—</span>
                         )}
                       </td>
 
                       <td className="py-3.5 px-5 text-right">
-                        {!isDisqualified && (
+                        {isAdmin && !isDisqualified && (
                           <button
                             type="button"
                             onClick={() => requestDisqualify(p)}

@@ -213,7 +213,7 @@ export const Navbar = () => {
                               className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
                             >
                               <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
-                              Статистика экзаменов
+                              Прошедшие экзамены и проверка
                             </Link>
                             <Link
                               to="/admin/users"
@@ -459,7 +459,7 @@ export const Navbar = () => {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
                       <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Статистика экзаменов</span>
+                      <span>Прошедшие экзамены и проверка</span>
                     </Link>
                     <Link
                       to="/admin/users"

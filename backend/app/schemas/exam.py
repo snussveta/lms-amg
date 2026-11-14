@@ -31,6 +31,7 @@ class ExamParticipantResponse(BaseModel):
     points_earned: int = 0
     total_points: int = 0
     passed: bool = False
+    needs_review: bool = False
     attempt_id: Optional[int] = None
     joined_at: datetime
     finished_at: Optional[datetime] = None

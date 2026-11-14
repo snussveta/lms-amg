@@ -172,7 +172,13 @@ export const TestResultPage = () => {
           <div className="bg-[#F5F5F7] rounded-xl p-3 sm:p-4 text-center border border-[#EEEEEE]">
             <div className="text-xs text-[#777777]">Набранный балл</div>
             <div className="text-xl font-bold text-[#222222] mt-0.5">
-              {result.score} <span className="text-xs text-[#777777] font-normal">/ {result.max_score}</span>
+              {isNeedsReview ? (
+                <span className="text-amber-700 text-sm font-bold">На проверке</span>
+              ) : (
+                <>
+                  {result.score} <span className="text-xs text-[#777777] font-normal">/ {result.max_score}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -181,13 +187,13 @@ export const TestResultPage = () => {
             <div
               className={`text-xl font-bold mt-0.5 ${
                 isNeedsReview
-                  ? 'text-amber-700'
+                  ? 'text-amber-700 text-sm font-bold'
                   : isPassed
                   ? 'text-emerald-700'
                   : 'text-[#E84C3D]'
               }`}
             >
-              {result.percentage}%
+              {isNeedsReview ? 'На проверке' : `${result.percentage}%`}
             </div>
           </div>
 
