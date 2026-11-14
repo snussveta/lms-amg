@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import (
     create_access_token,
+    decode_password_reset_token,
     get_current_user,
     get_password_hash,
     verify_password,
@@ -13,6 +15,11 @@ from app.models.user import User
 from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=10)
+    new_password: str = Field(..., min_length=6, max_length=128)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -75,3 +82,33 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
 async def get_me(current_user: User = Depends(get_current_user)):
     """Получение профиля текущего авторизованного пользователя."""
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/reset-password", response_model=TokenResponse)
+async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    """Установка или сброс пароля сотрудника по защищенному токену из письма."""
+    email = decode_password_reset_token(payload.token)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ссылка для установки пароля недействительна или истек срок ее действия. Обратитесь к администратору.",
+        )
+
+    res = await db.execute(select(User).where(User.email == email.lower()))
+    user = res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь для смены пароля не найден.",
+        )
+
+    user.hashed_password = get_password_hash(payload.new_password)
+    await db.commit()
+    await db.refresh(user)
+
+    token = create_access_token(data={"sub": str(user.id), "role": user.role})
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user),
+    )

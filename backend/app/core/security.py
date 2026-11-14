@@ -37,6 +37,31 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
+def create_password_reset_token(email: str, expires_delta: Optional[timedelta] = None) -> str:
+    """Creates a signed JWT token specifically for setting/resetting employee password."""
+    now = datetime.now(timezone.utc)
+    # Default 7 days lifetime for welcome/setup email link
+    expire = now + (expires_delta or timedelta(days=7))
+    to_encode = {
+        "sub": email.lower().strip(),
+        "type": "reset_password",
+        "exp": expire,
+        "iat": now,
+    }
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_password_reset_token(token: str) -> Optional[str]:
+    """Decodes a password reset token and returns the email if valid."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "reset_password":
+            return None
+        return payload.get("sub")
+    except JWTError:
+        return None
+
+
 def decode_access_token(token: str) -> Optional[dict]:
     """Decodes and validates a JWT token."""
     try:

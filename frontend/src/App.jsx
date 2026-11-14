@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Auth Pages
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 // Employee Pages
 import { TestCatalogPage } from './pages/employee/TestCatalogPage';
@@ -42,6 +43,7 @@ function App() {
               {/* Public Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Public Guest Testing Routes (без авторизации) */}
               <Route path="/t/:token" element={<GuestTakeTestPage />} />

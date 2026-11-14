@@ -36,8 +36,8 @@ class QuestionOptionEmployeeResponse(BaseModel):
 class QuestionCreate(BaseModel):
     id: Optional[int] = None
     text: str = Field(..., min_length=1)
-    # single_choice, multiple_choice, manual_review, text
-    question_type: str = Field(..., pattern="^(single_choice|multiple_choice|manual_review|text)$")
+    # single_choice, multiple_choice, manual_review, text, dropdown
+    question_type: str = Field(..., pattern="^(single_choice|multiple_choice|manual_review|text|dropdown)$")
     points: int = Field(default=1, ge=1)
     order: int = Field(default=0, ge=0)
     options: List[QuestionOptionCreate] = []

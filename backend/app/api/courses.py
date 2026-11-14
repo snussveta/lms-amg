@@ -114,9 +114,11 @@ async def get_courses(
         
         user_status = "not_started"
         user_progress_percent = 0
+        completed_at = None
         if c.id in enrollments_map:
             user_status = enrollments_map[c.id].status
             user_progress_percent = enrollments_map[c.id].progress_percent
+            completed_at = enrollments_map[c.id].completed_at
 
         assignment = assignments_map.get(c.id)
         is_assigned = assignment is not None
@@ -141,6 +143,7 @@ async def get_courses(
                 user_progress_percent=user_progress_percent,
                 is_assigned=is_assigned,
                 assignment_deadline=deadline,
+                completed_at=completed_at,
             )
         )
 

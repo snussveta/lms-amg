@@ -12,6 +12,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Send,
   Shield,
   ShieldAlert,
   ShieldCheck,
@@ -79,18 +80,38 @@ export const UserManagementPage = () => {
   const [isSubmittingHead, setIsSubmittingHead] = useState(false);
 
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [isTestEmailModalOpen, setIsTestEmailModalOpen] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
 
-  const handleSendTestEmail = async () => {
+  const openTestEmailModal = () => {
+    setTestEmailAddress(currentUser?.email || '');
+    setIsTestEmailModalOpen(true);
+  };
+
+  const handleSendTestEmailSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!testEmailAddress.trim()) {
+      setError('Пожалуйста, укажите email для отправки тестового письма.');
+      return;
+    }
     try {
       setIsSendingTestEmail(true);
       setError('');
       setSuccessMsg('');
-      const res = await api.post('/users/test-email');
-      setSuccessMsg(res.data?.message || 'Тестовое письмо поставлено в очередь отправки. Проверьте ваш почтовый ящик.');
+      const res = await api.post('/users/test-email', {
+        to_email: testEmailAddress.trim(),
+      });
+      setIsTestEmailModalOpen(false);
+      setSuccessMsg(
+        res.data?.message || `Тестовое письмо поставлено в очередь на ${testEmailAddress.trim()}. Проверьте почту.`
+      );
       setTimeout(() => setSuccessMsg(''), 8000);
     } catch (err) {
       console.error('Ошибка отправки тестового письма:', err);
-      setError(err.response?.data?.detail || 'Не удалось отправить тестовое письмо. Проверьте настройки SMTP в .env на сервере.');
+      setError(
+        err.response?.data?.detail ||
+          'Не удалось отправить тестовое письмо. Проверьте настройки SMTP в .env на сервере.'
+      );
     } finally {
       setIsSendingTestEmail(false);
     }
@@ -515,9 +536,9 @@ export const UserManagementPage = () => {
           {activeTab === 'users' ? (
             <>
               <button
-                onClick={handleSendTestEmail}
+                onClick={openTestEmailModal}
                 disabled={isSendingTestEmail}
-                title="Отправить тестовое письмо на почту администратора для проверки SMTP"
+                title="Отправить тестовое письмо для проверки SMTP"
                 className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#EEEEEE] bg-white hover:bg-[#F5F5F7] text-[#141414] text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px] disabled:opacity-50"
               >
                 <Mail className={`w-4 h-4 ${isSendingTestEmail ? 'animate-pulse text-[#E84C3D]' : 'text-[#141414]'}`} />
@@ -1629,6 +1650,73 @@ export const UserManagementPage = () => {
                 <span>Назначить руководителем</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Email Modal */}
+      {isTestEmailModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#141414]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-white" />
+                <h3 className="font-bold text-base !text-white text-white">Тестирование отправки почты (SMTP)</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTestEmailModalOpen(false)}
+                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendTestEmailSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Email получателя для теста *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={testEmailAddress}
+                  onChange={(e) => setTestEmailAddress(e.target.value)}
+                  placeholder="any-email@domain.com"
+                  className="input-field text-sm w-full bg-white"
+                />
+                <p className="text-[11px] text-[#777777] mt-2 leading-relaxed">
+                  Вы можете ввести любой почтовый адрес (личный ящик Gmail, Яндекс, Mail.ru или адрес mail-tester.com), чтобы убедиться в доставке писем с сервера.
+                </p>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#EEEEEE]">
+                <button
+                  type="button"
+                  onClick={() => setIsTestEmailModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-[#CCCCCC] text-xs font-semibold text-[#777777] hover:bg-[#F5F5F7] min-h-[42px]"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingTestEmail}
+                  className="btn-primary text-xs py-2.5 px-4 flex items-center gap-2 min-h-[42px] disabled:opacity-50"
+                >
+                  {isSendingTestEmail ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Отправка...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Отправить тестовое письмо</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

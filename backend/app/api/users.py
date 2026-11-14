@@ -1,16 +1,26 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import get_current_user, get_password_hash, require_role
+from app.core.security import (
+    create_password_reset_token,
+    get_current_user,
+    get_password_hash,
+    require_role,
+)
 from app.core.email import send_welcome_email, send_test_smtp_email
 from app.models.department import Department
 from app.models.user import User
 from app.schemas.user import UserAdminCreate, UserAdminUpdate, UserResponse, UserUpdateRole
 
 router = APIRouter(prefix="/users", tags=["Users Management"])
+
+
+class TestEmailPayload(BaseModel):
+    to_email: Optional[EmailStr] = None
 
 
 @router.get("", response_model=List[UserResponse])
@@ -109,13 +119,17 @@ async def create_user_by_admin(
     await db.commit()
     await db.refresh(new_user)
 
-    # Фоновая отправка письма с данными для входа
+    # Генерация одноразовой защищенной ссылки для быстрой установки постоянного пароля
+    reset_token = create_password_reset_token(email=new_user.email)
+
+    # Фоновая отправка письма с данными для входа и кнопкой мгновенной смены пароля
     background_tasks.add_task(
         send_welcome_email,
         to_email=new_user.email,
         full_name=new_user.full_name,
         password=payload.password,
         role=new_user.role,
+        reset_token=reset_token,
     )
 
     return UserResponse.model_validate(new_user)
@@ -124,13 +138,15 @@ async def create_user_by_admin(
 @router.post("/test-email")
 async def test_email_configuration(
     background_tasks: BackgroundTasks,
+    payload: Optional[TestEmailPayload] = None,
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
-    """Отправить тестовое письмо текущему администратору для проверки настроек SMTP."""
-    background_tasks.add_task(send_test_smtp_email, to_email=current_user.email)
+    """Отправить тестовое письмо на указанный email (или текущему администратору) для проверки настроек SMTP."""
+    target_email = (payload.to_email.strip() if (payload and payload.to_email) else current_user.email)
+    background_tasks.add_task(send_test_smtp_email, to_email=target_email)
     return {
         "status": "queued",
-        "message": f"Тестовое письмо отправлено на {current_user.email}. Проверьте почтовый ящик.",
+        "message": f"Тестовое письмо отправлено на {target_email}. Проверьте почтовый ящик.",
     }
 
 

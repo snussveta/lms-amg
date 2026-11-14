@@ -98,6 +98,7 @@ class CourseListItemResponse(CourseBase):
     user_progress_percent: Optional[int] = 0
     is_assigned: Optional[bool] = False
     assignment_deadline: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

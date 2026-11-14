@@ -233,6 +233,8 @@ export const GuestTakeTestPage = () => {
     switch (type) {
       case 'single_choice':
         return 'Один вариант';
+      case 'dropdown':
+        return 'Раскрывающийся список';
       case 'multiple_choice':
         return 'Несколько вариантов';
       case 'manual_review':
@@ -514,7 +516,7 @@ export const GuestTakeTestPage = () => {
               </h3>
 
               <div className="space-y-3 mb-8">
-                {currentQuestion.question_type === 'single_choice' && (
+                {(currentQuestion.question_type === 'single_choice' || currentQuestion.question_type === 'dropdown') && (
                   <div className="space-y-2.5">
                     {currentQuestion.options?.map((option) => {
                       const isSelected =

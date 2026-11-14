@@ -177,9 +177,21 @@ def send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
 # 1. WELCOME / REGISTRATION EMAIL
 # ==============================================================================
 
-def send_welcome_email(to_email: str, full_name: str, password: str, role: str = "Сотрудник") -> bool:
-    """Sends login credentials when a new employee is registered by admin."""
-    login_url = f"{settings.FRONTEND_URL.rstrip('/')}/login"
+def send_welcome_email(
+    to_email: str,
+    full_name: str,
+    password: str,
+    role: str = "Сотрудник",
+    reset_token: Optional[str] = None,
+) -> bool:
+    """Sends login credentials and a direct password-change link when a new employee is registered."""
+    if reset_token:
+        action_url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={reset_token}"
+        action_label = "Сменить пароль и войти"
+    else:
+        action_url = f"{settings.FRONTEND_URL.rstrip('/')}/login"
+        action_label = "Войти в личный кабинет"
+
     subject = "Доступ к обучающей платформе AutoMall"
 
     role_title = (
@@ -206,7 +218,7 @@ def send_welcome_email(to_email: str, full_name: str, password: str, role: str =
                 <td style="padding: 4px 0; font-weight: bold; color: #222222;">{to_email}</td>
             </tr>
             <tr>
-                <td style="padding: 4px 0; color: #777777;">Пароль:</td>
+                <td style="padding: 4px 0; color: #777777;">Временный пароль:</td>
                 <td style="padding: 4px 0;">
                     <span style="font-family: monospace; font-size: 15px; font-weight: bold; background: #FFFFFF; border: 1px solid #CED4DA; padding: 2px 8px; border-radius: 4px; color: #141414;">
                         {password}
@@ -220,16 +232,22 @@ def send_welcome_email(to_email: str, full_name: str, password: str, role: str =
         </table>
     </div>
 
+    <div style="margin-top: 15px; margin-bottom: 20px; padding: 14px 16px; background-color: #FCECEB; border-left: 4px solid #E84C3D; border-radius: 6px;">
+        <p style="margin: 0; font-size: 13px; color: #222222; line-height: 1.5;">
+            🔒 <strong>Быстрая смена пароля:</strong> Для вашей безопасности вы можете сразу установить собственный постоянный пароль, нажав на кнопку ниже.
+        </p>
+    </div>
+
     <p style="font-size: 13px; color: #777777; margin-bottom: 0;">
-        Вы можете войти с компьютера или телефона. Рекомендуем сохранить данные для входа.
+        Вы можете войти с компьютера или смартфона в любое удобное время.
     </p>
     """
 
     html = _build_html_container(
         title=subject,
         content_html=content,
-        action_url=login_url,
-        action_label="Войти в личный кабинет",
+        action_url=action_url,
+        action_label=action_label,
     )
     return send_email_sync(to_email, subject, html)
 

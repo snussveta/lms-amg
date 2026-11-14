@@ -326,7 +326,7 @@ async def submit_attempt(
         correct_option_ids = [opt.id for opt in correct_options]
         correct_option_texts = [opt.text for opt in correct_options]
 
-        if q.question_type == "single_choice":
+        if q.question_type in ("single_choice", "dropdown"):
             if len(user_selected) == 1 and user_selected[0] in correct_option_ids:
                 is_q_correct = True
                 points_earned = q.points

@@ -5,18 +5,36 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
+  CheckCircle2,
+  CheckSquare,
   ChevronDown,
+  Circle,
+  CircleDot,
   Clock,
   Copy,
+  ExternalLink,
+  Eye,
+  FileEdit,
+  FileText,
   Globe,
+  GripVertical,
   HelpCircle,
+  Layers,
+  ListOrdered,
+  Lock,
+  Minus,
   MoveDown,
   MoveUp,
   Percent,
   Plus,
+  RefreshCw,
   Save,
   Search,
+  Settings as SettingsIcon,
   ShieldCheck,
+  Sparkles,
+  ToggleLeft,
+  ToggleRight,
   Trash2,
   Users,
   X,
@@ -27,6 +45,15 @@ export const TestConstructorPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
   const isEditing = Boolean(testId && testId !== 'new');
+
+  // Top Tabs: 'questions' | 'settings'
+  const [activeTab, setActiveTab] = useState('questions');
+
+  // Active question card (focused like in Google Forms)
+  const [activeQIndex, setActiveQIndex] = useState(0);
+
+  // Answer Key Mode for individual questions (like Google Forms "Ответы и баллы")
+  const [answerKeyMode, setAnswerKeyMode] = useState({});
 
   // Основные метаданные теста
   const [title, setTitle] = useState('');
@@ -47,9 +74,10 @@ export const TestConstructorPage = () => {
       text: '',
       question_type: 'single_choice',
       points: 1,
+      required: true,
       options: [
-        { text: '', is_correct: true },
-        { text: '', is_correct: false },
+        { text: 'Вариант 1', is_correct: true },
+        { text: 'Вариант 2', is_correct: false },
       ],
     },
   ]);
@@ -81,7 +109,7 @@ export const TestConstructorPage = () => {
       const res = await api.get(`/tests/${testId}`);
       const data = res.data;
 
-      setTitle(data.title);
+      setTitle(data.title || '');
       setDescription(data.description || '');
       setPassingScore(data.passing_score ?? 70);
       setIsPublished(Boolean(data.is_published));
@@ -105,6 +133,7 @@ export const TestConstructorPage = () => {
             text: q.text,
             question_type: q.question_type,
             points: q.points || 1,
+            required: true,
             options:
               q.options && q.options.length > 0
                 ? q.options.map((opt) => ({
@@ -113,8 +142,8 @@ export const TestConstructorPage = () => {
                     is_correct: Boolean(opt.is_correct),
                   }))
                 : [
-                    { text: '', is_correct: true },
-                    { text: '', is_correct: false },
+                    { text: 'Вариант 1', is_correct: true },
+                    { text: 'Вариант 2', is_correct: false },
                   ],
           }))
         );
@@ -135,31 +164,64 @@ export const TestConstructorPage = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  // Управление списком вопросов
-  const addQuestion = (type = 'single_choice') => {
+  // Google Forms: Question Management
+  const addQuestion = (type = 'single_choice', insertAfterIndex = null) => {
     const newQ = {
-      id: `temp-${Date.now()}`,
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       text: '',
       question_type: type,
       points: 1,
+      required: true,
       options:
         type === 'manual_review'
           ? []
+          : type === 'text'
+          ? [{ text: '', is_correct: true }]
           : [
-              { text: '', is_correct: true },
-              { text: '', is_correct: false },
+              { text: 'Вариант 1', is_correct: true },
+              { text: 'Вариант 2', is_correct: false },
             ],
     };
-    setQuestions([...questions, newQ]);
+
+    if (insertAfterIndex !== null && insertAfterIndex >= 0 && insertAfterIndex < questions.length) {
+      const updated = [...questions];
+      updated.splice(insertAfterIndex + 1, 0, newQ);
+      setQuestions(updated);
+      setActiveQIndex(insertAfterIndex + 1);
+    } else {
+      setQuestions([...questions, newQ]);
+      setActiveQIndex(questions.length);
+    }
+  };
+
+  // Google Forms: Duplicate Question
+  const duplicateQuestion = (index) => {
+    const sourceQ = questions[index];
+    const clonedQ = {
+      ...sourceQ,
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      text: sourceQ.text ? `${sourceQ.text} (копия)` : '',
+      options: (sourceQ.options || []).map((opt) => ({
+        ...opt,
+        id: undefined,
+      })),
+    };
+    const updated = [...questions];
+    updated.splice(index + 1, 0, clonedQ);
+    setQuestions(updated);
+    setActiveQIndex(index + 1);
   };
 
   const deleteQuestion = (index) => {
     if (questions.length <= 1) {
-      alert('В тесте должен присутствовать хотя бы один вопрос.');
+      alert('В форме должен присутствовать хотя бы один вопрос.');
       return;
     }
     const updated = questions.filter((_, i) => i !== index);
     setQuestions(updated);
+    if (activeQIndex >= updated.length) {
+      setActiveQIndex(updated.length - 1);
+    }
   };
 
   const moveQuestion = (index, direction) => {
@@ -170,38 +232,47 @@ export const TestConstructorPage = () => {
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
     setQuestions(updated);
+    setActiveQIndex(targetIndex);
   };
 
   const updateQuestion = (index, field, value) => {
     const updated = [...questions];
     updated[index] = { ...updated[index], [field]: value };
 
-    // Если меняется тип на manual_review - очищаем варианты
+    // При смене типа обновляем структуру вариантов
     if (field === 'question_type') {
       if (value === 'manual_review') {
         updated[index].options = [];
-      } else if (updated[index].options.length === 0) {
-        updated[index].options = [
-          { text: '', is_correct: true },
-          { text: '', is_correct: false },
-        ];
+      } else if (value === 'text') {
+        if (!updated[index].options || updated[index].options.length === 0) {
+          updated[index].options = [{ text: '', is_correct: true }];
+        }
+      } else {
+        if (!updated[index].options || updated[index].options.length === 0) {
+          updated[index].options = [
+            { text: 'Вариант 1', is_correct: true },
+            { text: 'Вариант 2', is_correct: false },
+          ];
+        }
       }
     }
 
     setQuestions(updated);
   };
 
-  // Управление вариантами ответов внутри вопроса
-  const addOption = (qIndex) => {
+  // Options Management
+  const addOption = (qIndex, customLabel = null) => {
     const updated = [...questions];
-    updated[qIndex].options.push({ text: '', is_correct: false });
+    const nextNum = (updated[qIndex].options?.length || 0) + 1;
+    const text = customLabel || `Вариант ${nextNum}`;
+    updated[qIndex].options.push({ text, is_correct: false });
     setQuestions(updated);
   };
 
   const deleteOption = (qIndex, optIndex) => {
     const updated = [...questions];
-    if (updated[qIndex].options.length <= 2) {
-      alert('Вопрос должен иметь минимум 2 варианта ответа.');
+    if (updated[qIndex].options.length <= 1) {
+      alert('В вопросе должен оставаться хотя бы один вариант ответа.');
       return;
     }
     updated[qIndex].options = updated[qIndex].options.filter((_, i) => i !== optIndex);
@@ -214,55 +285,71 @@ export const TestConstructorPage = () => {
     setQuestions(updated);
   };
 
-  const setCorrectOption = (qIndex, optIndex) => {
+  const toggleOptionCorrect = (qIndex, optIndex) => {
     const updated = [...questions];
     const qType = updated[qIndex].question_type;
 
-    if (qType === 'single_choice') {
-      // Снимаем выбор со всех и ставим текущий
+    if (qType === 'single_choice' || qType === 'dropdown') {
       updated[qIndex].options.forEach((opt, idx) => {
         opt.is_correct = idx === optIndex;
       });
     } else if (qType === 'multiple_choice') {
-      // Переключаем значение
       updated[qIndex].options[optIndex].is_correct = !updated[qIndex].options[optIndex].is_correct;
+    } else if (qType === 'text') {
+      updated[qIndex].options[optIndex].is_correct = true;
     }
     setQuestions(updated);
   };
 
-  // Валидация перед сохранением
+  const toggleAnswerKey = (qIndex) => {
+    setAnswerKeyMode((prev) => ({
+      ...prev,
+      [qIndex]: !prev[qIndex],
+    }));
+  };
+
+  // Validation
   const validateTest = () => {
     if (!title.trim()) {
-      setError('Пожалуйста, введите название теста.');
+      setError('Пожалуйста, введите название формы теста.');
+      setActiveTab('questions');
       return false;
     }
     if (questions.length === 0) {
-      setError('Тест должен содержать минимум 1 вопрос.');
+      setError('Форма должна содержать минимум 1 вопрос.');
       return false;
     }
 
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.text.trim()) {
-        setError(`Вопрос #${i + 1} не заполнен.`);
+        setError(`Вопрос #${i + 1} не содержит формулировки.`);
+        setActiveQIndex(i);
+        setActiveTab('questions');
         return false;
       }
 
       if (q.question_type !== 'manual_review') {
-        if (!q.options || q.options.length < 2) {
-          setError(`Вопрос #${i + 1} должен содержать как минимум 2 варианта ответа.`);
+        if (!q.options || q.options.length < 1) {
+          setError(`Вопрос #${i + 1} должен содержать варианты ответов.`);
+          setActiveQIndex(i);
+          setActiveTab('questions');
           return false;
         }
 
         const emptyOption = q.options.some((o) => !o.text.trim());
         if (emptyOption) {
-          setError(`Вопрос #${i + 1} содержит незаполненные варианты ответов.`);
+          setError(`Вопрос #${i + 1} содержит пустые варианты ответов.`);
+          setActiveQIndex(i);
+          setActiveTab('questions');
           return false;
         }
 
         const hasCorrect = q.options.some((o) => o.is_correct);
         if (!hasCorrect) {
-          setError(`В вопросе #${i + 1} не выбран ни один правильный ответ.`);
+          setError(`В вопросе #${i + 1} укажите правильный ответ (нажмите «Ответы и баллы»).`);
+          setActiveQIndex(i);
+          setActiveTab('questions');
           return false;
         }
       }
@@ -291,7 +378,7 @@ export const TestConstructorPage = () => {
           text: q.text.trim(),
           question_type: q.question_type,
           points: parseInt(q.points, 10) || 1,
-          order_index: idx,
+          order: idx,
           options:
             q.question_type === 'manual_review'
               ? []
@@ -311,13 +398,13 @@ export const TestConstructorPage = () => {
       navigate('/admin/tests');
     } catch (err) {
       console.error('Ошибка сохранения теста:', err);
-      setError(getErrorMessage(err, 'Не удалось сохранить тест. Проверьте правильность полей.'));
+      setError(getErrorMessage(err, 'Не удалось сохранить тест. Проверьте правильность заполнения.'));
     } finally {
       setSaving(false);
     }
   };
 
-  // Подгрузка банка вопросов
+  // Question Bank
   const openBankModal = async () => {
     setIsBankModalOpen(true);
     setSelectedBankIds([]);
@@ -331,8 +418,6 @@ export const TestConstructorPage = () => {
       setBankLoading(false);
     }
   };
-
-  const bankDepartments = ['Все', 'СТО', 'IT', 'Продажи', 'Общий'];
 
   const filteredBankQuestions = bankQuestions.filter((q) => {
     const matchesDept = bankDept === 'Все' || q.department === bankDept;
@@ -349,26 +434,17 @@ export const TestConstructorPage = () => {
     );
   };
 
-  const toggleSelectAllBank = () => {
-    const currentFilteredIds = filteredBankQuestions.map((q) => q.id);
-    const allSelected = currentFilteredIds.every((id) => selectedBankIds.includes(id));
-    if (allSelected) {
-      setSelectedBankIds((prev) => prev.filter((id) => !currentFilteredIds.includes(id)));
-    } else {
-      setSelectedBankIds((prev) => Array.from(new Set([...prev, ...currentFilteredIds])));
-    }
-  };
-
   const handleImportFromBank = () => {
     const toImport = bankQuestions.filter((q) => selectedBankIds.includes(q.id));
     const newItems = toImport.map((bq) => ({
-      id: `temp-${Date.now()}-${Math.random()}`,
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       text: bq.text,
-      question_type: bq.question_type,
+      question_type: bq.question_type || 'single_choice',
       points: bq.points || 1,
+      required: true,
       options: (bq.options || []).map((opt) => ({
         text: opt.text,
-        is_correct: opt.is_correct,
+        is_correct: Boolean(opt.is_correct),
       })),
     }));
     setQuestions((prev) => [...prev, ...newItems]);
@@ -376,22 +452,40 @@ export const TestConstructorPage = () => {
     setSelectedBankIds([]);
   };
 
-  const getQuestionTypeLabel = (type) => {
-    switch (type) {
-      case 'single_choice':
-        return 'Один вариант';
-      case 'multiple_choice':
-        return 'Несколько вариантов';
-      case 'manual_review':
-        return 'Ручная проверка';
-      case 'text':
-        return 'Текстовый ответ';
-      default:
-        return type;
-    }
-  };
-
   const totalPoints = questions.reduce((sum, q) => sum + (parseInt(q.points, 10) || 0), 0);
+
+  const QUESTION_TYPES = [
+    {
+      id: 'single_choice',
+      label: 'Один из списка',
+      icon: CircleDot,
+      desc: 'Выбор одного верного варианта',
+    },
+    {
+      id: 'multiple_choice',
+      label: 'Несколько из списка',
+      icon: CheckSquare,
+      desc: 'Чекбоксы с несколькими верными ответами',
+    },
+    {
+      id: 'dropdown',
+      label: 'Раскрывающийся список',
+      icon: ListOrdered,
+      desc: 'Выпадающий селектор из вариантов',
+    },
+    {
+      id: 'text',
+      label: 'Текст (строка)',
+      icon: FileText,
+      desc: 'Краткий текстовый ответ по ключевым словам',
+    },
+    {
+      id: 'manual_review',
+      label: 'Текст (абзац)',
+      icon: FileEdit,
+      desc: 'Развернутый ответ с ручной проверкой экзаменатором',
+    },
+  ];
 
   if (loading) {
     return (
@@ -402,618 +496,830 @@ export const TestConstructorPage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-32">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <Link
-            to="/admin/tests"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#777777] hover:text-[#141414] transition-colors mb-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Назад к списку тестов</span>
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-black text-[#222222]">
-            {isEditing ? 'Редактирование теста' : 'Конструктор теста'}
-          </h1>
-          <p className="text-[#777777] text-xs sm:text-sm mt-0.5">
-            Настройка параметров, выбор типов вопросов и регламентов прохождения.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F5F5F7] pb-36">
+      {/* Google Forms Top Bar */}
+      <div className="sticky top-0 z-30 bg-white border-b border-[#EEEEEE] shadow-2xs">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-3">
+            {/* Left Brand & Title */}
+            <div className="flex items-center gap-3 min-w-0">
+              <Link
+                to="/admin/tests"
+                className="p-2 rounded-xl text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] transition-colors shrink-0"
+                title="Назад к списку тестов"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E84C3D]">
+                    Google Forms Mode
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg-[#CED4DA]" />
+                  <span className="text-xs text-[#777777] truncate">
+                    {title ? title : 'Новая форма теста'}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <div className="px-3 py-1.5 rounded-xl bg-white border border-[#EEEEEE] shadow-2xs text-xs">
-            <span className="text-[#777777]">Всего баллов: </span>
-            <span className="font-bold text-[#141414]">{totalPoints} б.</span>
+            {/* Center Tabs: Вопросы / Настройки */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('questions')}
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 ${
+                  activeTab === 'questions'
+                    ? 'border-[#E84C3D] text-[#141414]'
+                    : 'border-transparent text-[#777777] hover:text-[#222222]'
+                }`}
+              >
+                <span>Вопросы</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#F5F5F7] font-mono">
+                  {questions.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 ${
+                  activeTab === 'settings'
+                    ? 'border-[#E84C3D] text-[#141414]'
+                    : 'border-transparent text-[#777777] hover:text-[#222222]'
+                }`}
+              >
+                <SettingsIcon className="w-3.5 h-3.5" />
+                <span>Настройки</span>
+              </button>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden sm:flex items-center px-2.5 py-1 rounded-lg bg-[#F5F5F7] border border-[#EEEEEE] text-xs font-bold text-[#141414]">
+                <span>Всего: {totalPoints} б.</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleSave(true)}
+                disabled={saving}
+                className="btn-secondary text-xs px-3 py-1.5 min-h-[38px] hidden md:inline-flex"
+                title="Сохранить как черновик"
+              >
+                В черновик
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSave(false)}
+                disabled={saving}
+                className="btn-primary text-xs px-4 py-1.5 flex items-center gap-1.5 font-bold min-h-[38px]"
+              >
+                {saving ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>{saving ? 'Сохранение...' : 'Сохранить'}</span>
+              </button>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleSave(true)}
-            disabled={saving}
-            className="btn-secondary text-xs min-h-[40px] px-3.5"
-          >
-            В черновик
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSave(false)}
-            disabled={saving}
-            className="btn-primary text-xs flex items-center gap-1.5 min-h-[40px] px-4 font-bold"
-          >
-            <Save className="w-4 h-4" />
-            <span>{saving ? 'Сохранение...' : 'Сохранить тест'}</span>
-          </button>
         </div>
       </div>
 
-      {error && (
-        <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-[#E84C3D] text-xs">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* General Parameters */}
-      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-5 sm:p-6 mb-6 space-y-4">
-        <h2 className="text-sm font-bold text-[#222222] border-b border-[#EEEEEE] pb-2.5">
-          1. Общие параметры теста
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2 space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
-              Название теста *
-            </label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Например: Информационная безопасность и защита данных 2026"
-              className="input-field bg-white"
-            />
+      {/* Main Container */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 relative">
+        {error && (
+          <div className="mb-5 p-4 rounded-2xl bg-[#FCECEB] border border-[#F8D3D0] flex items-start gap-3 text-[#E84C3D] text-xs sm:text-sm shadow-sm animate-fade-in">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <span className="flex-1 font-medium">{error}</span>
+            <button
+              onClick={() => setError('')}
+              className="text-[#E84C3D]/70 hover:text-[#E84C3D]"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        )}
 
-          <div className="md:col-span-2 space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
-              Описание / Инструкции для тестируемого
-            </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Краткое описание тем теста, правил прохождения и критериев аттестации..."
-              className="input-field resize-none bg-white"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
-              Проходной порог (%)
-            </label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={passingScore}
-              onChange={(e) => setPassingScore(e.target.value)}
-              className="input-field bg-white"
-            />
-            <span className="text-[11px] text-[#777777] block">
-              Минимальный процент набранных баллов для зачета теста.
-            </span>
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#222222]">
-              Ограничение времени (минуты)
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min="1"
-                max="1440"
-                disabled={!hasTimeLimit}
-                value={timeLimitMinutes}
-                onChange={(e) => setTimeLimitMinutes(e.target.value)}
-                className="input-field disabled:opacity-40 bg-white"
-              />
-              <label className="flex items-center gap-1.5 text-xs text-[#222222] font-medium whitespace-nowrap cursor-pointer min-h-[44px]">
+        {/* ============================================================== */}
+        {/* TAB 1: QUESTIONS (GOOGLE FORMS EDITOR)                         */}
+        {/* ============================================================== */}
+        {activeTab === 'questions' && (
+          <div className="space-y-4">
+            {/* Google Forms Header Card */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm overflow-hidden border-t-8 border-t-[#E84C3D]">
+              <div className="p-6 sm:p-8 space-y-4">
                 <input
-                  type="checkbox"
-                  checked={!hasTimeLimit}
-                  onChange={(e) => setHasTimeLimit(!e.target.checked)}
-                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Новая форма теста"
+                  className="w-full text-2xl sm:text-3xl font-black text-[#222222] border-b-2 border-transparent hover:border-[#EEEEEE] focus:border-[#E84C3D] focus:outline-none transition-colors pb-1 placeholder:text-[#CED4DA]"
                 />
-                Без лимита
-              </label>
+                <textarea
+                  rows={2}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Описание формы / Инструкции для тестируемого..."
+                  className="w-full text-xs sm:text-sm text-[#495057] border-b border-transparent hover:border-[#EEEEEE] focus:border-[#141414] focus:outline-none transition-colors pb-1 resize-none placeholder:text-[#CED4DA]"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Status & Guest Access Toggles */}
-          <div className="md:col-span-2 pt-3 border-t border-[#EEEEEE] space-y-3">
-            <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px]">
-              <input
-                type="checkbox"
-                checked={isPublished}
-                onChange={(e) => setIsPublished(e.target.checked)}
-                className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-[#222222]">Опубликовать тест сразу</span>
-              <span className="text-[11px] text-[#777777]">
-                (Снимите галочку, чтобы сохранить как черновик `draft`)
-              </span>
-            </label>
+            {/* Questions List */}
+            {questions.map((q, qIndex) => {
+              const isActive = activeQIndex === qIndex;
+              const isKeyMode = Boolean(answerKeyMode[qIndex]);
+              const currentTypeObj =
+                QUESTION_TYPES.find((t) => t.id === q.question_type) || QUESTION_TYPES[0];
+              const IconComponent = currentTypeObj.icon;
 
-            {/* Guest Access Toggle */}
-            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={allowGuest}
-                  onChange={(e) => setAllowGuest(e.target.checked)}
-                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-[#222222] flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-[#141414]" />
-                  Разрешить прохождение по прямой ссылке без регистрации
-                </span>
-              </label>
+              return (
+                <div
+                  key={q.id || qIndex}
+                  onClick={() => setActiveQIndex(qIndex)}
+                  className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${
+                    isActive
+                      ? 'border-[#CED4DA] shadow-lg border-l-8 border-l-[#E84C3D]'
+                      : 'border-[#EEEEEE] shadow-xs hover:border-[#CED4DA]'
+                  }`}
+                >
+                  <div className="p-5 sm:p-6 space-y-5">
+                    {/* Top Row: Question Title & Question Type Selector */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-between gap-3">
+                      <div className="flex-1 flex items-start gap-2.5">
+                        <span className="w-7 h-7 rounded-lg bg-[#141414] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1 shadow-2xs">
+                          {qIndex + 1}
+                        </span>
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            value={q.text}
+                            onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
+                            placeholder="Вопрос без заголовка"
+                            className="w-full text-sm sm:text-base font-bold text-[#222222] bg-[#F5F5F7] border border-transparent hover:border-[#CED4DA] focus:border-[#141414] focus:bg-white rounded-xl px-3.5 py-2.5 transition-all outline-none"
+                          />
+                        </div>
+                      </div>
 
-              {allowGuest && (
-                <div className="pt-1 pl-6">
-                  <p className="text-[11px] text-[#777777] mb-2 leading-relaxed">
-                    Гости смогут проходить тест, указав только свое ФИО. Ссылка генерируется автоматически при сохранении теста.
-                  </p>
-                  {publicToken && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={`${window.location.origin}/t/${publicToken}`}
-                        className="input-field text-xs font-mono py-1.5 text-[#222222] max-w-md select-all bg-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleCopyLink}
-                        className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 whitespace-nowrap min-h-[38px]"
-                      >
-                        {copiedLink ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700 font-bold">Скопировано</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>Копировать</span>
-                          </>
-                        )}
-                      </button>
+                      {/* Question Type Dropdown (Google Forms Style) */}
+                      <div className="sm:w-64 shrink-0">
+                        <select
+                          value={q.question_type}
+                          onChange={(e) => updateQuestion(qIndex, 'question_type', e.target.value)}
+                          className="w-full bg-white text-[#222222] text-xs font-bold rounded-xl border border-[#CED4DA] py-2.5 px-3 focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414] min-h-[42px] cursor-pointer shadow-2xs"
+                        >
+                          {QUESTION_TYPES.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
 
-            {/* Retake Limit Toggle */}
-            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={disallowRetake}
-                  onChange={(e) => setDisallowRetake(e.target.checked)}
-                  className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-[#222222] flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-[#141414]" />
-                  Запретить повторное прохождение
-                </span>
-              </label>
-              <p className="text-[11px] text-[#777777] pl-6 leading-relaxed">
-                Сотрудник сможет пройти тестирование только 1 раз. При включении тумблера повторные попытки будут строго заблокированы платформой.
-              </p>
-            </div>
+                    {/* Question Options Body */}
+                    <div className="pt-2">
+                      {/* 1. SINGLE CHOICE & DROPDOWN */}
+                      {(q.question_type === 'single_choice' || q.question_type === 'dropdown') && (
+                        <div className="space-y-2.5">
+                          {q.options.map((opt, optIndex) => (
+                            <div
+                              key={optIndex}
+                              className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${
+                                opt.is_correct
+                                  ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400'
+                                  : 'border-transparent hover:border-[#EEEEEE]'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleOptionCorrect(qIndex, optIndex)}
+                                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                                  opt.is_correct
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'border-2 border-[#CED4DA] text-transparent hover:border-emerald-600'
+                                }`}
+                                title="Нажмите, чтобы отметить как правильный ответ"
+                              >
+                                {opt.is_correct ? (
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                ) : (
+                                  <Circle className="w-3 h-3 text-transparent" />
+                                )}
+                              </button>
 
-            {/* Visibility / Access Mode Selection */}
-            <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#222222]">
-                <Users className="w-4 h-4 text-[#141414]" />
-                <span>Видимость и права доступа к тесту</span>
-              </div>
+                              <input
+                                type="text"
+                                value={opt.text}
+                                onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
+                                placeholder={`Вариант ${optIndex + 1}`}
+                                className="flex-1 text-xs sm:text-sm bg-transparent border-b border-[#EEEEEE] hover:border-[#CED4DA] focus:border-[#141414] focus:outline-none py-1.5 transition-colors"
+                              />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <label
-                  className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
-                    isAssignedOnly
-                      ? 'bg-white border-[#141414] shadow-sm ring-1 ring-[#141414]/20'
-                      : 'bg-white/60 border-[#EEEEEE] text-[#777777] hover:border-[#141414]/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <input
-                      type="radio"
-                      name="access_mode"
-                      checked={isAssignedOnly}
-                      onChange={() => setIsAssignedOnly(true)}
-                      className="text-[#141414] focus:ring-[#141414] border-[#EEEEEE] w-4 h-4"
-                    />
-                    <span className="text-xs font-bold text-[#222222]">
-                      Доступен только назначенным сотрудникам
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
-                    По умолчанию. Тест появится в каталоге исключительно у сотрудников, которым назначено персональное прохождение.
-                  </span>
-                </label>
+                              {opt.is_correct && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full shrink-0">
+                                  Правильный
+                                </span>
+                              )}
 
-                <label
-                  className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-colors ${
-                    !isAssignedOnly
-                      ? 'bg-white border-[#141414] shadow-sm ring-1 ring-[#141414]/20'
-                      : 'bg-white/60 border-[#EEEEEE] text-[#777777] hover:border-[#141414]/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <input
-                      type="radio"
-                      name="access_mode"
-                      checked={!isAssignedOnly}
-                      onChange={() => setIsAssignedOnly(false)}
-                      className="text-[#141414] focus:ring-[#141414] border-[#EEEEEE] w-4 h-4"
-                    />
-                    <span className="text-xs font-bold text-[#222222]">
-                      Общий доступ для всех сотрудников компании
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
-                    Тест доступен для прохождения всем авторизованным сотрудникам без необходимости индивидуального назначения.
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                              {q.options.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteOption(qIndex, optIndex)}
+                                  className="p-1 text-[#777777] hover:text-[#E84C3D] rounded-lg transition-colors"
+                                  title="Удалить вариант"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
 
-      {/* Questions Section */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-[#222222] flex items-center gap-2">
-            <span>2. Список вопросов</span>
-            <span className="text-xs font-normal text-[#777777]">({questions.length})</span>
-          </h2>
+                          <div className="flex items-center gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => addOption(qIndex)}
+                              className="text-xs font-bold text-[#E84C3D] hover:underline inline-flex items-center gap-1.5 px-2 py-1"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Добавить вариант</span>
+                            </button>
+                            <span className="text-xs text-[#CED4DA]">или</span>
+                            <button
+                              type="button"
+                              onClick={() => addOption(qIndex, 'Другое...')}
+                              className="text-xs text-[#777777] hover:text-[#141414] hover:underline"
+                            >
+                              добавить вариант «Другое»
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
-          {/* Quick Add Question Buttons */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={openBankModal}
-              className="btn-secondary text-[11px] py-1.5 px-3 flex items-center gap-1.5 text-[#141414] border-[#141414]/30 hover:bg-[#141414]/5 font-bold shadow-2xs min-h-[36px]"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Добавить из банка вопросов</span>
-            </button>
-            <div className="w-px h-4 bg-[#EEEEEE] mx-1 hidden sm:block" />
-            <button
-              type="button"
-              onClick={() => addQuestion('single_choice')}
-              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 min-h-[36px]"
-            >
-              <Plus className="w-3 h-3" />
-              Один вариант
-            </button>
-            <button
-              type="button"
-              onClick={() => addQuestion('multiple_choice')}
-              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 min-h-[36px]"
-            >
-              <Plus className="w-3 h-3" />
-              Несколько
-            </button>
-            <button
-              type="button"
-              onClick={() => addQuestion('manual_review')}
-              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 min-h-[36px]"
-            >
-              <Plus className="w-3 h-3" />
-              Ручной ввод
-            </button>
-            <button
-              type="button"
-              onClick={() => addQuestion('text')}
-              className="btn-secondary text-[11px] py-1.5 px-2.5 flex items-center gap-1 text-[#777777] min-h-[36px]"
-            >
-              <Plus className="w-3 h-3" />
-              Ключевое слово
-            </button>
-          </div>
-        </div>
+                      {/* 2. MULTIPLE CHOICE */}
+                      {q.question_type === 'multiple_choice' && (
+                        <div className="space-y-2.5">
+                          <p className="text-[11px] text-[#777777] font-semibold mb-1">
+                            Отметьте галочками все правильные варианты ответов (несколько правильных):
+                          </p>
+                          {q.options.map((opt, optIndex) => (
+                            <div
+                              key={optIndex}
+                              className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${
+                                opt.is_correct
+                                  ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400'
+                                  : 'border-transparent hover:border-[#EEEEEE]'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleOptionCorrect(qIndex, optIndex)}
+                                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                                  opt.is_correct
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'border-2 border-[#CED4DA] text-transparent hover:border-emerald-600'
+                                }`}
+                                title="Переключить правильность ответа"
+                              >
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </button>
 
-        {/* Question Cards */}
-        {questions.map((q, qIndex) => (
-          <div
-            key={q.id || qIndex}
-            className="bg-white rounded-2xl p-5 border border-[#EEEEEE] shadow-sm relative group space-y-3"
-          >
-            {/* Top Bar */}
-            <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-[#EEEEEE] flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-[#141414] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                  {qIndex + 1}
-                </span>
+                              <input
+                                type="text"
+                                value={opt.text}
+                                onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
+                                placeholder={`Вариант ${optIndex + 1}`}
+                                className="flex-1 text-xs sm:text-sm bg-transparent border-b border-[#EEEEEE] hover:border-[#CED4DA] focus:border-[#141414] focus:outline-none py-1.5 transition-colors"
+                              />
 
-                <select
-                  value={q.question_type}
-                  onChange={(e) => updateQuestion(qIndex, 'question_type', e.target.value)}
-                  className="bg-[#F5F5F7] text-[#222222] text-xs font-bold rounded-lg border border-[#EEEEEE] py-1 px-2.5 focus:border-[#141414] min-h-[34px]"
-                >
-                  <option value="single_choice">Один вариант (1 правильный)</option>
-                  <option value="multiple_choice">Несколько вариантов (чекбоксы)</option>
-                  <option value="manual_review">Развернутый ответ (ручная проверка админом)</option>
-                  <option value="text">Текстовый ответ (авто по ключевым словам)</option>
-                </select>
-              </div>
+                              {opt.is_correct && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full shrink-0">
+                                  Правильный
+                                </span>
+                              )}
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#F5F5F7] px-2.5 py-1 rounded-lg border border-[#EEEEEE]">
-                  <span className="text-[11px] font-bold text-[#777777]">Баллы:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={q.points}
-                    onChange={(e) => updateQuestion(qIndex, 'points', e.target.value)}
-                    className="w-10 bg-transparent text-xs font-bold text-[#141414] text-center focus:outline-none"
-                  />
-                </div>
+                              {q.options.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteOption(qIndex, optIndex)}
+                                  className="p-1 text-[#777777] hover:text-[#E84C3D] rounded-lg transition-colors"
+                                  title="Удалить вариант"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
 
-                <button
-                  type="button"
-                  onClick={() => moveQuestion(qIndex, -1)}
-                  disabled={qIndex === 0}
-                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
-                  title="Поднять выше"
-                >
-                  <MoveUp className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveQuestion(qIndex, 1)}
-                  disabled={qIndex === questions.length - 1}
-                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
-                  title="Опустить ниже"
-                >
-                  <MoveDown className="w-4 h-4" />
-                </button>
+                          <div className="flex items-center gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => addOption(qIndex)}
+                              className="text-xs font-bold text-[#E84C3D] hover:underline inline-flex items-center gap-1.5 px-2 py-1"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Добавить вариант</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
-                <button
-                  type="button"
-                  onClick={() => deleteQuestion(qIndex)}
-                  className="p-1.5 rounded-lg text-[#777777] hover:text-[#E84C3D] hover:bg-red-50 transition-colors"
-                  title="Удалить вопрос"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                      {/* 3. SHORT TEXT (Краткий текстовый ответ) */}
+                      {q.question_type === 'text' && (
+                        <div className="space-y-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                          <div className="text-xs text-[#777777] border-b border-[#CED4DA] pb-2 font-mono">
+                            Краткий ответ (вводится пользователем вручную)
+                          </div>
+                          <div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#222222] block mb-1">
+                              Принимаемые правильные ответы (синонимы):
+                            </span>
+                            <div className="space-y-2">
+                              {q.options.map((opt, optIndex) => (
+                                <div key={optIndex} className="flex items-center gap-2">
+                                  <span className="text-xs font-mono text-[#777777] w-6">
+                                    {optIndex + 1}.
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={opt.text}
+                                    onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
+                                    placeholder="Например: ABS, Антиблокировочная система..."
+                                    className="input-field text-xs sm:text-sm bg-white flex-1"
+                                  />
+                                  {q.options.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteOption(qIndex, optIndex)}
+                                      className="p-1.5 text-[#777777] hover:text-[#E84C3D]"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addOption(qIndex, '')}
+                              className="text-xs font-bold text-[#E84C3D] hover:underline mt-2 inline-flex items-center gap-1"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Добавить еще один правильный вариант</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
-            {/* Question Text */}
-            <div>
-              <input
-                type="text"
-                value={q.text}
-                onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
-                placeholder="Введите текст вопроса..."
-                className="input-field text-xs sm:text-sm font-semibold bg-white"
-              />
-            </div>
+                      {/* 4. PARAGRAPH (Развернутый ответ / ручная проверка) */}
+                      {q.question_type === 'manual_review' && (
+                        <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2 text-xs">
+                          <div className="flex items-center gap-2 font-bold text-[#222222]">
+                            <FileEdit className="w-4 h-4 text-[#141414]" />
+                            <span>Развернутый ответ (абзац)</span>
+                          </div>
+                          <div className="text-[#777777] border-b border-[#CED4DA] pb-2 font-mono">
+                            Текст развернутого ответа... (многострочное поле ввода)
+                          </div>
+                          <p className="text-[11px] text-[#777777] leading-relaxed">
+                            Сотрудник дает свободный ответ. Этот вопрос не оценивается автоматически. После сдачи теста результат направляется экзаменатору для ручного выставления баллов (от 0 до {q.points}).
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-            {/* Options based on type */}
-            <div>
-              {q.question_type === 'manual_review' ? (
-                <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] text-xs">
-                  <div className="flex items-center gap-2 text-[#141414] font-bold mb-1">
-                    <HelpCircle className="w-4 h-4 text-[#141414]" />
-                    <span>Открытый вопрос со свободным текстовым ответом</span>
-                  </div>
-                  <p className="text-[11px] text-[#777777] leading-relaxed">
-                    Сотрудник вводит развернутый текст ответа. Вопрос не оценивается автоматически. После сдачи теста попытка переходит в статус «Требует проверки», и проверяющий выставляет балл вручную (от 0 до {q.points}).
-                  </p>
-                </div>
-              ) : q.question_type === 'text' ? (
-                <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#EEEEEE]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-[#222222]">
-                      Принимаемые ключевые слова:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => addOption(qIndex)}
-                      className="text-[11px] text-[#141414] hover:underline font-bold"
-                    >
-                      + Добавить синоним
-                    </button>
-                  </div>
-                  <div className="space-y-1.5">
-                    {q.options.map((opt, optIndex) => (
-                      <div key={optIndex} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={opt.text}
-                          onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
-                          placeholder="Например: 2FA, MFA..."
-                          className="input-field text-xs py-1.5 font-mono bg-white"
-                        />
-                        {q.options.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => deleteOption(qIndex, optIndex)}
-                            className="p-1.5 text-[#777777] hover:text-[#E84C3D]"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                    {/* Google Forms Bottom Bar for Question */}
+                    <div className="pt-4 border-t border-[#EEEEEE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      {/* Left: Answer Key / Баллы */}
+                      <div className="flex items-center gap-2">
+                        <div className="inline-flex items-center gap-1.5 bg-[#F5F5F7] px-3 py-1.5 rounded-xl border border-[#EEEEEE]">
+                          <span className="font-bold text-[#777777] text-[11px] uppercase tracking-wider">
+                            Баллы:
+                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={q.points}
+                            onChange={(e) =>
+                              updateQuestion(qIndex, 'points', parseInt(e.target.value, 10) || 1)
+                            }
+                            className="w-12 bg-white text-center font-bold text-xs text-[#141414] rounded border border-[#CED4DA] py-0.5 focus:outline-none focus:border-[#141414]"
+                          />
+                        </div>
+
+                        {q.question_type !== 'manual_review' && (
+                          <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>
+                              Правильных:{' '}
+                              {q.options.filter((o) => o.is_correct).length}
+                            </span>
+                          </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                  <span className="text-[11px] text-[#777777] mt-1.5 block">
-                    Регистр букв не учитывается.
-                  </span>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold text-[#777777] flex items-center justify-between">
-                    <span>
-                      {q.question_type === 'single_choice'
-                        ? 'Выберите правильный вариант (радиокнопка):'
-                        : 'Отметьте все правильные варианты (чекбоксы):'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => addOption(qIndex)}
-                      className="text-[11px] text-[#141414] hover:underline font-bold"
-                    >
-                      + Добавить вариант
-                    </button>
-                  </div>
 
-                  {q.options.map((opt, optIndex) => (
-                    <div
-                      key={optIndex}
-                      className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all ${
-                        opt.is_correct
-                          ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
-                          : 'bg-white border-[#EEEEEE] text-[#222222]'
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setCorrectOption(qIndex, optIndex)}
-                        className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          q.question_type === 'single_choice'
-                            ? `rounded-full border ${
-                                opt.is_correct
-                                  ? 'border-[#141414] bg-[#141414] text-white'
-                                  : 'border-[#EEEEEE] hover:border-[#141414]'
-                              }`
-                            : `rounded-md border ${
-                                opt.is_correct
-                                  ? 'border-[#141414] bg-[#141414] text-white'
-                                  : 'border-[#EEEEEE] hover:border-[#141414]'
-                              }`
-                        }`}
-                      >
-                        {opt.is_correct && <Check className="w-3.5 h-3.5 text-white" />}
-                      </button>
-
-                      <input
-                        type="text"
-                        value={opt.text}
-                        onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
-                        placeholder={`Вариант ${optIndex + 1}`}
-                        className="input-field text-xs py-1.5 bg-white"
-                      />
-
-                      {q.options.length > 2 && (
+                      {/* Right: Actions (Duplicate, Delete, Required, Move) */}
+                      <div className="flex items-center gap-1.5 self-end sm:self-auto">
                         <button
                           type="button"
-                          onClick={() => deleteOption(qIndex, optIndex)}
-                          className="p-1.5 text-[#777777] hover:text-[#E84C3D] transition-colors"
-                          title="Удалить вариант"
+                          onClick={() => duplicateQuestion(qIndex)}
+                          className="p-2 rounded-xl text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] transition-colors"
+                          title="Создать копию вопроса (дублировать)"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteQuestion(qIndex)}
+                          className="p-2 rounded-xl text-[#777777] hover:text-[#E84C3D] hover:bg-[#FCECEB] transition-colors"
+                          title="Удалить вопрос"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+
+                        <div className="w-px h-5 bg-[#EEEEEE] mx-1" />
+
+                        {/* Reorder Up/Down */}
+                        <button
+                          type="button"
+                          onClick={() => moveQuestion(qIndex, -1)}
+                          disabled={qIndex === 0}
+                          className="p-2 rounded-xl text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
+                          title="Переместить выше"
+                        >
+                          <MoveUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveQuestion(qIndex, 1)}
+                          disabled={qIndex === questions.length - 1}
+                          className="p-2 rounded-xl text-[#777777] hover:text-[#141414] hover:bg-[#F5F5F7] disabled:opacity-20 transition-colors"
+                          title="Переместить ниже"
+                        >
+                          <MoveDown className="w-4 h-4" />
+                        </button>
+
+                        <div className="w-px h-5 bg-[#EEEEEE] mx-1" />
+
+                        {/* Required Toggle */}
+                        <label className="flex items-center gap-2 cursor-pointer select-none pl-1">
+                          <span className="text-xs font-semibold text-[#777777]">Обязательный</span>
+                          <input
+                            type="checkbox"
+                            checked={q.required !== false}
+                            onChange={(e) => updateQuestion(qIndex, 'required', e.target.checked)}
+                            className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4 cursor-pointer"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 2: SETTINGS (GOOGLE FORMS QUIZ CONFIGURATION)              */}
+        {/* ============================================================== */}
+        {activeTab === 'settings' && (
+          <div className="space-y-5 animate-fade-in">
+            {/* 1. Quiz Grading Card */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Тест и оценивание ответов</h3>
+                  <p className="text-xs text-[#777777]">
+                    Параметры начисления баллов, проходного порога и аттестации
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Проходной порог аттестации (%)
+                    </span>
+                    <span className="text-[11px] text-[#777777]">
+                      Минимальный процент набранных баллов для успешной сдачи теста
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={passingScore}
+                      onChange={(e) => setPassingScore(e.target.value)}
+                      className="input-field w-20 text-center font-bold text-sm bg-white"
+                    />
+                    <span className="font-bold text-xs text-[#777777]">%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Ограничение времени на прохождение
+                    </span>
+                    <span className="text-[11px] text-[#777777]">
+                      Таймер обратного отсчета для тестируемого сотрудника
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="1440"
+                      disabled={!hasTimeLimit}
+                      value={timeLimitMinutes}
+                      onChange={(e) => setTimeLimitMinutes(e.target.value)}
+                      className="input-field w-20 text-center font-bold text-sm bg-white disabled:opacity-40"
+                    />
+                    <span className="text-xs text-[#777777]">мин.</span>
+                    <label className="flex items-center gap-1.5 text-xs text-[#222222] font-semibold cursor-pointer pl-2">
+                      <input
+                        type="checkbox"
+                        checked={!hasTimeLimit}
+                        onChange={(e) => setHasTimeLimit(!e.target.checked)}
+                        className="rounded border-[#CED4DA] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
+                      />
+                      <span>Без лимита</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Security & Attempts Card */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Защита от списывания и попытки</h3>
+                  <p className="text-xs text-[#777777]">
+                    Ограничение повторного прохождения и регламент сдачи
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={disallowRetake}
+                    onChange={(e) => setDisallowRetake(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Запретить повторное прохождение (Строго 1 попытка)
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      При включении этой опции сотрудник сможет пройти тестирование только один раз. Вторая попытка будет заблокирована.
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPublished}
+                    onChange={(e) => setIsPublished(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-[#141414] focus:ring-[#141414] w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Опубликовать тест сразу
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      Снимите отметку, чтобы сохранить тест как закрытый черновик (Draft).
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* 3. Access Mode & Guest Testing */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Режим доступа и ссылки</h3>
+                  <p className="text-xs text-[#777777]">
+                    Распределение между сотрудниками и гостевой доступ
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label
+                    className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
+                      isAssignedOnly
+                        ? 'bg-white border-[#141414] ring-2 ring-[#141414]/10 shadow-sm'
+                        : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        name="access_mode"
+                        checked={isAssignedOnly}
+                        onChange={() => setIsAssignedOnly(true)}
+                        className="text-[#141414] focus:ring-[#141414] border-[#CED4DA] w-4 h-4"
+                      />
+                      <span className="text-xs font-bold text-[#222222]">
+                        Только назначенным сотрудникам
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
+                      По умолчанию. Тест виден только сотрудникам, которым назначено персональное прохождение.
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
+                      !isAssignedOnly
+                        ? 'bg-white border-[#141414] ring-2 ring-[#141414]/10 shadow-sm'
+                        : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        name="access_mode"
+                        checked={!isAssignedOnly}
+                        onChange={() => setIsAssignedOnly(false)}
+                        className="text-[#141414] focus:ring-[#141414] border-[#CED4DA] w-4 h-4"
+                      />
+                      <span className="text-xs font-bold text-[#222222]">
+                        Общий доступ для всех сотрудников
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
+                      Тест отображается в общем каталоге и открыт для самостоятельного прохождения всеми.
+                    </span>
+                  </label>
+                </div>
+
+                {/* Direct Link / Guest Mode */}
+                <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={allowGuest}
+                      onChange={(e) => setAllowGuest(e.target.checked)}
+                      className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-[#222222] flex items-center gap-1.5">
+                      <Globe className="w-4 h-4 text-[#E84C3D]" />
+                      Разрешить прохождение по прямой ссылке без авторизации (Гости)
+                    </span>
+                  </label>
+
+                  {allowGuest && (
+                    <div className="pt-2 pl-6 space-y-2">
+                      <p className="text-[11px] text-[#777777] leading-relaxed">
+                        Гости смогут проходить тест без логина, указав свое ФИО перед стартом.
+                      </p>
+                      {publicToken ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            readOnly
+                            value={`${window.location.origin}/t/${publicToken}`}
+                            className="input-field text-xs font-mono py-2 text-[#222222] flex-1 select-all bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyLink}
+                            className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 whitespace-nowrap min-h-[40px]"
+                          >
+                            {copiedLink ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Скопировано</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Копировать</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                          Ссылка сгенерируется автоматически при первом сохранении теста.
+                        </p>
                       )}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        ))}
+        )}
+
+        {/* ============================================================== */}
+        {/* GOOGLE FORMS FLOATING ACTION TOOLBAR (RIGHT OR BOTTOM)        */}
+        {/* ============================================================== */}
+        <div className="fixed bottom-6 right-6 md:right-8 z-40 flex md:flex-col items-center gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl border border-[#CED4DA] shadow-2xl">
+          <button
+            type="button"
+            onClick={() => addQuestion('single_choice', activeQIndex)}
+            className="w-11 h-11 rounded-xl bg-[#E84C3D] hover:bg-[#D33829] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95"
+            title="Добавить вопрос"
+          >
+            <Plus className="w-5 h-5 stroke-[2.5]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={openBankModal}
+            className="w-11 h-11 rounded-xl bg-[#141414] hover:bg-[#2A2A2A] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95"
+            title="Импортировать вопросы из банка"
+          >
+            <BookOpen className="w-5 h-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === 'questions' ? 'settings' : 'questions')}
+            className="w-11 h-11 rounded-xl bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] flex items-center justify-center shadow-xs transition-transform hover:scale-105"
+            title={activeTab === 'questions' ? 'Открыть настройки' : 'Вернуться к вопросам'}
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Модальное окно импорта вопросов из банка вопросов */}
+      {/* ============================================================== */}
+      {/* QUESTION BANK IMPORT MODAL                                     */}
+      {/* ============================================================== */}
       {isBankModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-[#EEEEEE] rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl relative my-8 flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#EEEEEE] mb-4 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#141414]" />
-                <h3 className="text-base font-bold text-[#222222]">
-                  Импорт вопросов из банка вопросов
+        <div className="fixed inset-0 z-50 bg-[#141414]/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <BookOpen className="w-5 h-5 text-[#E84C3D]" />
+                <h3 className="font-bold text-base !text-white text-white">
+                  Импорт вопросов из корпоративного банка
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsBankModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] transition-colors"
+                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
-            {/* Фильтры банка: Поиск + Отделы */}
-            <div className="space-y-3 pb-3 border-b border-[#EEEEEE] flex-shrink-0">
-              <div className="relative">
-                <Search className="w-4 h-4 text-[#777777] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {/* Filter & Search */}
+            <div className="p-4 bg-[#F5F5F7] border-b border-[#EEEEEE] flex items-center gap-3 flex-wrap">
+              <div className="flex-1 relative min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" />
                 <input
                   type="text"
                   placeholder="Поиск по тексту вопроса или теме..."
                   value={bankSearch}
                   onChange={(e) => setBankSearch(e.target.value)}
-                  className="input-field pl-10 text-xs sm:text-sm bg-white"
+                  className="input-field pl-9 text-xs w-full bg-white"
                 />
               </div>
 
-              {/* Табы отделов */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                {bankDepartments.map((dept) => (
-                  <button
-                    key={dept}
-                    type="button"
-                    onClick={() => setBankDept(dept)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors min-h-[34px] ${
-                      bankDept === dept
-                        ? 'bg-[#141414] text-white shadow-2xs'
-                        : 'bg-[#F5F5F7] text-[#777777] hover:text-[#222222] border border-[#EEEEEE]'
-                    }`}
-                  >
-                    {dept}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-[#777777] pt-1">
-                <button
-                  type="button"
-                  onClick={toggleSelectAllBank}
-                  className="text-[#141414] hover:underline font-bold"
-                >
-                  {filteredBankQuestions.length > 0 &&
-                  filteredBankQuestions.every((q) => selectedBankIds.includes(q.id))
-                    ? 'Снять выбор со всех'
-                    : 'Выбрать все отфильтрованные'}
-                </button>
-                <span className="font-medium">Найдено: {filteredBankQuestions.length}</span>
-              </div>
+              <span className="text-xs font-bold text-[#777777]">
+                Выбрано: {selectedBankIds.length}
+              </span>
             </div>
 
-            {/* Список вопросов */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-2.5 min-h-[220px]">
+            {/* Questions List */}
+            <div className="p-4 overflow-y-auto flex-1 space-y-2.5">
               {bankLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 rounded-xl bg-[#F5F5F7] animate-pulse" />
-                  ))}
+                <div className="py-12 text-center text-xs text-[#777777]">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#141414]" />
+                  Загрузка банка вопросов...
                 </div>
               ) : filteredBankQuestions.length === 0 ? (
-                <div className="p-8 text-center text-[#777777] text-xs">
-                  {bankQuestions.length === 0
-                    ? 'Банк вопросов пуст. Создайте вопросы в разделе «Банк вопросов».'
-                    : 'По заданному фильтру и поисковому запросу ничего не найдено.'}
+                <div className="py-12 text-center text-xs text-[#777777]">
+                  Вопросов в банке не найдено.
                 </div>
               ) : (
                 filteredBankQuestions.map((bq) => {
@@ -1022,35 +1328,37 @@ export const TestConstructorPage = () => {
                     <div
                       key={bq.id}
                       onClick={() => toggleBankQuestionSelect(bq.id)}
-                      className={`p-3.5 rounded-xl border transition-colors cursor-pointer flex items-start gap-3 ${
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
                         isSelected
-                          ? 'bg-[#141414]/5 border-[#141414] text-[#222222]'
-                          : 'bg-white border-[#EEEEEE] hover:bg-[#F5F5F7] text-[#222222]'
+                          ? 'bg-[#FCECEB]/60 border-[#E84C3D] shadow-xs'
+                          : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA]'
                       }`}
                     >
-                      <div className="pt-0.5">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}} // handled by parent onClick
-                          className="rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] w-4 h-4 cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded font-bold bg-[#F5F5F7] text-[#141414] border border-[#EEEEEE] text-[10px]">
-                            {bq.department}
-                          </span>
-                          <span className="text-[#777777] text-[11px]">
-                            {getQuestionTypeLabel(bq.question_type)}
-                          </span>
-                          <span className="text-[#777777] font-mono text-[11px]">
-                            {bq.points} б.
-                          </span>
-                        </div>
-                        <p className="text-[#222222] font-medium leading-relaxed">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4 mt-0.5 cursor-pointer"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs sm:text-sm font-bold text-[#222222] mb-1">
                           {bq.text}
-                        </p>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-[#777777] flex-wrap">
+                          <span className="px-2 py-0.5 rounded bg-[#F5F5F7] font-semibold text-[#141414]">
+                            {bq.question_type === 'single_choice'
+                              ? 'Один вариант'
+                              : bq.question_type === 'multiple_choice'
+                              ? 'Несколько'
+                              : bq.question_type === 'dropdown'
+                              ? 'Список'
+                              : bq.question_type === 'manual_review'
+                              ? 'Развернутый'
+                              : 'Текстовый'}
+                          </span>
+                          <span>{bq.points || 1} б.</span>
+                          {bq.topic && <span>• Тема: {bq.topic}</span>}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1058,70 +1366,28 @@ export const TestConstructorPage = () => {
               )}
             </div>
 
-            {/* Футер модалки */}
-            <div className="pt-3 border-t border-[#EEEEEE] flex items-center justify-between flex-shrink-0">
-              <div className="text-xs text-[#777777]">
-                Выбрано: <strong className="text-[#141414] font-bold">{selectedBankIds.length}</strong>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsBankModalOpen(false)}
-                  className="btn-secondary text-xs min-h-[40px] px-4"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  onClick={handleImportFromBank}
-                  disabled={selectedBankIds.length === 0}
-                  className="btn-primary text-xs flex items-center gap-1.5 min-h-[40px] px-5 font-bold"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Импортировать ({selectedBankIds.length})</span>
-                </button>
-              </div>
+            {/* Footer */}
+            <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBankModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-[#CCCCCC] text-xs font-semibold text-[#777777] hover:bg-white min-h-[40px]"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                disabled={selectedBankIds.length === 0}
+                onClick={handleImportFromBank}
+                className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 font-bold min-h-[40px] disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Импортировать ({selectedBankIds.length})</span>
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Sticky Bottom Save Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-[#EEEEEE] p-3 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-xs text-[#777777]">
-            <span>
-              Вопросов: <strong className="text-[#222222]">{questions.length}</strong>
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span>
-              Баллов: <strong className="text-[#141414]">{totalPoints} б.</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link to="/admin/tests" className="btn-secondary text-xs min-h-[38px] px-3.5">
-              Отмена
-            </Link>
-            <button
-              type="button"
-              onClick={() => handleSave(true)}
-              disabled={saving}
-              className="btn-secondary text-xs min-h-[38px] px-3.5"
-            >
-              В черновик
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSave(false)}
-              disabled={saving}
-              className="btn-primary text-xs min-h-[38px] px-4 font-bold"
-            >
-              {saving ? 'Сохранение...' : 'Опубликовать тест'}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -17,11 +17,14 @@ import { useAuth } from '../../context/AuthContext';
 import { AssignCourseModal } from '../../components/admin/AssignCourseModal';
 
 export const CoursesCatalogPage = () => {
-  const { isManager } = useAuth();
+  const { user, isManager } = useAuth();
+  const hasDepartment = Boolean(user?.department && user.department.trim());
+
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState('Все');
+  const [employeeTab, setEmployeeTab] = useState('assigned'); // 'assigned' | 'completed'
   const [searchQuery, setSearchQuery] = useState('');
   const [departments, setDepartments] = useState(['Все']);
   const [selectedCourseForAssign, setSelectedCourseForAssign] = useState(null);
@@ -67,10 +70,18 @@ export const CoursesCatalogPage = () => {
     }
   };
 
-  const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredCourses = courses.filter((c) => {
+    if (hasDepartment) {
+      if (employeeTab === 'completed') {
+        const isComp = c.user_status === 'completed' || c.user_progress_percent === 100;
+        if (!isComp) return false;
+      }
+    }
+    const matchesSearch =
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesSearch;
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
@@ -95,22 +106,67 @@ export const CoursesCatalogPage = () => {
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Department tabs: scrollable on mobile */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-          {departments.map((dept) => (
+        {hasDepartment ? (
+          /* Employee with Department: Just 2 clean tabs - Assigned & Completed */
+          <div className="flex items-center gap-2 border-b border-[#EEEEEE] sm:border-0 pb-1 sm:pb-0">
             <button
-              key={dept}
-              onClick={() => setSelectedDept(dept)}
-              className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none min-h-[38px] ${
-                selectedDept === dept
+              onClick={() => setEmployeeTab('assigned')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[40px] ${
+                employeeTab === 'assigned'
                   ? 'bg-[#141414] text-white shadow-sm'
                   : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
               }`}
             >
-              {dept}
+              <BookOpen className="w-4 h-4" />
+              <span>Назначенные</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                  employeeTab === 'assigned' ? 'bg-white/20 text-white' : 'bg-[#F5F5F7] text-[#777777]'
+                }`}
+              >
+                {courses.length}
+              </span>
             </button>
-          ))}
-        </div>
+
+            <button
+              onClick={() => setEmployeeTab('completed')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[40px] ${
+                employeeTab === 'completed'
+                  ? 'bg-[#141414] text-white shadow-sm'
+                  : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
+              }`}
+            >
+              <CheckCircle2
+                className={`w-4 h-4 ${employeeTab === 'completed' ? 'text-emerald-400' : 'text-emerald-600'}`}
+              />
+              <span>Пройденные</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                  employeeTab === 'completed' ? 'bg-white/20 text-white' : 'bg-[#F5F5F7] text-[#777777]'
+                }`}
+              >
+                {courses.filter((c) => c.user_status === 'completed' || c.user_progress_percent === 100).length}
+              </span>
+            </button>
+          </div>
+        ) : (
+          /* General Catalog: Department tabs */
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {departments.map((dept) => (
+              <button
+                key={dept}
+                onClick={() => setSelectedDept(dept)}
+                className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none min-h-[38px] ${
+                  selectedDept === dept
+                    ? 'bg-[#141414] text-white shadow-sm'
+                    : 'bg-white border border-[#EEEEEE] text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7]'
+                }`}
+              >
+                {dept}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Search */}
         <div className="w-full sm:w-80 relative">
@@ -133,28 +189,28 @@ export const CoursesCatalogPage = () => {
         </div>
       )}
 
-      {/* Assigned Alert Banner */}
-      {!loading && courses.some((c) => c.is_assigned && c.user_status !== 'completed') && (
-        <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#222222] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#E84C3D]/10 text-[#E84C3D] flex items-center justify-center shrink-0">
-              <GraduationCap className="w-4 h-4" />
+      {/* Assigned Alert Banner (only when on assigned tab) */}
+      {!loading &&
+        (!hasDepartment || employeeTab === 'assigned') &&
+        courses.some((c) => c.is_assigned && c.user_status !== 'completed') && (
+          <div className="p-4 rounded-xl bg-[#FCECEB] border border-[#F8D3D0] text-[#222222] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#E84C3D]/10 text-[#E84C3D] flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-[#E84C3D]">Вам назначены обязательные курсы!</span>{' '}
+                <span className="text-[#777777]">
+                  (Курсов к прохождению:{' '}
+                  {courses.filter((c) => c.is_assigned && c.user_status !== 'completed').length})
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="font-bold text-[#E84C3D]">
-                Вам назначены обязательные курсы!
-              </span>{' '}
-              <span className="text-[#777777]">
-                (Курсов к прохождению:{' '}
-                {courses.filter((c) => c.is_assigned && c.user_status !== 'completed').length})
-              </span>
-            </div>
+            <span className="text-[11px] font-bold text-[#E84C3D] uppercase tracking-wider bg-white px-2.5 py-1 rounded border border-[#F8D3D0]">
+              Приоритет обучения
+            </span>
           </div>
-          <span className="text-[11px] font-bold text-[#E84C3D] uppercase tracking-wider bg-white px-2.5 py-1 rounded border border-[#F8D3D0]">
-            Приоритет обучения
-          </span>
-        </div>
-      )}
+        )}
 
       {/* Courses Grid */}
       {loading ? (
@@ -170,13 +226,35 @@ export const CoursesCatalogPage = () => {
         </div>
       ) : filteredCourses.length === 0 ? (
         <div className="bg-white border border-[#EEEEEE] rounded-2xl p-12 text-center text-[#777777] space-y-3 shadow-card animate-fade-in">
-          <Layers className="w-10 h-10 mx-auto text-[#CED4DA]" />
-          <div className="text-base font-bold text-[#222222]">Нет доступных курсов</div>
-          <p className="text-xs sm:text-sm text-[#777777] max-w-sm mx-auto">
-            {searchQuery
-              ? 'По вашему запросу курсов не найдено. Попробуйте изменить формулировку.'
-              : 'В этом подразделении пока нет опубликованных обучающих программ.'}
-          </p>
+          {hasDepartment && employeeTab === 'completed' ? (
+            <>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div className="text-base font-bold text-[#222222]">У вас пока нет пройденных курсов</div>
+              <p className="text-xs sm:text-sm text-[#777777] max-w-sm mx-auto">
+                Здесь будут отображаться все завершенные курсы и ваши результаты. Перейдите во вкладку «Назначенные», чтобы приступить к обучению.
+              </p>
+              <button
+                type="button"
+                onClick={() => setEmployeeTab('assigned')}
+                className="btn-primary text-xs py-2.5 px-4 inline-flex items-center gap-1.5 font-bold"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Перейти к назначенным</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Layers className="w-10 h-10 mx-auto text-[#CED4DA]" />
+              <div className="text-base font-bold text-[#222222]">Нет доступных курсов</div>
+              <p className="text-xs sm:text-sm text-[#777777] max-w-sm mx-auto">
+                {searchQuery
+                  ? 'По вашему запросу курсов не найдено. Попробуйте изменить формулировку.'
+                  : 'В этом разделе пока нет обучающих программ.'}
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 animate-fade-in">
@@ -235,11 +313,26 @@ export const CoursesCatalogPage = () => {
                       {course.description || 'Описание курса...'}
                     </p>
 
-                    {course.assignment_deadline && !isCompleted && (
-                      <div className="text-[11px] text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 font-medium inline-flex items-center gap-1.5 mt-1">
-                        <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
-                        <span>Срок сдачи: {new Date(course.assignment_deadline).toLocaleDateString('ru-RU')}</span>
+                    {isCompleted ? (
+                      <div className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 font-medium inline-flex items-center gap-1.5 mt-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                        <span>
+                          {course.completed_at
+                            ? `Пройден: ${new Date(course.completed_at).toLocaleDateString('ru-RU', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}`
+                            : 'Курс успешно завершен (100%)'}
+                        </span>
                       </div>
+                    ) : (
+                      course.assignment_deadline && (
+                        <div className="text-[11px] text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 font-medium inline-flex items-center gap-1.5 mt-1">
+                          <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                          <span>Срок сдачи: {new Date(course.assignment_deadline).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                      )
                     )}
                   </div>
 

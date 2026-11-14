@@ -172,6 +172,8 @@ export const TakeTestPage = () => {
         return 'Один правильный ответ';
       case 'multiple_choice':
         return 'Несколько правильных ответов';
+      case 'dropdown':
+        return 'Раскрывающийся список';
       case 'manual_review':
         return 'Развернутый ответ (ручная проверка)';
       case 'text':
@@ -322,7 +324,8 @@ export const TakeTestPage = () => {
 
             {/* Варианты ответов / поле ввода */}
             <div className="space-y-3 mb-8">
-              {(currentQuestion.question_type === 'single_choice' || currentQuestion.type === 'single_choice') && (
+              {(['single_choice', 'dropdown'].includes(currentQuestion.question_type) ||
+                ['single_choice', 'dropdown'].includes(currentQuestion.type)) && (
                 <div className="space-y-2.5">
                   {currentQuestion.options?.map((option) => {
                     const isSelected =
