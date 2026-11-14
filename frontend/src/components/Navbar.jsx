@@ -13,9 +13,11 @@ import {
   Users,
   X,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { RoleBadge } from './RoleBadge';
+import { JoinExamModal } from './exam/JoinExamModal';
 
 export const Navbar = () => {
   const { user, logout, isAdmin, isDepartmentHead, isManager } = useAuth();
@@ -23,6 +25,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const [isJoinExamModalOpen, setIsJoinExamModalOpen] = useState(false);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -207,49 +210,62 @@ export const Navbar = () => {
             </div>
 
             {/* Desktop User Profile & Actions */}
-            {user ? (
-              <div className="hidden md:flex items-center gap-3">
-                <div className="flex items-center gap-2.5 pr-2 border-r border-white/15">
-                  <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] flex items-center justify-center font-bold text-xs text-white">
-                    {user.full_name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-white leading-tight">
-                        {user.full_name}
-                      </span>
-                      <RoleBadge role={user.role} />
-                    </div>
-                    <span className="text-[11px] text-[#888888] truncate max-w-[170px]">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
+            <div className="hidden md:flex items-center gap-3">
+              {/* Join Live Exam Button */}
+              <button
+                type="button"
+                onClick={() => setIsJoinExamModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#E84C3D] to-[#D33829] hover:brightness-110 active:scale-95 transition-all shadow-sm shadow-[#E84C3D]/25"
+                title="Войти в очный экзамен по PIN-коду"
+              >
+                <Zap className="w-3.5 h-3.5 fill-white text-white" />
+                <span>Войти в экзамен</span>
+              </button>
 
-                <button
-                  onClick={handleLogout}
-                  className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  title="Выйти из системы"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
-                >
-                  Войти
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#E84C3D] hover:bg-[#D33829] transition-all shadow-sm"
-                >
-                  Регистрация
-                </Link>
-              </div>
-            )}
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 pr-2 border-r border-white/15">
+                    <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] flex items-center justify-center font-bold text-xs text-white">
+                      {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-white leading-tight">
+                          {user.full_name}
+                        </span>
+                        <RoleBadge role={user.role} />
+                      </div>
+                      <span className="text-[11px] text-[#888888] truncate max-w-[170px]">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Выйти из системы"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
+                  >
+                    Войти
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#E84C3D] hover:bg-[#D33829] transition-all shadow-sm"
+                  >
+                    Регистрация
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {/* Mobile Menu Hamburger Button (44px touch target) */}
             <div className="md:hidden flex items-center">
@@ -267,6 +283,18 @@ export const Navbar = () => {
         {/* Mobile Full Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#242424] bg-[#141414] text-white px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-xl">
+            {/* Quick Live Exam Join Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsJoinExamModalOpen(true);
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E84C3D] to-[#D33829] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
+            >
+              <Zap className="w-4 h-4 fill-white text-white" />
+              <span>Войти в очный экзамен (PIN)</span>
+            </button>
             {user ? (
               <>
                 {/* User Info Card on Mobile */}
@@ -509,6 +537,12 @@ export const Navbar = () => {
           </button>
         </div>
       )}
+
+      {/* Join Exam PIN Modal */}
+      <JoinExamModal
+        isOpen={isJoinExamModalOpen}
+        onClose={() => setIsJoinExamModalOpen(false)}
+      />
     </>
   );
 };

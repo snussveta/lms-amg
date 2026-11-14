@@ -32,6 +32,11 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 // Public Guest Test Page
 import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
 
+// Synchronous Live Exam Pages
+import { DirectJoinExamPage } from './pages/public/DirectJoinExamPage';
+import { LiveExamRoomPage } from './pages/employee/LiveExamRoomPage';
+import { LiveExamControlPage } from './pages/admin/LiveExamControlPage';
+
 function App() {
   return (
     <Router>
@@ -48,6 +53,19 @@ function App() {
               {/* Public Guest Testing Routes (без авторизации) */}
               <Route path="/t/:token" element={<GuestTakeTestPage />} />
               <Route path="/public-test/:testId" element={<GuestTakeTestPage />} />
+
+              {/* Synchronous Live Exam Routes */}
+              <Route path="/exam/join" element={<DirectJoinExamPage />} />
+              <Route path="/exam/join/:code" element={<DirectJoinExamPage />} />
+              <Route path="/exam/room/:sessionId" element={<LiveExamRoomPage />} />
+              <Route
+                path="/admin/exam/:sessionId"
+                element={
+                  <ProtectedRoute requireManager>
+                    <LiveExamControlPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Employee Routes */}
               <Route

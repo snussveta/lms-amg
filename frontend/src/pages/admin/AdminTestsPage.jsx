@@ -14,16 +14,19 @@ import {
   UserPlus,
   Users,
   XCircle,
+  Zap,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { CreateExamSessionModal } from '../../components/exam/CreateExamSessionModal';
 
 export const AdminTestsPage = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [assigningTest, setAssigningTest] = useState(null);
+  const [examTest, setExamTest] = useState(null);
   const [confirmDeleteTest, setConfirmDeleteTest] = useState(null);
   const [copiedToken, setCopiedToken] = useState(null);
 
@@ -236,6 +239,15 @@ export const AdminTestsPage = () => {
                     <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5">
                         <button
+                          onClick={() => setExamTest(t)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all"
+                          title="Запустить синхронный экзамен по PIN-коду"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />
+                          <span>Экзамен</span>
+                        </button>
+
+                        <button
                           onClick={() => setAssigningTest(t)}
                           className="p-2 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] transition-colors"
                           title="Назначить сотрудникам"
@@ -299,6 +311,14 @@ export const AdminTestsPage = () => {
           description="Все связанные вопросы, персональные назначения и результаты прохождения сотрудников будут безвозвратно удалены."
           confirmText="Удалить тест"
           variant="danger"
+        />
+      )}
+      {/* Create Exam Session Modal */}
+      {examTest && (
+        <CreateExamSessionModal
+          test={examTest}
+          isOpen={Boolean(examTest)}
+          onClose={() => setExamTest(null)}
         />
       )}
     </div>

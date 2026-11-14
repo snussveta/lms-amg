@@ -16,6 +16,7 @@ from app.models.course import (
     CourseAssignment,
 )
 from app.models.knowledge import KnowledgeFile, KnowledgeFileAssignment
+from app.models.exam import ExamSession, ExamParticipant
 
 __all__ = [
     "Base",
@@ -37,4 +38,6 @@ __all__ = [
     "CourseAssignment",
     "KnowledgeFile",
     "KnowledgeFileAssignment",
+    "ExamSession",
+    "ExamParticipant",
 ]

@@ -158,6 +158,47 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     # Default courses to assigned-only (is_public = FALSE) so unassigned employees do not see them
                     "ALTER TABLE courses ALTER COLUMN is_public SET DEFAULT FALSE;",
                     "UPDATE courses SET is_public = FALSE WHERE is_public IS NULL OR is_public = TRUE;",
+                    # Exam Sessions table
+                    """CREATE TABLE IF NOT EXISTS exam_sessions (
+                        id SERIAL PRIMARY KEY,
+                        test_id INTEGER NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
+                        creator_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                        title VARCHAR(255) NOT NULL,
+                        pin_code VARCHAR(10) NOT NULL,
+                        session_token VARCHAR(64) UNIQUE NOT NULL,
+                        status VARCHAR(50) DEFAULT 'waiting' NOT NULL,
+                        time_limit_minutes INTEGER DEFAULT 30 NOT NULL,
+                        passing_score INTEGER DEFAULT 70 NOT NULL,
+                        shuffle_questions BOOLEAN DEFAULT TRUE NOT NULL,
+                        shuffle_options BOOLEAN DEFAULT TRUE NOT NULL,
+                        started_at TIMESTAMP WITH TIME ZONE,
+                        ended_at TIMESTAMP WITH TIME ZONE,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_sessions_pin_code ON exam_sessions(pin_code);",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_sessions_status ON exam_sessions(status);",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_sessions_test_id ON exam_sessions(test_id);",
+                    # Exam Participants table
+                    """CREATE TABLE IF NOT EXISTS exam_participants (
+                        id SERIAL PRIMARY KEY,
+                        session_id INTEGER NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
+                        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                        guest_name VARCHAR(255),
+                        status VARCHAR(50) DEFAULT 'waiting' NOT NULL,
+                        current_question_index INTEGER DEFAULT 0 NOT NULL,
+                        progress_percent INTEGER DEFAULT 0 NOT NULL,
+                        tab_switches_count INTEGER DEFAULT 0 NOT NULL,
+                        score FLOAT DEFAULT 0.0 NOT NULL,
+                        points_earned INTEGER DEFAULT 0 NOT NULL,
+                        total_points INTEGER DEFAULT 0 NOT NULL,
+                        passed BOOLEAN DEFAULT FALSE NOT NULL,
+                        attempt_id INTEGER REFERENCES attempts(id) ON DELETE SET NULL,
+                        joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        finished_at TIMESTAMP WITH TIME ZONE
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_participants_session_id ON exam_participants(session_id);",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_participants_user_id ON exam_participants(user_id);",
+                    "CREATE INDEX IF NOT EXISTS ix_exam_participants_status ON exam_participants(status);",
                 ]
                 for stmt in migration_sqls:
                     try:
