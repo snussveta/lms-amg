@@ -512,12 +512,8 @@ export const TestConstructorPage = () => {
               </Link>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#E84C3D]">
-                    Google Forms Mode
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-[#CED4DA]" />
-                  <span className="text-xs text-[#777777] truncate">
-                    {title ? title : 'Новая форма теста'}
+                  <span className="text-sm font-bold text-[#222222] truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+                    {title ? title : 'Конструктор теста'}
                   </span>
                 </div>
               </div>
