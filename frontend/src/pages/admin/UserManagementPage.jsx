@@ -138,14 +138,14 @@ export const UserManagementPage = () => {
   const openRegisterModal = () => {
     const initialDept = isDepartmentHead
       ? departments.find((d) => d.name === currentUser?.department || d.id === currentUser?.department_id) || null
-      : (departments.length > 0 ? departments[0] : null);
+      : null;
 
     setRegisterForm({
       full_name: '',
       email: '',
       password: generateRandomPassword(),
-      department: initialDept ? initialDept.name : (currentUser?.department || ''),
-      department_id: initialDept ? initialDept.id : (currentUser?.department_id || null),
+      department: initialDept ? initialDept.name : '',
+      department_id: initialDept ? initialDept.id : null,
       role: 'employee',
     });
     setCopiedPassword(false);
@@ -162,13 +162,15 @@ export const UserManagementPage = () => {
     try {
       setIsSubmittingUser(true);
       setError('');
-      const matchedDept = departments.find(
-        (d) => d.name === registerForm.department || d.id === registerForm.department_id
-      );
+      const matchedDept = registerForm.department
+        ? departments.find(
+            (d) => d.name === registerForm.department || d.id === registerForm.department_id
+          )
+        : null;
       const payload = {
         ...registerForm,
-        department: matchedDept ? matchedDept.name : registerForm.department,
-        department_id: matchedDept ? matchedDept.id : registerForm.department_id,
+        department: matchedDept ? matchedDept.name : (registerForm.department?.trim() || null),
+        department_id: matchedDept ? matchedDept.id : null,
       };
 
       const res = await api.post('/users', payload);
@@ -195,10 +197,8 @@ export const UserManagementPage = () => {
         (targetUser.department_id && d.id === targetUser.department_id) ||
         (targetUser.department && d.name.toLowerCase() === targetUser.department.toLowerCase())
     );
-    const resolvedDeptName = matchedDept
-      ? matchedDept.name
-      : (targetUser.department || (departments[0]?.name || ''));
-    const resolvedDeptId = matchedDept ? matchedDept.id : (departments[0]?.id || null);
+    const resolvedDeptName = matchedDept ? matchedDept.name : (targetUser.department || '');
+    const resolvedDeptId = matchedDept ? matchedDept.id : (targetUser.department_id || null);
 
     setEditForm({
       full_name: targetUser.full_name || '',
@@ -218,14 +218,16 @@ export const UserManagementPage = () => {
     try {
       setIsSubmittingEdit(true);
       setError('');
-      const matchedDept = departments.find(
-        (d) => d.name === editForm.department || d.id === editForm.department_id
-      );
+      const matchedDept = editForm.department
+        ? departments.find(
+            (d) => d.name === editForm.department || d.id === editForm.department_id
+          )
+        : null;
       const payload = {
         full_name: editForm.full_name.trim(),
         email: editForm.email.trim(),
-        department: matchedDept ? matchedDept.name : editForm.department,
-        department_id: matchedDept ? matchedDept.id : editForm.department_id,
+        department: matchedDept ? matchedDept.name : (editForm.department?.trim() || ''),
+        department_id: matchedDept ? matchedDept.id : 0,
         role: editForm.role,
       };
       if (editForm.password && editForm.password.trim()) {
@@ -467,7 +469,11 @@ export const UserManagementPage = () => {
 
     if (!matchesSearch) return false;
     if (filterRole !== 'all' && u.role !== filterRole) return false;
-    if (filterDept !== 'all' && u.department !== filterDept) return false;
+    if (filterDept === 'none') {
+      if (u.department && u.department.trim()) return false;
+    } else if (filterDept !== 'all' && u.department !== filterDept) {
+      return false;
+    }
     return true;
   });
 
@@ -604,7 +610,7 @@ export const UserManagementPage = () => {
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#777777]" />
               <input
                 type="text"
-                placeholder="Поиск по ФИО, логину, отделу или филиалу..."
+                placeholder="Поиск по ФИО, логину или отделу..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input-field pl-10 text-xs sm:text-sm w-full"
@@ -619,6 +625,7 @@ export const UserManagementPage = () => {
                 className="bg-white text-xs text-[#222222] font-medium rounded-xl border border-[#EEEEEE] px-3 py-2 focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414] min-h-[40px]"
               >
                 <option value="all">Все отделы</option>
+                <option value="none">Без отдела</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.name}>
                     {d.name}
@@ -702,10 +709,17 @@ export const UserManagementPage = () => {
                           </td>
 
                           <td className="py-3.5 px-5">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#141414]">
-                              <Building2 className="w-3.5 h-3.5 text-[#141414]" />
-                              {u.department || 'Без отдела'}
-                            </span>
+                            {u.department ? (
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#141414]">
+                                <Building2 className="w-3.5 h-3.5 text-[#141414]" />
+                                {u.department}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-[#777777] italic">
+                                <Building2 className="w-3.5 h-3.5 text-[#777777]/50" />
+                                Без отдела
+                              </span>
+                            )}
                           </td>
 
                           <td className="py-3.5 px-5">
@@ -979,7 +993,7 @@ export const UserManagementPage = () => {
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-base">Зарегистрировать сотрудника</h3>
+                <h3 className="font-bold text-base !text-white text-white">Зарегистрировать сотрудника</h3>
               </div>
               <button
                 onClick={() => setIsRegisterModalOpen(false)}
@@ -1063,11 +1077,18 @@ export const UserManagementPage = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                    Отдел компании
-                  </label>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Отдел компании
+                </label>
+                {isDepartmentHead ? (
+                  <input
+                    type="text"
+                    disabled
+                    value={registerForm.department || 'Ваш отдел'}
+                    className="input-field text-xs w-full bg-[#F5F5F7] text-[#777777] cursor-not-allowed"
+                  />
+                ) : (
                   <select
                     value={registerForm.department || ''}
                     onChange={(e) => {
@@ -1081,15 +1102,12 @@ export const UserManagementPage = () => {
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
-                    {departments.length === 0 ? (
-                      <option value="">Нет созданных отделов</option>
-                    ) : (
-                      departments.map((d) => (
-                        <option key={d.id} value={d.name}>
-                          {d.name}
-                        </option>
-                      ))
-                    )}
+                    <option value="">-- Без отдела --</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
                     {registerForm.department &&
                       !departments.some((d) => d.name === registerForm.department) && (
                         <option value={registerForm.department}>
@@ -1097,9 +1115,7 @@ export const UserManagementPage = () => {
                         </option>
                       )}
                   </select>
-                </div>
-
-
+                )}
               </div>
 
               {!isDepartmentHead && (
@@ -1181,7 +1197,7 @@ export const UserManagementPage = () => {
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-base">Редактирование сотрудника</h3>
+                <h3 className="font-bold text-base !text-white text-white">Редактирование сотрудника</h3>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
@@ -1262,11 +1278,18 @@ export const UserManagementPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                    Отдел компании
-                  </label>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Отдел компании
+                </label>
+                {isDepartmentHead ? (
+                  <input
+                    type="text"
+                    disabled
+                    value={editForm.department || 'Без отдела'}
+                    className="input-field text-xs w-full bg-[#F5F5F7] text-[#777777] cursor-not-allowed"
+                  />
+                ) : (
                   <select
                     value={editForm.department || ''}
                     onChange={(e) => {
@@ -1280,15 +1303,12 @@ export const UserManagementPage = () => {
                     }}
                     className="input-field text-xs w-full bg-white"
                   >
-                    {departments.length === 0 ? (
-                      <option value="">Нет созданных отделов</option>
-                    ) : (
-                      departments.map((d) => (
-                        <option key={d.id} value={d.name}>
-                          {d.name}
-                        </option>
-                      ))
-                    )}
+                    <option value="">-- Без отдела --</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
                     {editForm.department &&
                       !departments.some((d) => d.name === editForm.department) && (
                         <option value={editForm.department}>
@@ -1296,9 +1316,7 @@ export const UserManagementPage = () => {
                         </option>
                       )}
                   </select>
-                </div>
-
-
+                )}
               </div>
 
               {!isDepartmentHead && (
@@ -1350,7 +1368,7 @@ export const UserManagementPage = () => {
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-base">
+                <h3 className="font-bold text-base !text-white text-white">
                   {editingDept ? 'Редактировать отдел' : 'Создать новый отдел'}
                 </h3>
               </div>
@@ -1451,7 +1469,7 @@ export const UserManagementPage = () => {
                   <Briefcase className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base leading-tight">
+                  <h3 className="font-bold text-base leading-tight !text-white text-white">
                     Назначить руководителя отдела
                   </h3>
                   <p className="text-[11px] text-white/70">

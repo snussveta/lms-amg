@@ -79,11 +79,21 @@ async def create_user_by_admin(
             dept_obj = dept_res.scalar_one_or_none()
 
         if not dept_obj and payload.department is not None and payload.department.strip():
-            dept_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
-            dept_obj = dept_res.scalar_one_or_none()
+            clean_d = payload.department.strip()
+            if clean_d.lower() not in ["без отдела", "none", "null"]:
+                dept_res = await db.execute(select(Department).where(Department.name.ilike(clean_d)))
+                dept_obj = dept_res.scalar_one_or_none()
 
-        dept_name = dept_obj.name if dept_obj else (payload.department.strip() if payload.department else "СТО")
-        dept_id = dept_obj.id if dept_obj else None
+        dept_name = None
+        dept_id = None
+        if dept_obj:
+            dept_name = dept_obj.name
+            dept_id = dept_obj.id
+        elif payload.department and payload.department.strip():
+            clean_d = payload.department.strip()
+            if clean_d.lower() not in ["без отдела", "none", "null"]:
+                dept_name = clean_d
+                dept_id = None
 
     new_user = User(
         email=email_clean,
@@ -176,15 +186,29 @@ async def update_user(
             target_dept_obj = d_res.scalar_one_or_none()
 
         if not target_dept_obj and payload.department is not None and payload.department.strip():
-            d_res = await db.execute(select(Department).where(Department.name.ilike(payload.department.strip())))
-            target_dept_obj = d_res.scalar_one_or_none()
+            clean_d = payload.department.strip()
+            if clean_d.lower() not in ["без отдела", "none", "null"]:
+                d_res = await db.execute(select(Department).where(Department.name.ilike(clean_d)))
+                target_dept_obj = d_res.scalar_one_or_none()
 
         if target_dept_obj:
             target_user.department_id = target_dept_obj.id
             target_user.department = target_dept_obj.name
-        elif payload.department is not None and payload.department.strip():
-            target_user.department = payload.department.strip()
+        elif payload.department is not None:
+            clean_dept = payload.department.strip() if payload.department else ""
+            if not clean_dept or clean_dept.lower() in ["без отдела", "none", "null"]:
+                target_user.department = None
+                target_user.department_id = None
+                if target_user.role == "department_head":
+                    target_user.role = "employee"
+            else:
+                target_user.department = clean_dept
+                target_user.department_id = None
+        elif payload.department_id == 0 or payload.department_id == -1:
+            target_user.department = None
             target_user.department_id = None
+            if target_user.role == "department_head":
+                target_user.role = "employee"
 
     if payload.full_name is not None and payload.full_name.strip():
         target_user.full_name = payload.full_name.strip()

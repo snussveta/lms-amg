@@ -31,9 +31,9 @@ export const ConfirmModal = ({
                 isDanger ? 'bg-[#E84C3D] text-white' : 'bg-[#333333] text-white'
               } shadow-sm`}
             >
-              {isDanger ? <Trash2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+              {isDanger ? <Trash2 className="w-4 h-4 text-white" /> : <AlertTriangle className="w-4 h-4 text-white" />}
             </div>
-            <h3 className="font-bold text-sm sm:text-base leading-tight tracking-tight">
+            <h3 className="font-bold text-sm sm:text-base leading-tight tracking-tight !text-white text-white">
               {title}
             </h3>
           </div>
@@ -41,9 +41,9 @@ export const ConfirmModal = ({
             type="button"
             disabled={loading}
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
@@ -98,3 +98,4 @@ export const ConfirmModal = ({
     </div>
   );
 };
+

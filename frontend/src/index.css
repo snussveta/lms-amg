@@ -32,15 +32,18 @@
 
   /* Heading and text helpers for crisp typography */
   h1, h2, h3, h4, h5, h6 {
-    color: #222222;
+    color: inherit;
     letter-spacing: -0.015em;
   }
-  
-  /* Retain white text on dark headers and primary buttons */
+
+  /* Retain pure white text on dark headers, modals, navbars and primary buttons */
   header h1, header h2, header h3,
   nav h1, nav h2, nav h3,
+  .text-white, .text-white h1, .text-white h2, .text-white h3, .text-white h4,
+  [class*="bg-[#141414]"] h1, [class*="bg-[#141414]"] h2, [class*="bg-[#141414]"] h3,
+  [class*="bg-black"] h1, [class*="bg-black"] h2, [class*="bg-black"] h3,
   .btn-primary, .btn-accent {
-    color: #FFFFFF;
+    color: #FFFFFF !important;
   }
 }
 
