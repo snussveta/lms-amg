@@ -144,6 +144,7 @@ export const LiveExamControlPage = () => {
                 current_question_index: msg.current_question_index,
                 progress_percent: msg.progress_percent,
                 tab_switches_count: msg.tab_switches_count,
+                right_clicks_count: msg.right_clicks_count || p.right_clicks_count || 0,
               }
             : p
         )
@@ -581,11 +582,20 @@ export const LiveExamControlPage = () => {
                       </td>
 
                       <td className="py-3.5 px-5">
-                        {p.tab_switches_count > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0] shadow-2xs">
-                            <ShieldAlert className="w-3.5 h-3.5" />
-                            Свернул вкладку ({p.tab_switches_count}x)
-                          </span>
+                        {((p.tab_switches_count || 0) > 0 || (p.right_clicks_count || 0) > 0) ? (
+                          <div className="flex flex-col gap-1 items-start">
+                            {p.tab_switches_count > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]">
+                                <ShieldAlert className="w-3 h-3" />
+                                Уход с экрана ({p.tab_switches_count}x)
+                              </span>
+                            )}
+                            {p.right_clicks_count > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                🖱️ Правая кнопка ({p.right_clicks_count}x)
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-semibold">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />

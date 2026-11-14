@@ -21,6 +21,9 @@ export const CreateExamSessionModal = ({ test, isOpen, onClose }) => {
   const [passingScore, setPassingScore] = useState(test?.passing_score || 70);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
+  const [detectTabSwitches, setDetectTabSwitches] = useState(true);
+  const [detectRightClicks, setDetectRightClicks] = useState(true);
+  const [blockCopyPaste, setBlockCopyPaste] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +48,9 @@ export const CreateExamSessionModal = ({ test, isOpen, onClose }) => {
         passing_score: parseInt(passingScore, 10) || 70,
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
+        detect_tab_switches: detectTabSwitches,
+        detect_right_clicks: detectRightClicks,
+        block_copy_paste: blockCopyPaste,
       });
 
       onClose();
@@ -144,25 +150,65 @@ export const CreateExamSessionModal = ({ test, isOpen, onClose }) => {
           </div>
 
           <div className="p-3.5 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2.5 text-xs">
-            <span className="font-bold text-[#222222] block">Защита от списывания:</span>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            <span className="font-bold text-[#222222] block">Настройки и защита от списывания (Античит):</span>
+            
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={shuffleQuestions}
-                onChange={(e) => setShuffleQuestions(e.target.checked)}
+                checked={detectTabSwitches}
+                onChange={(e) => setDetectTabSwitches(e.target.checked)}
                 className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4"
               />
-              <span className="text-[#495057]">Случайный порядок вопросов у каждого сотрудника</span>
+              <span className="text-[#333333] font-medium">
+                🛡️ Фиксировать переключение вкладок и уход с окна экзамена
+              </span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={shuffleOptions}
-                onChange={(e) => setShuffleOptions(e.target.checked)}
+                checked={detectRightClicks}
+                onChange={(e) => setDetectRightClicks(e.target.checked)}
                 className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4"
               />
-              <span className="text-[#495057]">Перемешивать варианты ответов внутри вопросов</span>
+              <span className="text-[#333333] font-medium">
+                🖱️ Блокировать и фиксировать нажатие правой кнопки мыши (ПКМ)
+              </span>
             </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={blockCopyPaste}
+                onChange={(e) => setBlockCopyPaste(e.target.checked)}
+                className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4"
+              />
+              <span className="text-[#333333] font-medium">
+                📋 Запретить копирование текста вопросов и вариантов
+              </span>
+            </label>
+
+            <div className="pt-1.5 border-t border-[#E5E5EA] space-y-2">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={shuffleQuestions}
+                  onChange={(e) => setShuffleQuestions(e.target.checked)}
+                  className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4"
+                />
+                <span className="text-[#555555]">Случайный порядок вопросов у каждого сотрудника</span>
+              </label>
+
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={shuffleOptions}
+                  onChange={(e) => setShuffleOptions(e.target.checked)}
+                  className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-4 h-4"
+                />
+                <span className="text-[#555555]">Перемешивать варианты ответов внутри вопросов</span>
+              </label>
+            </div>
           </div>
 
           <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#EEEEEE]">

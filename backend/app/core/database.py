@@ -199,6 +199,11 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "CREATE INDEX IF NOT EXISTS ix_exam_participants_session_id ON exam_participants(session_id);",
                     "CREATE INDEX IF NOT EXISTS ix_exam_participants_user_id ON exam_participants(user_id);",
                     "CREATE INDEX IF NOT EXISTS ix_exam_participants_status ON exam_participants(status);",
+                    # Anti-cheat custom controls
+                    "ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS detect_tab_switches BOOLEAN DEFAULT TRUE;",
+                    "ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS detect_right_clicks BOOLEAN DEFAULT TRUE;",
+                    "ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS block_copy_paste BOOLEAN DEFAULT TRUE;",
+                    "ALTER TABLE exam_participants ADD COLUMN IF NOT EXISTS right_clicks_count INTEGER DEFAULT 0;",
                 ]
                 for stmt in migration_sqls:
                     try:

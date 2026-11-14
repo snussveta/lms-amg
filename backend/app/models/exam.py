@@ -39,6 +39,9 @@ class ExamSession(Base):
     passing_score: Mapped[int] = mapped_column(Integer, default=70, nullable=False)
     shuffle_questions: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     shuffle_options: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    detect_tab_switches: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    detect_right_clicks: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    block_copy_paste: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -80,6 +83,7 @@ class ExamParticipant(Base):
     current_question_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     progress_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     tab_switches_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    right_clicks_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     points_earned: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

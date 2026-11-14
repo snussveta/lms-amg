@@ -39,7 +39,26 @@ export const LiveExamRoomPage = () => {
   const [session, setSession] = useState(null);
   const [participant, setParticipant] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionsError, setQuestionsError] = useState('');
   const [currentQIndex, setCurrentQIndex] = useState(0);
+
+  // Sync refs so callbacks and event handlers always access freshest state
+  const participantRef = useRef(null);
+  const questionsRef = useRef([]);
+  const currentQIndexRef = useRef(0);
+
+  useEffect(() => {
+    participantRef.current = participant;
+  }, [participant]);
+
+  useEffect(() => {
+    questionsRef.current = questions;
+  }, [questions]);
+
+  useEffect(() => {
+    currentQIndexRef.current = currentQIndex;
+  }, [currentQIndex]);
 
   // User answers map: { [questionId]: { selected_option_ids: [], text_answer: '' } }
   const [userAnswers, setUserAnswers] = useState({});
@@ -101,6 +120,7 @@ export const LiveExamRoomPage = () => {
 
       if (currentPart) {
         setParticipant(currentPart);
+        participantRef.current = currentPart;
         sessionStorage.setItem(`exam_participant_${sessionId}`, currentPart.id);
 
         if (currentPart.status === 'submitted') {
@@ -113,9 +133,9 @@ export const LiveExamRoomPage = () => {
         }
       }
 
-      // 3. If in progress, fetch questions
-      if (sessionData.status === 'in_progress' && currentPart) {
-        await loadQuestions(currentPart.id);
+      // 3. If in progress, fetch questions immediately
+      if (sessionData.status === 'in_progress') {
+        loadQuestions(currentPart?.id);
       }
 
       // 4. Connect WebSocket
@@ -139,8 +159,8 @@ export const LiveExamRoomPage = () => {
       const sData = sRes.data;
       setSession(sData);
 
-      if (sData.status === 'in_progress' && questions.length === 0 && participant) {
-        await loadQuestions(participant.id);
+      if (sData.status === 'in_progress' && questionsRef.current.length === 0) {
+        loadQuestions();
       }
     } catch {
       // quiet poll
@@ -149,12 +169,36 @@ export const LiveExamRoomPage = () => {
 
   const loadQuestions = async (partId) => {
     try {
-      const qRes = await api.get(`/exam/sessions/${sessionId}/questions?participant_id=${partId}`);
-      setQuestions(qRes.data || []);
+      setLoadingQuestions(true);
+      setQuestionsError('');
+      const targetId =
+        partId ||
+        participantRef.current?.id ||
+        participant?.id ||
+        sessionStorage.getItem(`exam_participant_${sessionId}`);
+
+      const url = targetId
+        ? `/exam/sessions/${sessionId}/questions?participant_id=${targetId}`
+        : `/exam/sessions/${sessionId}/questions`;
+
+      const qRes = await api.get(url);
+      const list = qRes.data || [];
+      setQuestions(list);
+      questionsRef.current = list;
     } catch (err) {
       console.error('Ошибка загрузки вопросов:', err);
+      setQuestionsError(err.response?.data?.detail || 'Не удалось загрузить вопросы экзамена.');
+    } finally {
+      setLoadingQuestions(false);
     }
   };
+
+  // Declarative effect: load questions whenever session is in progress and questions array is empty
+  useEffect(() => {
+    if (session?.status === 'in_progress' && questions.length === 0 && !loadingQuestions && !result) {
+      loadQuestions();
+    }
+  }, [session?.status, participant?.id, questions.length, result]);
 
   // Synchronized Timer
   useEffect(() => {
@@ -181,31 +225,99 @@ export const LiveExamRoomPage = () => {
     return () => clearInterval(interval);
   }, [session?.status, session?.started_at, session?.time_limit_minutes, submitting, result, participant]);
 
-  // Anti-Cheat: Tab Switching / Blur Listener
+  // Anti-Cheat: Tab Switching, Window Blur & Right Click (Context Menu) Listeners
   useEffect(() => {
-    if (session?.status !== 'in_progress' || result || participant?.status !== 'taking') {
+    if (session?.status !== 'in_progress' || result) {
       return;
     }
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setCheatWarning('⚠️ Внимание! Переключение вкладок зафиксировано и передано экзаменатору!');
-        setTimeout(() => setCheatWarning(''), 6000);
+    let lastTabSwitchTime = 0;
+    const handleTabOrWindowSwitch = () => {
+      if (session?.detect_tab_switches === false) return;
+      const now = Date.now();
+      if (now - lastTabSwitchTime < 2000) return; // 2s debounce
+      lastTabSwitchTime = now;
 
-        if (participant?.id) {
-          api.post(`/exam/sessions/${sessionId}/progress`, {
-            participant_id: participant.id,
-            current_question_index: currentQIndex,
-            progress_percent: Math.round(((currentQIndex + 1) / (questions.length || 1)) * 100),
-            switched_tab: true,
-          }).catch(() => {});
-        }
+      setCheatWarning('⚠️ Внимание! Переключение окна/вкладки зафиксировано и передано экзаменатору!');
+      setTimeout(() => setCheatWarning(''), 6000);
+
+      const partId =
+        participantRef.current?.id ||
+        participant?.id ||
+        sessionStorage.getItem(`exam_participant_${sessionId}`);
+
+      if (partId) {
+        api.post(`/exam/sessions/${sessionId}/progress`, {
+          participant_id: parseInt(partId, 10),
+          current_question_index: currentQIndexRef.current,
+          progress_percent: Math.round(
+            ((currentQIndexRef.current + 1) / (questionsRef.current.length || 1)) * 100
+          ),
+          switched_tab: true,
+        }).catch(() => {});
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [session?.status, result, participant, currentQIndex, questions.length]);
+    let lastRightClickTime = 0;
+    const handleContextMenu = (e) => {
+      if (session?.detect_right_clicks === false) return;
+      e.preventDefault(); // Block right click context menu!
+
+      const now = Date.now();
+      if (now - lastRightClickTime < 2000) return;
+      lastRightClickTime = now;
+
+      setCheatWarning('⚠️ Нажатие правой кнопки мыши (ПКМ) запрещено! Нарушение зафиксировано.');
+      setTimeout(() => setCheatWarning(''), 6000);
+
+      const partId =
+        participantRef.current?.id ||
+        participant?.id ||
+        sessionStorage.getItem(`exam_participant_${sessionId}`);
+
+      if (partId) {
+        api.post(`/exam/sessions/${sessionId}/progress`, {
+          participant_id: parseInt(partId, 10),
+          current_question_index: currentQIndexRef.current,
+          progress_percent: Math.round(
+            ((currentQIndexRef.current + 1) / (questionsRef.current.length || 1)) * 100
+          ),
+          right_clicked: true,
+        }).catch(() => {});
+      }
+    };
+
+    const handleCopy = (e) => {
+      if (session?.block_copy_paste === false) return;
+      e.preventDefault();
+      setCheatWarning('⚠️ Копирование материалов экзамена запрещено.');
+      setTimeout(() => setCheatWarning(''), 4000);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) handleTabOrWindowSwitch();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('blur', handleTabOrWindowSwitch);
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('cut', handleCopy);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('blur', handleTabOrWindowSwitch);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('cut', handleCopy);
+    };
+  }, [
+    session?.status,
+    session?.detect_tab_switches,
+    session?.detect_right_clicks,
+    session?.block_copy_paste,
+    result,
+  ]);
 
   const setupWebSocket = () => {
     try {
@@ -233,15 +345,18 @@ export const LiveExamRoomPage = () => {
 
   const handleLiveEvent = (msg) => {
     if (msg.type === 'EXAM_STARTED') {
-      // Trigger dramatic 3-2-1 countdown!
+      // 1. Immediately request questions so they are ready
+      loadQuestions();
+      setSession((prev) => (prev ? { ...prev, status: 'in_progress', started_at: msg.started_at } : prev));
+
+      // 2. Trigger dramatic 3-2-1 countdown!
       setCountdown(3);
       setTimeout(() => setCountdown(2), 1000);
       setTimeout(() => setCountdown(1), 2000);
       setTimeout(() => {
         setCountdown(null);
-        setSession((prev) => (prev ? { ...prev, status: 'in_progress', started_at: msg.started_at } : prev));
-        if (participant) {
-          loadQuestions(participant.id);
+        if (questionsRef.current.length === 0) {
+          loadQuestions();
         }
       }, 3000);
     } else if (msg.type === 'TIME_EXTENDED') {
@@ -249,7 +364,8 @@ export const LiveExamRoomPage = () => {
     } else if (msg.type === 'EXAM_FINISHED') {
       handleAutoSubmit();
     } else if (msg.type === 'PARTICIPANT_DISQUALIFIED') {
-      if (participant && msg.participant_id === participant.id) {
+      const myId = participantRef.current?.id || participant?.id;
+      if (myId && msg.participant_id === myId) {
         setParticipant((prev) => ({ ...prev, status: 'disqualified' }));
       }
     }
@@ -568,38 +684,69 @@ export const LiveExamRoomPage = () => {
           </div>
         )}
 
-        {/* Question Navigator (Pills) */}
-        <div className="bg-white rounded-2xl border border-[#EEEEEE] p-3 shadow-xs">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
-            {questions.map((q, idx) => {
-              const isAnswered = Boolean(
-                userAnswers[q.id]?.selected_option_ids?.length ||
-                  userAnswers[q.id]?.text_answer?.trim()
-              );
-              const isCurrent = currentQIndex === idx;
-
-              return (
-                <button
-                  key={q.id}
-                  type="button"
-                  onClick={() => setCurrentQIndex(idx)}
-                  className={`w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 transition-all ${
-                    isCurrent
-                      ? 'bg-[#141414] text-white ring-2 ring-[#141414] shadow-sm'
-                      : isAnswered
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold'
-                      : 'bg-[#F5F5F7] text-[#777777] hover:bg-[#EEEEEE]'
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              );
-            })}
+        {/* Loading questions */}
+        {loadingQuestions && (
+          <div className="bg-white rounded-3xl border border-[#EEEEEE] p-12 text-center space-y-3 shadow-md animate-fade-in">
+            <RefreshCw className="w-8 h-8 text-[#E84C3D] animate-spin mx-auto" />
+            <div className="text-sm font-bold text-[#141414]">Загрузка вопросов экзамена...</div>
           </div>
-        </div>
+        )}
+
+        {/* Empty or Failed Questions State */}
+        {!loadingQuestions && questions.length === 0 && (
+          <div className="bg-white rounded-3xl border border-[#EEEEEE] p-10 text-center space-y-4 shadow-md animate-fade-in">
+            <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
+            <div className="text-base font-bold text-[#141414]">
+              {questionsError || 'В данном тесте пока нет вопросов.'}
+            </div>
+            <p className="text-xs text-[#777777] max-w-sm mx-auto">
+              Если экзаменатор добавил вопросы только что, нажмите кнопку ниже для обновления.
+            </p>
+            <button
+              type="button"
+              onClick={() => loadQuestions()}
+              className="btn-primary text-xs px-5 py-2.5 font-bold inline-flex items-center gap-2 shadow-sm"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Повторить загрузку вопросов</span>
+            </button>
+          </div>
+        )}
+
+        {/* Question Navigator (Pills) */}
+        {!loadingQuestions && questions.length > 0 && (
+          <div className="bg-white rounded-2xl border border-[#EEEEEE] p-3 shadow-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
+              {questions.map((q, idx) => {
+                const isAnswered = Boolean(
+                  userAnswers[q.id]?.selected_option_ids?.length ||
+                    userAnswers[q.id]?.text_answer?.trim()
+                );
+                const isCurrent = currentQIndex === idx;
+
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setCurrentQIndex(idx)}
+                    className={`w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 transition-all ${
+                      isCurrent
+                        ? 'bg-[#141414] text-white ring-2 ring-[#141414] shadow-sm'
+                        : isAnswered
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold'
+                        : 'bg-[#F5F5F7] text-[#777777] hover:bg-[#EEEEEE]'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Current Question Card */}
-        {currentQ && (
+        {!loadingQuestions && currentQ && (
           <div className="bg-white rounded-3xl border border-[#EEEEEE] shadow-md p-6 sm:p-8 space-y-6">
             <div className="flex items-center justify-between gap-3 border-b border-[#EEEEEE] pb-3 text-xs">
               <span className="font-bold text-[#777777] uppercase tracking-wider">

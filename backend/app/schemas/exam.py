@@ -10,6 +10,9 @@ class ExamSessionCreate(BaseModel):
     passing_score: Optional[int] = Field(default=70, ge=0, le=100)
     shuffle_questions: Optional[bool] = True
     shuffle_options: Optional[bool] = True
+    detect_tab_switches: Optional[bool] = True
+    detect_right_clicks: Optional[bool] = True
+    block_copy_paste: Optional[bool] = True
 
 
 class ExamParticipantResponse(BaseModel):
@@ -23,6 +26,7 @@ class ExamParticipantResponse(BaseModel):
     current_question_index: int = 0
     progress_percent: int = 0
     tab_switches_count: int = 0
+    right_clicks_count: int = 0
     score: float = 0.0
     points_earned: int = 0
     total_points: int = 0
@@ -47,6 +51,9 @@ class ExamSessionDetailResponse(BaseModel):
     passing_score: int
     shuffle_questions: bool
     shuffle_options: bool
+    detect_tab_switches: bool = True
+    detect_right_clicks: bool = True
+    block_copy_paste: bool = True
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
     created_at: datetime
@@ -69,6 +76,7 @@ class ExamProgressReport(BaseModel):
     current_question_index: int = 0
     progress_percent: int = 0
     switched_tab: bool = False
+    right_clicked: bool = False
 
 
 class ExamAnswerItem(BaseModel):

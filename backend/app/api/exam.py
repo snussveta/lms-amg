@@ -31,7 +31,7 @@ from app.schemas.exam import (
     ExamSessionDetailResponse,
     ExamSubmitRequest,
 )
-from app.schemas.test import QuestionEmployeeResponse
+from app.schemas.test import QuestionEmployeeResponse, QuestionOptionEmployeeResponse
 
 router = APIRouter(prefix="/exam", tags=["Live Synchronous Exam"])
 
@@ -57,6 +57,7 @@ def _map_participant_response(p: ExamParticipant) -> ExamParticipantResponse:
         current_question_index=p.current_question_index,
         progress_percent=p.progress_percent,
         tab_switches_count=p.tab_switches_count,
+        right_clicks_count=getattr(p, "right_clicks_count", 0),
         score=p.score,
         points_earned=p.points_earned,
         total_points=p.total_points,
@@ -100,6 +101,9 @@ async def create_exam_session(
         passing_score=payload.passing_score if payload.passing_score is not None else test.passing_score,
         shuffle_questions=payload.shuffle_questions if payload.shuffle_questions is not None else True,
         shuffle_options=payload.shuffle_options if payload.shuffle_options is not None else True,
+        detect_tab_switches=payload.detect_tab_switches if payload.detect_tab_switches is not None else True,
+        detect_right_clicks=payload.detect_right_clicks if payload.detect_right_clicks is not None else True,
+        block_copy_paste=payload.block_copy_paste if payload.block_copy_paste is not None else True,
     )
     db.add(session)
     await db.commit()
@@ -117,6 +121,9 @@ async def create_exam_session(
         passing_score=session.passing_score,
         shuffle_questions=session.shuffle_questions,
         shuffle_options=session.shuffle_options,
+        detect_tab_switches=session.detect_tab_switches,
+        detect_right_clicks=session.detect_right_clicks,
+        block_copy_paste=session.block_copy_paste,
         started_at=session.started_at,
         ended_at=session.ended_at,
         created_at=session.created_at,
@@ -161,6 +168,9 @@ async def list_exam_sessions(
                 passing_score=s.passing_score,
                 shuffle_questions=s.shuffle_questions,
                 shuffle_options=s.shuffle_options,
+                detect_tab_switches=getattr(s, "detect_tab_switches", True),
+                detect_right_clicks=getattr(s, "detect_right_clicks", True),
+                block_copy_paste=getattr(s, "block_copy_paste", True),
                 started_at=s.started_at,
                 ended_at=s.ended_at,
                 created_at=s.created_at,
@@ -206,6 +216,9 @@ async def get_exam_session_detail(
         passing_score=s.passing_score,
         shuffle_questions=s.shuffle_questions,
         shuffle_options=s.shuffle_options,
+        detect_tab_switches=getattr(s, "detect_tab_switches", True),
+        detect_right_clicks=getattr(s, "detect_right_clicks", True),
+        block_copy_paste=getattr(s, "block_copy_paste", True),
         started_at=s.started_at,
         ended_at=s.ended_at,
         created_at=s.created_at,
@@ -486,6 +499,8 @@ async def report_progress(
     participant.progress_percent = payload.progress_percent
     if payload.switched_tab:
         participant.tab_switches_count += 1
+    if payload.right_clicked:
+        participant.right_clicks_count = getattr(participant, "right_clicks_count", 0) + 1
 
     await db.commit()
 
@@ -498,32 +513,46 @@ async def report_progress(
             "current_question_index": participant.current_question_index,
             "progress_percent": participant.progress_percent,
             "tab_switches_count": participant.tab_switches_count,
+            "right_clicks_count": getattr(participant, "right_clicks_count", 0),
         },
     )
 
     return {
         "status": "ok",
         "tab_switches_count": participant.tab_switches_count,
+        "right_clicks_count": getattr(participant, "right_clicks_count", 0),
     }
 
 
 @router.get("/sessions/{session_id}/questions", response_model=List[QuestionEmployeeResponse])
 async def get_exam_questions(
     session_id: int,
-    participant_id: int = Query(...),
+    participant_id: Optional[int] = Query(None),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user),
 ):
     """
     Получение списка вопросов экзамена для участника.
     Вопросы очищены от правильных ответов (Anti-Cheat).
     """
     # Verify participant and session
-    p_res = await db.execute(
-        select(ExamParticipant).where(
-            ExamParticipant.id == participant_id, ExamParticipant.session_id == session_id
+    participant = None
+    if participant_id:
+        p_res = await db.execute(
+            select(ExamParticipant).where(
+                ExamParticipant.id == participant_id, ExamParticipant.session_id == session_id
+            )
         )
-    )
-    participant = p_res.scalar_one_or_none()
+        participant = p_res.scalar_one_or_none()
+
+    if not participant and current_user:
+        p_res = await db.execute(
+            select(ExamParticipant).where(
+                ExamParticipant.user_id == current_user.id, ExamParticipant.session_id == session_id
+            )
+        )
+        participant = p_res.scalar_one_or_none()
+
     if not participant or participant.status == "disqualified":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -569,7 +598,14 @@ async def get_exam_questions(
                 question_type=q.question_type,
                 points=q.points,
                 order=q.order,
-                options=opts,
+                options=[
+                    QuestionOptionEmployeeResponse(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        text=opt.text,
+                    )
+                    for opt in opts
+                ],
             )
         )
 
