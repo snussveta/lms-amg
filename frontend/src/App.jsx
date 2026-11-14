@@ -36,6 +36,7 @@ import { GuestTakeTestPage } from './pages/public/GuestTakeTestPage';
 import { DirectJoinExamPage } from './pages/public/DirectJoinExamPage';
 import { LiveExamRoomPage } from './pages/employee/LiveExamRoomPage';
 import { LiveExamControlPage } from './pages/admin/LiveExamControlPage';
+import { LiveExamStatsPage } from './pages/admin/LiveExamStatsPage';
 
 function App() {
   return (
@@ -63,6 +64,14 @@ function App() {
                 element={
                   <ProtectedRoute requireManager>
                     <LiveExamControlPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/exam-stats"
+                element={
+                  <ProtectedRoute requireManager>
+                    <LiveExamStatsPage />
                   </ProtectedRoute>
                 }
               />

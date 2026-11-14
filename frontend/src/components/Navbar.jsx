@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
+  BarChart3,
   BookOpen,
   FileQuestion,
   FolderArchive,
@@ -145,6 +146,20 @@ export const Navbar = () => {
                     </Link>
                   )}
 
+                  {isDepartmentHead && (
+                    <Link
+                      to="/admin/exam-stats"
+                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 relative ${
+                        isActive('/admin/exam-stats')
+                          ? 'bg-[#242424] text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#E84C3D] after:rounded-full'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <BarChart3 className="w-4 h-4 text-white/90" />
+                      Экзамены отдела
+                    </Link>
+                  )}
+
                   {isAdmin && (
                     <>
                       <div className="w-px h-5 bg-white/20 mx-2" />
@@ -192,6 +207,13 @@ export const Navbar = () => {
                             >
                               <BookOpen className="w-4 h-4 text-[#E84C3D]" />
                               Банк вопросов
+                            </Link>
+                            <Link
+                              to="/admin/exam-stats"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
+                            >
+                              <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
+                              Статистика экзаменов
                             </Link>
                             <Link
                               to="/admin/users"
@@ -372,18 +394,32 @@ export const Navbar = () => {
                   </Link>
 
                   {isDepartmentHead && (
-                    <Link
-                      to="/admin/users"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                        isActive('/admin/users')
-                          ? 'bg-white/20 text-white font-semibold'
-                          : 'text-white/90 hover:bg-white/10'
-                      }`}
-                    >
-                      <Users className="w-4 h-4 text-white/80" />
-                      <span>Сотрудники отдела</span>
-                    </Link>
+                    <>
+                      <Link
+                        to="/admin/users"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                          isActive('/admin/users')
+                            ? 'bg-white/20 text-white font-semibold'
+                            : 'text-white/90 hover:bg-white/10'
+                        }`}
+                      >
+                        <Users className="w-4 h-4 text-white/80" />
+                        <span>Сотрудники отдела</span>
+                      </Link>
+                      <Link
+                        to="/admin/exam-stats"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                          isActive('/admin/exam-stats')
+                            ? 'bg-white/20 text-white font-semibold'
+                            : 'text-white/90 hover:bg-white/10'
+                        }`}
+                      >
+                        <BarChart3 className="w-4 h-4 text-white/80" />
+                        <span>Экзамены отдела</span>
+                      </Link>
+                    </>
                   )}
                 </div>
 
@@ -416,6 +452,14 @@ export const Navbar = () => {
                     >
                       <BookOpen className="w-4 h-4 text-[#E84C3D]" />
                       <span>Банк вопросов</span>
+                    </Link>
+                    <Link
+                      to="/admin/exam-stats"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
+                    >
+                      <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
+                      <span>Статистика экзаменов</span>
                     </Link>
                     <Link
                       to="/admin/users"

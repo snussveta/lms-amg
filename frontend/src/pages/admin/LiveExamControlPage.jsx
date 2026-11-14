@@ -4,6 +4,7 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   Check,
   CheckCircle2,
   Clock,
@@ -140,12 +141,12 @@ export const LiveExamControlPage = () => {
         prev.map((p) =>
           p.id === msg.participant_id
             ? {
-                ...p,
-                current_question_index: msg.current_question_index,
-                progress_percent: msg.progress_percent,
-                tab_switches_count: msg.tab_switches_count,
-                right_clicks_count: msg.right_clicks_count || p.right_clicks_count || 0,
-              }
+              ...p,
+              current_question_index: msg.current_question_index,
+              progress_percent: msg.progress_percent,
+              tab_switches_count: msg.tab_switches_count,
+              right_clicks_count: msg.right_clicks_count || p.right_clicks_count || 0,
+            }
             : p
         )
       );
@@ -287,10 +288,10 @@ export const LiveExamControlPage = () => {
   const avgScore =
     submittedCount > 0
       ? Math.round(
-          participants
-            .filter((p) => p.status === 'submitted')
-            .reduce((sum, p) => sum + (p.score || 0), 0) / submittedCount
-        )
+        participants
+          .filter((p) => p.status === 'submitted')
+          .reduce((sum, p) => sum + (p.score || 0), 0) / submittedCount
+      )
       : 0;
 
   return (
@@ -298,25 +299,34 @@ export const LiveExamControlPage = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
-          <Link
-            to="/admin/tests"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#777777] hover:text-[#141414] transition-colors mb-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Назад ко всем тестам</span>
-          </Link>
+          <div className="flex items-center gap-3 mb-2">
+            <Link
+              to="/admin/tests"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#777777] hover:text-[#141414] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Назад к тестам</span>
+            </Link>
+            <span className="text-[#DDDDDD]">•</span>
+            <Link
+              to="/admin/exam-stats"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#E84C3D] hover:underline transition-colors"
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Журнал статистики экзаменов</span>
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
               {session.title}
             </h1>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                isWaiting
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                  : isInProgress
+              className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${isWaiting
+                ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                : isInProgress
                   ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse'
                   : 'bg-zinc-100 text-zinc-700 border border-zinc-300'
-              }`}
+                }`}
             >
               {isWaiting ? 'Ожидание старта' : isInProgress ? 'Экзамен идет' : 'Завершен'}
             </span>
@@ -411,9 +421,8 @@ export const LiveExamControlPage = () => {
                 <span>Осталось времени:</span>
               </div>
               <div
-                className={`font-mono text-3xl sm:text-4xl font-black ${
-                  timeLeftSeconds <= 120 ? 'text-[#E84C3D] animate-pulse' : 'text-white'
-                }`}
+                className={`font-mono text-3xl sm:text-4xl font-black ${timeLeftSeconds <= 120 ? 'text-[#E84C3D] animate-pulse' : 'text-white'
+                  }`}
               >
                 {formatTimer(timeLeftSeconds)}
               </div>
@@ -463,8 +472,8 @@ export const LiveExamControlPage = () => {
                 {isWaiting
                   ? 'Список сотрудников, ожидающих старта в лобби'
                   : isInProgress
-                  ? 'Мониторинг процесса сдачи и контроль нарушений (античит)'
-                  : 'Итоговый протокол сдачи экзамена'}
+                    ? 'Мониторинг процесса сдачи и контроль нарушений (античит)'
+                    : 'Итоговый протокол сдачи экзамена'}
               </p>
             </div>
           </div>
@@ -516,9 +525,8 @@ export const LiveExamControlPage = () => {
                   return (
                     <tr
                       key={p.id}
-                      className={`hover:bg-[#F8F9FA] transition-colors ${
-                        isDisqualified ? 'bg-red-50/50 opacity-60' : ''
-                      }`}
+                      className={`hover:bg-[#F8F9FA] transition-colors ${isDisqualified ? 'bg-red-50/50 opacity-60' : ''
+                        }`}
                     >
                       <td className="py-3.5 px-5 font-mono text-xs text-[#777777]">
                         {idx + 1}
@@ -608,11 +616,10 @@ export const LiveExamControlPage = () => {
                         {isSubmitted ? (
                           <div className="flex items-center gap-2">
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-xs font-black ${
-                                p.passed
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-black ${p.passed
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}
                             >
                               {p.score}% ({p.passed ? 'Сдал' : 'Не сдал'})
                             </span>

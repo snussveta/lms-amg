@@ -88,6 +88,24 @@ export const AdminTestsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+      {/* Top Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-[#EEEEEE] pb-3">
+        <Link
+          to="/admin/tests"
+          className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white text-[#141414] shadow-xs border border-[#E5E5E5] flex items-center gap-2"
+        >
+          <FileQuestion className="w-4 h-4 text-[#E84C3D]" />
+          <span>Управление тестами</span>
+        </Link>
+        <Link
+          to="/admin/exam-stats"
+          className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#777777] hover:text-[#141414] hover:bg-white transition-all flex items-center gap-2 border border-transparent"
+        >
+          <BarChart3 className="w-4 h-4 text-[#777777]" />
+          <span>Статистика очных экзаменов</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>

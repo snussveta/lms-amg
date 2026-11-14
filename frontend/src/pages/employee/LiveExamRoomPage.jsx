@@ -254,7 +254,7 @@ export const LiveExamRoomPage = () => {
             ((currentQIndexRef.current + 1) / (questionsRef.current.length || 1)) * 100
           ),
           switched_tab: true,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
 
@@ -283,7 +283,7 @@ export const LiveExamRoomPage = () => {
             ((currentQIndexRef.current + 1) / (questionsRef.current.length || 1)) * 100
           ),
           right_clicked: true,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
 
@@ -403,7 +403,7 @@ export const LiveExamRoomPage = () => {
         current_question_index: currentQIndex,
         progress_percent: prog,
         switched_tab: false,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -493,11 +493,10 @@ export const LiveExamRoomPage = () => {
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full bg-white rounded-3xl border border-[#EEEEEE] shadow-2xl p-8 text-center space-y-5 animate-fade-in">
           <div
-            className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto border ${
-              result.passed
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                : 'bg-red-50 text-[#E84C3D] border-red-200'
-            }`}
+            className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto border ${result.passed
+              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              : 'bg-red-50 text-[#E84C3D] border-red-200'
+              }`}
           >
             {result.passed ? (
               <CheckCircle2 className="w-9 h-9" />
@@ -508,11 +507,10 @@ export const LiveExamRoomPage = () => {
 
           <div>
             <span
-              className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                result.passed
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-red-100 text-red-800'
-              }`}
+              className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${result.passed
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-red-100 text-red-800'
+                }`}
             >
               {result.passed ? 'Экзамен сдан' : 'Не сдан'}
             </span>
@@ -652,9 +650,8 @@ export const LiveExamRoomPage = () => {
               <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/20">
                 <Clock className="w-4 h-4 text-[#E84C3D]" />
                 <span
-                  className={`font-mono text-sm sm:text-base font-black ${
-                    timeLeftSeconds <= 120 ? 'text-[#E84C3D] animate-pulse' : 'text-white'
-                  }`}
+                  className={`font-mono text-sm sm:text-base font-black ${timeLeftSeconds <= 120 ? 'text-[#E84C3D] animate-pulse' : 'text-white'
+                    }`}
                 >
                   {formatTimer(timeLeftSeconds)}
                 </span>
@@ -720,7 +717,7 @@ export const LiveExamRoomPage = () => {
               {questions.map((q, idx) => {
                 const isAnswered = Boolean(
                   userAnswers[q.id]?.selected_option_ids?.length ||
-                    userAnswers[q.id]?.text_answer?.trim()
+                  userAnswers[q.id]?.text_answer?.trim()
                 );
                 const isCurrent = currentQIndex === idx;
 
@@ -729,13 +726,12 @@ export const LiveExamRoomPage = () => {
                     key={q.id}
                     type="button"
                     onClick={() => setCurrentQIndex(idx)}
-                    className={`w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 transition-all ${
-                      isCurrent
-                        ? 'bg-[#141414] text-white ring-2 ring-[#141414] shadow-sm'
-                        : isAnswered
+                    className={`w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 transition-all ${isCurrent
+                      ? 'bg-[#141414] text-white ring-2 ring-[#141414] shadow-sm'
+                      : isAnswered
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold'
                         : 'bg-[#F5F5F7] text-[#777777] hover:bg-[#EEEEEE]'
-                    }`}
+                      }`}
                   >
                     {idx + 1}
                   </button>
@@ -774,18 +770,16 @@ export const LiveExamRoomPage = () => {
                       <div
                         key={opt.id}
                         onClick={() => handleSelectOption(currentQ.id, opt.id, false)}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${
-                          isSelected
-                            ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-2 ring-[#141414]'
-                            : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
-                        }`}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${isSelected
+                          ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-2 ring-[#141414]'
+                          : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
+                          }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                            isSelected
-                              ? 'border-[#141414] bg-[#141414] text-white'
-                              : 'border-[#CED4DA] bg-white'
-                          }`}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${isSelected
+                            ? 'border-[#141414] bg-[#141414] text-white'
+                            : 'border-[#CED4DA] bg-white'
+                            }`}
                         >
                           {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
@@ -810,18 +804,16 @@ export const LiveExamRoomPage = () => {
                       <div
                         key={opt.id}
                         onClick={() => handleSelectOption(currentQ.id, opt.id, true)}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${
-                          isSelected
-                            ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-2 ring-[#141414]'
-                            : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
-                        }`}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${isSelected
+                          ? 'bg-[#F0F5FA] border-[#141414] text-[#141414] font-bold ring-2 ring-[#141414]'
+                          : 'bg-white border-[#EEEEEE] hover:border-[#CED4DA] hover:bg-[#F8F9FA] text-[#222222]'
+                          }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                            isSelected
-                              ? 'border-[#141414] bg-[#141414] text-white'
-                              : 'border-[#CED4DA] bg-white'
-                          }`}
+                          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${isSelected
+                            ? 'border-[#141414] bg-[#141414] text-white'
+                            : 'border-[#CED4DA] bg-white'
+                            }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                         </div>
@@ -905,13 +897,14 @@ export const LiveExamRoomPage = () => {
       {confirmSubmitOpen && (
         <ConfirmModal
           isOpen={confirmSubmitOpen}
-          onClose={() => setConfirmSubmitOpen(false)}
+          onClose={() => !submitting && setConfirmSubmitOpen(false)}
           onConfirm={doSubmit}
           title="Завершить и сдать экзамен?"
           message={`Вы ответили на ${
             Object.keys(userAnswers).length
           } из ${questions.length} вопросов. После отправки изменить ответы будет невозможно.`}
           confirmText="Да, отправить ответы"
+          loading={submitting}
         />
       )}
     </div>

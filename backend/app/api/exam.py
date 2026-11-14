@@ -667,6 +667,7 @@ async def submit_exam_answers(
     attempt = Attempt(
         test_id=session.test_id,
         user_id=participant.user_id,
+        is_guest=participant.user_id is None,
         guest_name=participant.guest_name,
         status="in_progress",
         started_at=session.started_at or now,
@@ -674,16 +675,19 @@ async def submit_exam_answers(
     db.add(attempt)
     await db.flush()
 
+    has_unreviewed = False
+
     for q in questions:
         ans = user_answers_map.get(q.id)
-        selected_ids = ans.selected_option_ids if ans else []
-        text_ans = ans.text_answer if ans else None
+        selected_ids = ans.selected_option_ids if ans and ans.selected_option_ids else []
+        text_ans = (ans.text_answer or "").strip() if ans and ans.text_answer else None
 
         correct_options = [opt for opt in q.options if opt.is_correct]
         correct_option_ids = [opt.id for opt in correct_options]
 
         is_correct = False
         points_awarded = 0
+        is_reviewed = True
 
         if q.question_type in ["single_choice", "dropdown"]:
             if len(selected_ids) == 1 and selected_ids[0] in correct_option_ids:
@@ -695,41 +699,44 @@ async def submit_exam_answers(
                 points_awarded = q.points
         elif q.question_type == "text":
             clean_text = (text_ans or "").strip().lower()
-            if clean_text:
-                for opt in correct_options:
-                    if opt.text.strip().lower() == clean_text:
-                        is_correct = True
-                        points_awarded = q.points
-                        break
-        elif q.question_type == "manual_review":
+            if correct_options:
+                if clean_text:
+                    for opt in correct_options:
+                        if opt.text.strip().lower() == clean_text:
+                            is_correct = True
+                            points_awarded = q.points
+                            break
+            else:
+                is_reviewed = False
+                has_unreviewed = True
+                points_awarded = 0
+        elif q.question_type in ["manual_review", "open", "free_text"]:
             is_correct = False
             points_awarded = 0
+            is_reviewed = False
+            has_unreviewed = True
 
         earned_points += points_awarded
 
         attempt_ans = AttemptAnswer(
             attempt_id=attempt.id,
             question_id=q.id,
-            question_text=q.text,
-            question_type=q.question_type,
-            points_max=q.points,
-            points_awarded=points_awarded,
+            selected_option_ids=selected_ids,
+            text_answer=text_ans if text_ans else None,
             is_correct=is_correct,
-            is_reviewed=q.question_type != "manual_review",
-            user_selected_option_ids=selected_ids,
-            user_text_answer=text_ans,
+            points_awarded=points_awarded,
+            is_reviewed=is_reviewed,
         )
         db.add(attempt_ans)
 
     score_percent = round((earned_points / total_possible_points * 100), 1) if total_possible_points > 0 else 0.0
-    passed = score_percent >= session.passing_score
+    passed = (score_percent >= session.passing_score) if not has_unreviewed else False
 
-    attempt.score = score_percent
-    attempt.points_earned = earned_points
-    attempt.total_points = total_possible_points
-    attempt.passed = passed
-    attempt.status = "completed"
-    attempt.finished_at = now
+    attempt.score = int(round(score_percent))
+    attempt.max_score = int(total_possible_points)
+    attempt.is_passed = passed
+    attempt.status = "needs_review" if has_unreviewed else "submitted"
+    attempt.submitted_at = now
 
     # Update participant
     participant.status = "submitted"
@@ -760,6 +767,180 @@ async def submit_exam_answers(
         "total_points": total_possible_points,
         "passed": passed,
         "attempt_id": attempt.id,
+    }
+
+
+# ==============================================================================
+# 5. EXAM STATISTICS & PROTOCOLS (RBAC: ADMIN VS DEPARTMENT HEAD)
+# ==============================================================================
+
+
+@router.get("/stats")
+async def get_exam_statistics(
+    session_id: Optional[int] = Query(None),
+    test_id: Optional[int] = Query(None),
+    department: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+):
+    """
+    Статистика по проведенным очным экзаменам.
+    - Администраторы и суперадминистраторы: видят всех сотрудников и сессии, могут проверять.
+    - Начальники отделов: строго ограничены только сотрудниками своего отдела.
+    """
+    is_head = current_user.role == "department_head"
+    user_dept = current_user.department or ""
+
+    stmt = (
+        select(ExamParticipant)
+        .join(ExamSession, ExamParticipant.session_id == ExamSession.id)
+        .outerjoin(User, ExamParticipant.user_id == User.id)
+        .outerjoin(Test, ExamSession.test_id == Test.id)
+        .outerjoin(Attempt, ExamParticipant.attempt_id == Attempt.id)
+        .options(
+            selectinload(ExamParticipant.session).selectinload(ExamSession.test),
+            selectinload(ExamParticipant.user),
+            selectinload(ExamParticipant.attempt),
+        )
+        .order_by(desc(ExamParticipant.joined_at))
+    )
+
+    # RBAC Filter: Department Head strictly restricted to their department
+    if is_head:
+        if current_user.department_id:
+            stmt = stmt.where(User.department_id == current_user.department_id)
+        elif user_dept:
+            stmt = stmt.where(User.department == user_dept)
+        else:
+            stmt = stmt.where(User.id == current_user.id)
+    else:
+        if department and department != "all":
+            stmt = stmt.where(User.department == department)
+
+    if session_id:
+        stmt = stmt.where(ExamParticipant.session_id == session_id)
+
+    if test_id:
+        stmt = stmt.where(ExamSession.test_id == test_id)
+
+    if status_filter and status_filter != "all":
+        if status_filter == "passed":
+            stmt = stmt.where(ExamParticipant.passed == True, ExamParticipant.status == "submitted")
+        elif status_filter == "failed":
+            stmt = stmt.where(ExamParticipant.passed == False, ExamParticipant.status == "submitted")
+        elif status_filter == "needs_review":
+            stmt = stmt.where(Attempt.status == "needs_review")
+        else:
+            stmt = stmt.where(ExamParticipant.status == status_filter)
+
+    if search:
+        search_term = f"%{search.strip().lower()}%"
+        stmt = stmt.where(
+            or_(
+                func.lower(User.full_name).like(search_term),
+                func.lower(User.email).like(search_term),
+                func.lower(ExamParticipant.guest_name).like(search_term),
+                func.lower(ExamSession.title).like(search_term),
+            )
+        )
+
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
+
+    # Sessions for filter dropdown
+    sessions_stmt = select(ExamSession).order_by(desc(ExamSession.created_at)).limit(100)
+    s_res = await db.execute(sessions_stmt)
+    all_sessions = s_res.scalars().all()
+
+    # Unique departments for filter dropdown
+    dept_stmt = select(User.department).where(User.department.isnot(None), User.department != "").distinct()
+    dept_res = await db.execute(dept_stmt)
+    all_departments = sorted([d[0] for d in dept_res.all() if d[0]])
+
+    items = []
+    total_score_sum = 0
+    submitted_count = 0
+    passed_count = 0
+    failed_count = 0
+    needs_review_count = 0
+    disqualified_count = 0
+    total_violations = 0
+
+    for p in participants:
+        s = p.session
+        t = s.test if s else None
+        att = p.attempt
+
+        full_name = p.user.full_name if p.user else (p.guest_name or "Гость")
+        email = p.user.email if p.user else None
+        dept = p.user.department if p.user else "—"
+
+        is_needs_review = att.status == "needs_review" if att else False
+
+        if p.status == "submitted":
+            submitted_count += 1
+            total_score_sum += p.score
+            if p.passed:
+                passed_count += 1
+            else:
+                failed_count += 1
+        elif p.status == "disqualified":
+            disqualified_count += 1
+
+        if is_needs_review:
+            needs_review_count += 1
+
+        total_violations += (p.tab_switches_count or 0) + (getattr(p, "right_clicks_count", 0) or 0)
+
+        items.append({
+            "id": p.id,
+            "session_id": s.id if s else None,
+            "session_title": s.title if s else "Экзамен",
+            "session_status": s.status if s else "unknown",
+            "pin_code": s.pin_code if s else "",
+            "test_id": t.id if t else (s.test_id if s else None),
+            "test_title": t.title if t else "Тест",
+            "user_id": p.user_id,
+            "full_name": full_name,
+            "email": email,
+            "department": dept,
+            "status": p.status,
+            "score": p.score,
+            "points_earned": p.points_earned,
+            "total_points": p.total_points,
+            "passed": p.passed,
+            "tab_switches_count": p.tab_switches_count,
+            "right_clicks_count": getattr(p, "right_clicks_count", 0),
+            "attempt_id": p.attempt_id,
+            "attempt_status": att.status if att else None,
+            "needs_review": is_needs_review,
+            "joined_at": p.joined_at,
+            "finished_at": p.finished_at,
+        })
+
+    avg_score = round(total_score_sum / submitted_count, 1) if submitted_count > 0 else 0.0
+
+    return {
+        "summary": {
+            "total_participants": len(participants),
+            "submitted_count": submitted_count,
+            "passed_count": passed_count,
+            "failed_count": failed_count,
+            "needs_review_count": needs_review_count,
+            "disqualified_count": disqualified_count,
+            "total_violations": total_violations,
+            "average_score": avg_score,
+            "user_role": current_user.role,
+            "managed_department": user_dept if is_head else None,
+        },
+        "sessions": [
+            {"id": s.id, "title": s.title, "pin_code": s.pin_code, "status": s.status}
+            for s in all_sessions
+        ],
+        "departments": all_departments,
+        "items": items,
     }
 
 
