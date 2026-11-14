@@ -933,6 +933,7 @@ async def get_exam_statistics(
             "total_violations": total_violations,
             "average_score": avg_score,
             "user_role": current_user.role,
+            "can_review": current_user.role in ("admin", "superadmin"),
             "managed_department": user_dept if is_head else None,
         },
         "sessions": [

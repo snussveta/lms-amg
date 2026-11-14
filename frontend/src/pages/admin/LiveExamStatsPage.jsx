@@ -27,7 +27,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ManualReviewModal } from '../../components/admin/ManualReviewModal';
 
 export const LiveExamStatsPage = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const isHead = user?.role === 'department_head';
 
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,7 @@ export const LiveExamStatsPage = () => {
               </div>
               <p className="text-xs text-[#777777] mt-0.5">
                 {isHead
-                  ? `Журнал результатов и проверка работ сотрудников отдела «${user?.department || 'Ваш отдел'}»`
+                  ? `Журнал результатов и контроль честности сдачи сотрудников отдела «${user?.department || 'Ваш отдел'}» (режим просмотра)`
                   : 'Сводные данные, аудит честности сдачи (античит) и проверка развернутых ответов сотрудников'}
               </p>
             </div>
@@ -240,7 +240,11 @@ export const LiveExamStatsPage = () => {
             {summary.needs_review_count ?? 0}
           </div>
           <div className="text-[11px] text-amber-800 font-medium">
-            {summary.needs_review_count > 0 ? 'Требуют оценки' : 'Все проверено'}
+            {summary.needs_review_count > 0
+              ? isAdmin
+                ? 'Требуют оценки'
+                : 'Проверяется администратором'
+              : 'Все проверено'}
           </div>
         </div>
 
@@ -504,7 +508,7 @@ export const LiveExamStatsPage = () => {
                         ) : isNeedsReview ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
                             <Clock className="w-3 h-3" />
-                            На проверке
+                            {isAdmin ? 'На проверке' : 'На проверке админом'}
                           </span>
                         ) : isSubmitted && row.passed ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -527,26 +531,31 @@ export const LiveExamStatsPage = () => {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
-                          {isNeedsReview && row.attempt_id ? (
-                            <button
-                              type="button"
-                              onClick={() => setReviewingAttemptId(row.attempt_id)}
-                              className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
-                            >
-                              <FileCheck className="w-3.5 h-3.5" />
-                              <span>Проверить</span>
-                            </button>
-                          ) : row.attempt_id ? (
-                            <button
-                              type="button"
-                              onClick={() => setReviewingAttemptId(row.attempt_id)}
-                              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#555555] bg-[#F5F5F7] hover:bg-[#EEEEEE] hover:text-[#141414] transition-colors flex items-center gap-1 border border-[#EEEEEE]"
-                              title="Посмотреть протокол и ответы"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Протокол</span>
-                            </button>
-                          ) : null}
+                          {isAdmin && (
+                            <>
+                              {isNeedsReview && row.attempt_id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setReviewingAttemptId(row.attempt_id)}
+                                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                                  title="Проверить развернутые ответы"
+                                >
+                                  <FileCheck className="w-3.5 h-3.5" />
+                                  <span>Проверить</span>
+                                </button>
+                              ) : row.attempt_id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setReviewingAttemptId(row.attempt_id)}
+                                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#555555] bg-[#F5F5F7] hover:bg-[#EEEEEE] hover:text-[#141414] transition-colors flex items-center gap-1 border border-[#EEEEEE]"
+                                  title="Посмотреть протокол и ответы"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Протокол</span>
+                                </button>
+                              ) : null}
+                            </>
+                          )}
 
                           {row.session_status === 'in_progress' && (
                             <Link
@@ -557,6 +566,10 @@ export const LiveExamStatsPage = () => {
                               <Zap className="w-3.5 h-3.5" />
                               <span>Сессия</span>
                             </Link>
+                          )}
+
+                          {!isAdmin && row.session_status !== 'in_progress' && (
+                            <span className="text-[#999999] text-[11px]">—</span>
                           )}
                         </div>
                       </td>
@@ -569,8 +582,8 @@ export const LiveExamStatsPage = () => {
         )}
       </div>
 
-      {/* Manual Review Modal */}
-      {reviewingAttemptId && (
+      {/* Manual Review Modal (Admins only) */}
+      {isAdmin && reviewingAttemptId && (
         <ManualReviewModal
           attemptId={reviewingAttemptId}
           onClose={() => setReviewingAttemptId(null)}

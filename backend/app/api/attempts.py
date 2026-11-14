@@ -462,10 +462,10 @@ async def review_attempt_answers(
     review_req: AttemptManualReviewRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+    current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """
-    Интерфейс ручной проверки открытых ответов администратором или начальником отдела:
+    Интерфейс ручной проверки открытых ответов администратором:
     - Выставляет баллы (от 0 до MAX) за каждый открытый вопрос
     - Оставляет комментарий / заметку проверяющего
     - Пересчитывает итоговый балл, процент и статус сдачи
@@ -484,20 +484,6 @@ async def review_attempt_answers(
 
     if not attempt:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Попытка не найдена")
-
-    # RBAC: Department head can only review attempts of employees in their department
-    if current_user.role == "department_head":
-        user_dept_id = current_user.department_id
-        user_dept = current_user.department or ""
-        att_user = attempt.user
-        if not att_user or not (
-            (user_dept_id and att_user.department_id == user_dept_id)
-            or (user_dept and att_user.department == user_dept)
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Начальник отдела может проверять работы только сотрудников своего отдела",
-            )
 
     test = attempt.test
     questions_map = {q.id: q for q in test.questions}
