@@ -58,21 +58,20 @@ async def get_courses(
     - Employees see courses assigned to them + published public courses / department courses.
     - Admins see all courses (published & drafts) across departments.
     """
-    # If employee, fetch personal assignments and enrollments
+    # Fetch personal assignments and enrollments for current user (any role)
     assigned_course_ids = []
     assignments_map = {}
     enrollments_map = {}
-    if current_user.role == "employee":
-        assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
-        assign_res = await db.execute(assign_stmt)
-        for a in assign_res.scalars().all():
-            assignments_map[a.course_id] = a
-        assigned_course_ids = list(assignments_map.keys())
+    assign_stmt = select(CourseAssignment).where(CourseAssignment.user_id == current_user.id)
+    assign_res = await db.execute(assign_stmt)
+    for a in assign_res.scalars().all():
+        assignments_map[a.course_id] = a
+    assigned_course_ids = list(assignments_map.keys())
 
-        enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
-        enr_res = await db.execute(enr_stmt)
-        for enr in enr_res.scalars().all():
-            enrollments_map[enr.course_id] = enr
+    enr_stmt = select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == current_user.id)
+    enr_res = await db.execute(enr_stmt)
+    for enr in enr_res.scalars().all():
+        enrollments_map[enr.course_id] = enr
 
     stmt = (
         select(Course)
@@ -99,9 +98,16 @@ async def get_courses(
             stmt = stmt.where(
                 (Course.department_tag == department) | (Course.department_tag == "Общий")
             )
-    else:
-        if current_user.role == "department_head":
+    elif current_user.role == "department_head":
+        if assigned_course_ids:
+            stmt = stmt.where(
+                (Course.id.in_(assigned_course_ids)) | Course.hide_from_heads.is_(False)
+            )
+        else:
             stmt = stmt.where(Course.hide_from_heads.is_(False))
+        if department and department != "Все":
+            stmt = stmt.where(Course.department_tag == department)
+    else:
         if department and department != "Все":
             stmt = stmt.where(Course.department_tag == department)
 
@@ -149,7 +155,7 @@ async def get_courses(
             )
         )
 
-    if current_user.role == "employee":
+    if current_user.role in ["employee", "department_head"]:
         # Sort assigned courses first, then by deadline
         response_items.sort(
             key=lambda x: (
@@ -244,7 +250,7 @@ async def get_course_detail(
     if current_user.role == "department_head" and course.hide_from_heads:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
-    if current_user.role == "employee":
+    if current_user.role in ["employee", "department_head"]:
         assign_stmt = select(CourseAssignment).where(
             CourseAssignment.course_id == course_id,
             CourseAssignment.user_id == current_user.id,
@@ -252,7 +258,7 @@ async def get_course_detail(
         assign_res = await db.execute(assign_stmt)
         is_assigned = assign_res.scalar_one_or_none() is not None
 
-        if not is_assigned and not course.is_public:
+        if current_user.role == "employee" and not is_assigned and not course.is_public:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет доступа к данному курсу",
@@ -644,7 +650,7 @@ async def get_course_learn_state(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
     # Check access for employee: must be assigned or course must be public
-    if current_user.role == "employee":
+    if current_user.role in ["employee", "department_head"]:
         assign_stmt = select(CourseAssignment).where(
             CourseAssignment.course_id == course_id,
             CourseAssignment.user_id == current_user.id,
@@ -652,7 +658,7 @@ async def get_course_learn_state(
         assign_res = await db.execute(assign_stmt)
         is_assigned = assign_res.scalar_one_or_none() is not None
 
-        if not is_assigned and not course.is_public:
+        if current_user.role == "employee" and not is_assigned and not course.is_public:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет доступа к данному курсу. Он назначен персонально другим сотрудникам.",

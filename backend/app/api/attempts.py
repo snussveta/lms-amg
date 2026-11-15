@@ -57,7 +57,7 @@ async def start_attempt(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    if current_user.role == "employee":
+    if current_user.role in ["employee", "department_head"]:
         # Check if test is linked to a published course lesson
         course_check_stmt = (
             select(CourseLesson)
@@ -70,23 +70,23 @@ async def start_attempt(
         )
         is_in_course = (await db.execute(course_check_stmt)).scalar_one_or_none() is not None
 
-        if not test.is_published and not is_in_course:
+        assign_check = await db.execute(
+            select(TestAssignment).where(
+                TestAssignment.test_id == actual_test_id,
+                TestAssignment.user_id == current_user.id,
+            )
+        )
+        assignment = assign_check.scalar_one_or_none()
+
+        if not test.is_published and not is_in_course and not assignment:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест еще не опубликован")
 
         # Строгая проверка персонального назначения для тестов с ограниченным доступом
-        if test.is_assigned_only and not is_in_course:
-            assign_check = await db.execute(
-                select(TestAssignment).where(
-                    TestAssignment.test_id == actual_test_id,
-                    TestAssignment.user_id == current_user.id,
-                )
+        if test.is_assigned_only and not is_in_course and not assignment:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Этот тест вам не назначен",
             )
-            assignment = assign_check.scalar_one_or_none()
-            if not assignment:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Этот тест вам не назначен",
-                )
 
     now = datetime.now(timezone.utc)
 

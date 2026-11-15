@@ -42,13 +42,13 @@ async def get_tests(
     - Для администраторов: все тесты компании (опубликованные и черновики).
     """
     assigned_map = {}
-    if current_user.role == "employee":
-        # Получаем назначения сотрудника
-        assign_res = await db.execute(
-            select(TestAssignment).where(TestAssignment.user_id == current_user.id)
-        )
-        for a in assign_res.scalars().all():
-            assigned_map[a.test_id] = a
+    # Получаем персональные назначения текущего пользователя (для любой роли: сотрудник, руководитель, админ)
+    assign_res = await db.execute(
+        select(TestAssignment).where(TestAssignment.user_id == current_user.id)
+    )
+    for a in assign_res.scalars().all():
+        assigned_map[a.test_id] = a
+    assigned_ids = list(assigned_map.keys())
 
     stmt = (
         select(Test)
@@ -61,7 +61,6 @@ async def get_tests(
         # 1. Любые назначенные ему тесты (даже если черновик)
         # 2. Опубликованные тесты общего доступа (is_assigned_only == False)
         # Экзамены (is_exam == True) никогда не отображаются в общем каталоге тестов!
-        assigned_ids = list(assigned_map.keys())
         if assigned_ids:
             stmt = stmt.where(
                 Test.is_exam.is_(False),
@@ -74,35 +73,42 @@ async def get_tests(
                 Test.is_assigned_only.is_(False),
             )
     elif current_user.role == "department_head":
-        # Руководители отделов видят только нескрытые тесты и не видят экзамены (экзамены по умолчанию видят только администраторы)
-        stmt = stmt.where(
-            Test.hide_from_heads.is_(False),
-            Test.is_exam.is_(False),
-        )
+        # Руководители отделов видят:
+        # 1. Персонально назначенные им тесты
+        # 2. Тесты компании, которые не скрыты от начальников и не являются экзаменами
+        if assigned_ids:
+            stmt = stmt.where(
+                (Test.id.in_(assigned_ids))
+                | (Test.hide_from_heads.is_(False) & Test.is_exam.is_(False))
+            )
+        else:
+            stmt = stmt.where(
+                Test.hide_from_heads.is_(False),
+                Test.is_exam.is_(False),
+            )
 
     result = await db.execute(stmt)
     tests = result.scalars().all()
 
-    # Попытки сотрудника
+    # Попытки текущего пользователя (для любой роли, проходящей тесты)
     user_attempts_map = {}
     completed_attempts_count_map = {}
     latest_completed_attempt_id_map = {}
-    if current_user.role == "employee":
-        attempts_res = await db.execute(
-            select(Attempt).where(Attempt.user_id == current_user.id).order_by(Attempt.started_at.desc())
-        )
-        attempts = attempts_res.scalars().all()
-        for att in attempts:
-            if att.status in ["submitted", "needs_review", "timed_out"]:
-                completed_attempts_count_map[att.test_id] = completed_attempts_count_map.get(att.test_id, 0) + 1
-                if att.test_id not in latest_completed_attempt_id_map:
-                    latest_completed_attempt_id_map[att.test_id] = att.id
+    attempts_res = await db.execute(
+        select(Attempt).where(Attempt.user_id == current_user.id).order_by(Attempt.started_at.desc())
+    )
+    attempts = attempts_res.scalars().all()
+    for att in attempts:
+        if att.status in ["submitted", "needs_review", "timed_out"]:
+            completed_attempts_count_map[att.test_id] = completed_attempts_count_map.get(att.test_id, 0) + 1
+            if att.test_id not in latest_completed_attempt_id_map:
+                latest_completed_attempt_id_map[att.test_id] = att.id
 
-            if att.test_id not in user_attempts_map:
+        if att.test_id not in user_attempts_map:
+            user_attempts_map[att.test_id] = att
+        else:
+            if att.is_passed or (att.score > user_attempts_map[att.test_id].score):
                 user_attempts_map[att.test_id] = att
-            else:
-                if att.is_passed or (att.score > user_attempts_map[att.test_id].score):
-                    user_attempts_map[att.test_id] = att
 
     response_items = []
     for t in tests:
@@ -250,12 +256,19 @@ async def get_test(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены (если они не назначены ему персонально)
     if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+        assign_check = await db.execute(
+            select(TestAssignment).where(
+                TestAssignment.test_id == test_id,
+                TestAssignment.user_id == current_user.id,
+            )
+        )
+        if not assign_check.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
-    # Если сотрудник: проверка статуса публикации и персонального назначения
-    if current_user.role == "employee":
+    # Если сотрудник или руководитель: проверка статуса публикации и персонального назначения
+    if current_user.role in ["employee", "department_head"]:
         assign_check = await db.execute(
             select(TestAssignment).where(
                 TestAssignment.test_id == test_id,
@@ -264,10 +277,11 @@ async def get_test(
         )
         is_assigned = assign_check.scalar_one_or_none() is not None
 
-        if not test.is_published and not is_assigned:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
-        if test.is_assigned_only and not is_assigned:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест вам не назначен")
+        if current_user.role == "employee":
+            if not test.is_published and not is_assigned:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+            if test.is_assigned_only and not is_assigned:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Этот тест вам не назначен")
 
     tot_points = sum(q.points for q in test.questions)
 
