@@ -177,13 +177,12 @@ export const MyAttemptsPage = () => {
 
                       <td className="py-4 px-5">
                         <span
-                          className={`font-bold ${
-                            isNeedsReview
-                              ? 'text-amber-700 text-xs'
-                              : isPassed
+                          className={`font-bold ${isNeedsReview
+                            ? 'text-amber-700 text-xs'
+                            : isPassed
                               ? 'text-emerald-700'
                               : 'text-[#E84C3D]'
-                          }`}
+                            }`}
                         >
                           {isNeedsReview ? 'Ожидает проверки' : `${att.percentage}%`}
                         </span>

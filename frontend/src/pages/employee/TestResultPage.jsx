@@ -104,24 +104,22 @@ export const TestResultPage = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
       {/* Главный итоговый баннер результатов */}
       <div
-        className={`rounded-2xl p-6 sm:p-8 border shadow-card bg-white ${
-          isNeedsReview
-            ? 'border-amber-200'
-            : isPassed
+        className={`rounded-2xl p-6 sm:p-8 border shadow-card bg-white ${isNeedsReview
+          ? 'border-amber-200'
+          : isPassed
             ? 'border-emerald-200'
             : 'border-[#F8D3D0]'
-        }`}
+          }`}
       >
         <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
           {/* Иконка статуса */}
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${
-              isNeedsReview
-                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                : isPassed
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${isNeedsReview
+              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+              : isPassed
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 : 'bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]'
-            }`}
+              }`}
           >
             {isNeedsReview ? (
               <Clock className="w-8 h-8" />
@@ -135,19 +133,18 @@ export const TestResultPage = () => {
           <div className="flex-1">
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2 flex-wrap">
               <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  isNeedsReview
-                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                    : isPassed
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${isNeedsReview
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : isPassed
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : 'bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]'
-                }`}
+                  }`}
               >
                 {isNeedsReview
                   ? 'Ожидает проверки экзаменатором'
                   : isPassed
-                  ? 'Тест успешно сдан'
-                  : 'Тест не сдан'}
+                    ? 'Тест успешно сдан'
+                    : 'Тест не сдан'}
               </span>
               <span className="text-xs text-[#777777] font-medium">
                 Порог сдачи: {result.passing_score}%
@@ -161,8 +158,8 @@ export const TestResultPage = () => {
               {isNeedsReview
                 ? 'В тесте содержатся развернутые вопросы со свободным ответом. Итоговая оценка и статус будут пересчитаны после проверки экзаменатором.'
                 : isPassed
-                ? 'Поздравляем! Вы успешно преодолели квалификационный порог корпоративного стандарта AMG.'
-                : 'К сожалению, набранных баллов недостаточно для преодоления порога сдачи. Ознакомьтесь с разбором ответов ниже.'}
+                  ? 'Поздравляем! Вы успешно преодолели квалификационный порог корпоративного стандарта AMG.'
+                  : 'К сожалению, набранных баллов недостаточно для преодоления порога сдачи. Ознакомьтесь с разбором ответов ниже.'}
             </p>
           </div>
         </div>
@@ -185,13 +182,12 @@ export const TestResultPage = () => {
           <div className="bg-[#F5F5F7] rounded-xl p-3 sm:p-4 text-center border border-[#EEEEEE]">
             <div className="text-xs text-[#777777]">Процент сдачи</div>
             <div
-              className={`text-xl font-bold mt-0.5 ${
-                isNeedsReview
-                  ? 'text-amber-700 text-sm font-bold'
-                  : isPassed
+              className={`text-xl font-bold mt-0.5 ${isNeedsReview
+                ? 'text-amber-700 text-sm font-bold'
+                : isPassed
                   ? 'text-emerald-700'
                   : 'text-[#E84C3D]'
-              }`}
+                }`}
             >
               {isNeedsReview ? 'На проверке' : `${result.percentage}%`}
             </div>
@@ -249,13 +245,12 @@ export const TestResultPage = () => {
           return (
             <div
               key={ans.question_id}
-              className={`bg-white rounded-xl p-5 border shadow-2xs transition-colors ${
-                isManual && !ans.is_reviewed
-                  ? 'border-amber-200'
-                  : isCorrect
+              className={`bg-white rounded-xl p-5 border shadow-2xs transition-colors ${isManual && !ans.is_reviewed
+                ? 'border-amber-200'
+                : isCorrect
                   ? 'border-emerald-200'
                   : 'border-[#F8D3D0]'
-              }`}
+                }`}
             >
               {/* Шапка вопроса */}
               <div className="flex items-center justify-between gap-2 mb-3">
@@ -329,11 +324,10 @@ export const TestResultPage = () => {
                         <span className="font-bold text-[#222222]">
                           Выставлено баллов: <span className="text-emerald-700">{ans.points_awarded}</span> из {ans.points_max}
                         </span>
-                        <span className={`text-[11px] px-2 py-0.5 rounded font-bold ${
-                          ans.is_reviewed
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
+                        <span className={`text-[11px] px-2 py-0.5 rounded font-bold ${ans.is_reviewed
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
                           {ans.is_reviewed ? 'Проверено' : 'Ожидает проверки'}
                         </span>
                       </div>

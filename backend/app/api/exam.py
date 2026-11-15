@@ -42,11 +42,13 @@ def _generate_pin() -> str:
 
 
 def _map_participant_response(p: ExamParticipant) -> ExamParticipantResponse:
-    full_name = p.user.full_name if p.user else (p.guest_name or "Гость")
-    email = p.user.email if p.user else None
-    dept = p.user.department if p.user else None
+    full_name = p.user.full_name if (p.user_id and "user" in p.__dict__ and p.user) else (p.guest_name or "Гость")
+    email = p.user.email if (p.user_id and "user" in p.__dict__ and p.user) else None
+    dept = p.user.department if (p.user_id and "user" in p.__dict__ and p.user) else None
     is_needs_review = False
-    if hasattr(p, "attempt") and p.attempt and p.attempt.status == "needs_review":
+    if "attempt" in p.__dict__ and p.attempt and getattr(p.attempt, "status", None) == "needs_review":
+        is_needs_review = True
+    elif getattr(p, "status", None) == "needs_review":
         is_needs_review = True
 
     return ExamParticipantResponse(
@@ -149,6 +151,7 @@ async def list_exam_sessions(
             selectinload(ExamSession.test),
             selectinload(ExamSession.creator),
             selectinload(ExamSession.participants).selectinload(ExamParticipant.user),
+            selectinload(ExamSession.participants).selectinload(ExamParticipant.attempt),
         )
         .order_by(desc(ExamSession.created_at))
         .limit(50)
@@ -199,6 +202,7 @@ async def get_exam_session_detail(
             selectinload(ExamSession.test),
             selectinload(ExamSession.creator),
             selectinload(ExamSession.participants).selectinload(ExamParticipant.user),
+            selectinload(ExamSession.participants).selectinload(ExamParticipant.attempt),
         )
         .where(ExamSession.id == session_id)
     )
@@ -251,6 +255,7 @@ async def join_exam_session(
     stmt = select(ExamSession).options(
         selectinload(ExamSession.test),
         selectinload(ExamSession.participants).selectinload(ExamParticipant.user),
+        selectinload(ExamSession.participants).selectinload(ExamParticipant.attempt),
     )
 
     clean_pin = (payload.pin_code or "").replace(" ", "").replace("-", "").strip()
@@ -314,10 +319,13 @@ async def join_exam_session(
         await db.commit()
         await db.refresh(new_participant)
 
-        # Reload participant with user relation for broadcasting
+        # Reload participant with user and attempt relation for broadcasting
         p_stmt = (
             select(ExamParticipant)
-            .options(selectinload(ExamParticipant.user))
+            .options(
+                selectinload(ExamParticipant.user),
+                selectinload(ExamParticipant.attempt),
+            )
             .where(ExamParticipant.id == new_participant.id)
         )
         p_res = await db.execute(p_stmt)
@@ -854,10 +862,79 @@ async def get_exam_statistics(
     res = await db.execute(stmt)
     participants = res.scalars().all()
 
-    # Sessions for filter dropdown
-    sessions_stmt = select(ExamSession).order_by(desc(ExamSession.created_at)).limit(100)
+    # Sessions for filter dropdown and hierarchical catalog
+    sessions_stmt = (
+        select(ExamSession)
+        .options(
+            selectinload(ExamSession.test),
+            selectinload(ExamSession.participants).selectinload(ExamParticipant.user),
+            selectinload(ExamSession.participants).selectinload(ExamParticipant.attempt),
+        )
+        .order_by(desc(ExamSession.created_at))
+        .limit(100)
+    )
     s_res = await db.execute(sessions_stmt)
     all_sessions = s_res.scalars().all()
+
+    sessions_data = []
+    for s in all_sessions:
+        s_parts = s.participants or []
+        if is_head:
+            if current_user.department_id:
+                s_parts = [p for p in s_parts if p.user and p.user.department_id == current_user.department_id]
+            elif user_dept:
+                s_parts = [p for p in s_parts if p.user and p.user.department == user_dept]
+            else:
+                s_parts = [p for p in s_parts if p.user_id == current_user.id]
+
+        s_submitted = 0
+        s_passed = 0
+        s_failed = 0
+        s_needs_review = 0
+        s_score_sum = 0
+        s_violations = 0
+
+        for sp in s_parts:
+            sp_att = sp.attempt
+            sp_needs = (sp_att.status == "needs_review") if sp_att else False
+            s_violations += (sp.tab_switches_count or 0) + (getattr(sp, "right_clicks_count", 0) or 0)
+
+            if sp.status == "submitted":
+                if sp_needs:
+                    s_needs_review += 1
+                else:
+                    s_submitted += 1
+                    s_score_sum += sp.score
+                    if sp.passed:
+                        s_passed += 1
+                    else:
+                        s_failed += 1
+            elif sp.status == "needs_review":
+                s_needs_review += 1
+
+        s_avg = round(s_score_sum / s_submitted, 1) if s_submitted > 0 else 0.0
+
+        if not is_head or len(s_parts) > 0:
+            sessions_data.append({
+                "id": s.id,
+                "title": s.title,
+                "test_id": s.test_id,
+                "test_title": s.test.title if s.test else "Тест",
+                "pin_code": s.pin_code,
+                "status": s.status,
+                "time_limit_minutes": s.time_limit_minutes,
+                "passing_score": s.passing_score,
+                "started_at": s.started_at,
+                "ended_at": s.ended_at,
+                "created_at": s.created_at,
+                "total_participants": len(s_parts),
+                "submitted_count": s_submitted,
+                "passed_count": s_passed,
+                "failed_count": s_failed,
+                "needs_review_count": s_needs_review,
+                "total_violations": s_violations,
+                "average_score": s_avg,
+            })
 
     # Unique departments for filter dropdown
     dept_stmt = select(User.department).where(User.department.isnot(None), User.department != "").distinct()
@@ -941,10 +1018,8 @@ async def get_exam_statistics(
             "can_review": current_user.role in ("admin", "superadmin"),
             "managed_department": user_dept if is_head else None,
         },
-        "sessions": [
-            {"id": s.id, "title": s.title, "pin_code": s.pin_code, "status": s.status}
-            for s in all_sessions
-        ],
+        "sessions": sessions_data,
+        "selected_session": next((s for s in sessions_data if s["id"] == session_id), None) if session_id else None,
         "departments": all_departments,
         "items": items,
     }

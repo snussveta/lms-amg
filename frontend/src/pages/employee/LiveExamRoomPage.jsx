@@ -937,9 +937,8 @@ export const LiveExamRoomPage = () => {
           onClose={() => !submitting && setConfirmSubmitOpen(false)}
           onConfirm={doSubmit}
           title="Завершить и сдать экзамен?"
-          message={`Вы ответили на ${
-            Object.keys(userAnswers).length
-          } из ${questions.length} вопросов. После отправки изменить ответы будет невозможно.`}
+          message={`Вы ответили на ${Object.keys(userAnswers).length
+            } из ${questions.length} вопросов. После отправки изменить ответы будет невозможно.`}
           confirmText="Да, отправить ответы"
           loading={submitting}
         />
