@@ -21,9 +21,14 @@ import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal'
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { CreateExamSessionModal } from '../../components/exam/CreateExamSessionModal';
 import { GoogleFormsImportModal } from '../../components/GoogleFormsImportModal';
+import { useAuth } from '../../context/AuthContext';
 
 export const AdminTestsPage = () => {
+  const { user } = useAuth();
+  const isHead = user?.role === 'department_head';
+
   const [tests, setTests] = useState([]);
+  const [tabMode, setTabMode] = useState('tests'); // 'tests' | 'exams'
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [assigningTest, setAssigningTest] = useState(null);
@@ -92,6 +97,40 @@ export const AdminTestsPage = () => {
     setTimeout(() => setCopiedToken(null), 2500);
   };
 
+  const handleConvertToExam = async (test) => {
+    if (!window.confirm(`Создать независимую копию теста «${test.title}» как синхронный экзамен?`)) return;
+    try {
+      setLoading(true);
+      await api.post(`/tests/${test.id}/convert-to-exam`);
+      await fetchTests();
+      setTabMode('exams');
+    } catch (err) {
+      console.error('Ошибка преобразования в экзамен:', err);
+      alert(getErrorMessage(err, 'Не удалось создать копию как экзамен.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConvertToTest = async (test) => {
+    if (!window.confirm(`Создать независимую копию экзамена «${test.title}» как обычный тест?`)) return;
+    try {
+      setLoading(true);
+      await api.post(`/tests/${test.id}/convert-to-test`);
+      await fetchTests();
+      setTabMode('tests');
+    } catch (err) {
+      console.error('Ошибка преобразования в тест:', err);
+      alert(getErrorMessage(err, 'Не удалось создать копию как тест.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regularTests = tests.filter((t) => !t.is_exam);
+  const examTests = tests.filter((t) => t.is_exam);
+  const displayedTests = isHead || tabMode === 'tests' ? regularTests : examTests;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Top Navigation Tabs */}
@@ -111,6 +150,40 @@ export const AdminTestsPage = () => {
           <span>Прошедшие экзамены и проверка</span>
         </Link>
       </div>
+
+      {/* Sub-tabs: Regular Tests vs Synchronous Exams (Only for Admins) */}
+      {!isHead && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTabMode('tests')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
+              tabMode === 'tests'
+                ? 'bg-[#141414] text-white border-[#141414] shadow-sm'
+                : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7]'
+            }`}
+          >
+            <FileQuestion className="w-4 h-4" />
+            <span>Обычные тесты ({regularTests.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTabMode('exams')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
+              tabMode === 'exams'
+                ? 'bg-purple-700 text-white border-purple-700 shadow-sm'
+                : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7]'
+            }`}
+          >
+            <Zap className="w-4 h-4 fill-current text-amber-300" />
+            <span>Экзамены ({examTests.length})</span>
+            <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded font-black">
+              Только админы
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
@@ -159,15 +232,19 @@ export const AdminTestsPage = () => {
             <div key={i} className="rounded-xl h-20 animate-pulse bg-white border border-[#EEEEEE]" />
           ))}
         </div>
-      ) : tests.length === 0 ? (
+      ) : displayedTests.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto my-8 border border-[#EEEEEE] shadow-card">
           <FileQuestion className="w-10 h-10 mx-auto text-[#CED4DA] mb-3" />
-          <h3 className="text-base font-bold text-[#222222]">Тесты еще не созданы</h3>
+          <h3 className="text-base font-bold text-[#222222]">
+            {tabMode === 'exams' ? 'Экзамены еще не созданы' : 'Тесты еще не созданы'}
+          </h3>
           <p className="text-xs sm:text-sm text-[#777777] mt-1 mb-5">
-            Начните с создания первого теста для сотрудников или кандидатов компании.
+            {tabMode === 'exams'
+              ? 'Создайте экзамен или преобразуйте любой существующий тест в независимый экзамен.'
+              : 'Начните с создания первого теста для сотрудников или кандидатов компании.'}
           </p>
           <Link to="/admin/tests/new" className="btn-primary text-xs sm:text-sm">
-            Создать тест
+            {tabMode === 'exams' ? 'Создать экзамен' : 'Создать тест'}
           </Link>
         </div>
       ) : (
@@ -186,12 +263,27 @@ export const AdminTestsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EEEEEE] text-xs text-[#222222]">
-                {tests.map((t) => (
+                {displayedTests.map((t) => (
                   <tr key={t.id} className="hover:bg-[#F8F9FA] transition-colors">
                     <td className="py-3.5 px-5 max-w-sm">
                       <div className="font-bold text-[#222222] text-sm">{t.title}</div>
                       <div className="text-[11px] text-[#777777] truncate mt-0.5">
                         {t.description || 'Описание отсутствует'}
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                        {t.is_exam && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                            Экзамен
+                          </span>
+                        )}
+                        {t.hide_from_heads && (
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200"
+                            title="Скрыт от начальников отделов"
+                          >
+                            Скрыт от начальников
+                          </span>
+                        )}
                       </div>
                     </td>
 
@@ -272,14 +364,49 @@ export const AdminTestsPage = () => {
 
                     <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5">
-                        <button
-                          onClick={() => setExamTest(t)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all"
-                          title="Запустить синхронный экзамен по PIN-коду"
-                        >
-                          <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />
-                          <span>Экзамен</span>
-                        </button>
+                        {t.is_exam ? (
+                          <>
+                            <button
+                              onClick={() => setExamTest(t)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-[11px] font-bold shadow-sm transition-all"
+                              title="Запустить синхронный экзамен по PIN-коду"
+                            >
+                              <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
+                              <span>Запустить</span>
+                            </button>
+
+                            {!isHead && (
+                              <button
+                                onClick={() => handleConvertToTest(t)}
+                                className="p-2 rounded-lg bg-white hover:bg-[#F5F5F7] text-purple-700 border border-purple-200 transition-colors shadow-2xs"
+                                title="Создать независимую копию как обычный тест"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setExamTest(t)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all"
+                              title="Запустить синхронный экзамен по PIN-коду"
+                            >
+                              <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />
+                              <span>Экзамен</span>
+                            </button>
+
+                            {!isHead && (
+                              <button
+                                onClick={() => handleConvertToExam(t)}
+                                className="p-2 rounded-lg bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 transition-colors shadow-2xs"
+                                title="Создать независимую копию как синхронный экзамен"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </>
+                        )}
 
                         <button
                           onClick={() => setAssigningTest(t)}

@@ -217,6 +217,13 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
                     );""",
                     "CREATE INDEX IF NOT EXISTS ix_user_google_tokens_user_id ON user_google_tokens(user_id);",
+                    # Tests & Courses permissions and separation
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS hide_from_heads BOOLEAN DEFAULT FALSE;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS is_exam BOOLEAN DEFAULT FALSE;",
+                    "ALTER TABLE courses ADD COLUMN IF NOT EXISTS hide_from_heads BOOLEAN DEFAULT FALSE;",
+                    "CREATE INDEX IF NOT EXISTS ix_tests_is_exam ON tests(is_exam);",
+                    "CREATE INDEX IF NOT EXISTS ix_tests_hide_from_heads ON tests(hide_from_heads);",
+                    "CREATE INDEX IF NOT EXISTS ix_courses_hide_from_heads ON courses(hide_from_heads);",
                 ]
                 for stmt in migration_sqls:
                     try:

@@ -19,8 +19,11 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { ConfirmModal } from '../ConfirmModal';
+import { useAuth } from '../../context/AuthContext';
 
 export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
+  const { user } = useAuth();
+  const isHead = user?.role === 'department_head';
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
   const [targetMode, setTargetMode] = useState('users'); // 'users' | 'department'
   const [users, setUsers] = useState([]);
@@ -52,8 +55,29 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
         api.get('/departments'),
         api.get(`/courses/${course.id}/assigned-users`),
       ]);
-      setUsers(usersRes.data || []);
-      setDepartments(deptsRes.data || []);
+      const allUsers = usersRes.data || [];
+      const allDepts = deptsRes.data || [];
+
+      // Начальник отдела видит ТОЛЬКО свой отдел и ТОЛЬКО своих сотрудников
+      const filteredDepts = isHead
+        ? allDepts.filter(
+            (d) =>
+              (user?.department_id != null && String(d.id) === String(user.department_id)) ||
+              (user?.department && d.name && d.name.trim().toLowerCase() === user.department.trim().toLowerCase())
+          )
+        : allDepts;
+
+      const filteredUsersList = isHead
+        ? allUsers.filter(
+            (u) =>
+              u.role === 'employee' &&
+              ((user?.department_id != null && String(u.department_id) === String(user.department_id)) ||
+                (user?.department && u.department && u.department.trim().toLowerCase() === user.department.trim().toLowerCase()))
+          )
+        : allUsers;
+
+      setUsers(filteredUsersList);
+      setDepartments(filteredDepts);
       setAssignments(assignRes.data.assigned_users || []);
     } catch (err) {
       console.error('Ошибка загрузки данных назначения курса:', err);
@@ -318,17 +342,19 @@ export const AssignCourseModal = ({ course, onClose, onAssigned }) => {
               <div className="space-y-3 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between gap-2 shrink-0">
                   <span className="text-xs font-semibold text-[#777777]">
-                    Выберите отделы компании для массового назначения:
+                    {isHead ? 'Ваш отдел для назначения курса:' : 'Выберите отделы компании для массового назначения:'}
                   </span>
-                  <button
-                    type="button"
-                    onClick={selectAllDepts}
-                    className="text-xs font-bold text-[#141414] hover:underline"
-                  >
-                    {departments.length > 0 && selectedDeptIds.length === departments.length
-                      ? 'Снять выбор'
-                      : 'Выбрать все отделы'}
-                  </button>
+                  {!isHead && (
+                    <button
+                      type="button"
+                      onClick={selectAllDepts}
+                      className="text-xs font-bold text-[#141414] hover:underline"
+                    >
+                      {departments.length > 0 && selectedDeptIds.length === departments.length
+                        ? 'Снять выбор'
+                        : 'Выбрать все отделы'}
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto flex-1 p-1">

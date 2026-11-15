@@ -227,6 +227,11 @@ export const AdminCoursesPage = () => {
                   <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-white/95 backdrop-blur border border-[#EEEEEE] text-[#141414] uppercase tracking-wider shadow-2xs">
                     {course.department_tag || 'Общий'}
                   </span>
+                  {course.hide_from_heads && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur shadow-2xs bg-amber-500/90 text-white border border-amber-600/30" title="Скрыт от начальников отделов">
+                      Скрыт от начальников
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => handleTogglePublic(course, e)}

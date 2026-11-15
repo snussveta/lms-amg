@@ -24,6 +24,8 @@ class Test(Base):
     is_published: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allow_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     public_token: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True, nullable=True)
+    hide_from_heads: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_exam: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     author_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

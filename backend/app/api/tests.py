@@ -1,3 +1,4 @@
+import re
 import secrets
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
@@ -59,16 +60,25 @@ async def get_tests(
         # Сотруднику доступны:
         # 1. Любые назначенные ему тесты (даже если черновик)
         # 2. Опубликованные тесты общего доступа (is_assigned_only == False)
+        # Экзамены (is_exam == True) никогда не отображаются в общем каталоге тестов!
         assigned_ids = list(assigned_map.keys())
         if assigned_ids:
             stmt = stmt.where(
-                (Test.id.in_(assigned_ids)) | (Test.is_published.is_(True) & Test.is_assigned_only.is_(False))
+                Test.is_exam.is_(False),
+                (Test.id.in_(assigned_ids)) | (Test.is_published.is_(True) & Test.is_assigned_only.is_(False)),
             )
         else:
             stmt = stmt.where(
+                Test.is_exam.is_(False),
                 Test.is_published.is_(True),
                 Test.is_assigned_only.is_(False),
             )
+    elif current_user.role == "department_head":
+        # Руководители отделов видят только нескрытые тесты и не видят экзамены (экзамены по умолчанию видят только администраторы)
+        stmt = stmt.where(
+            Test.hide_from_heads.is_(False),
+            Test.is_exam.is_(False),
+        )
 
     result = await db.execute(stmt)
     tests = result.scalars().all()
@@ -137,6 +147,8 @@ async def get_tests(
                 is_published=t.is_published,
                 allow_guest=t.allow_guest,
                 public_token=t.public_token,
+                hide_from_heads=t.hide_from_heads,
+                is_exam=t.is_exam,
                 question_count=q_count,
                 total_points=tot_points,
                 created_at=t.created_at,
@@ -175,6 +187,8 @@ async def create_test(
         is_published=test_in.is_published,
         allow_guest=test_in.allow_guest,
         public_token=public_token,
+        hide_from_heads=test_in.hide_from_heads,
+        is_exam=test_in.is_exam,
         author_id=current_user.id,
     )
     db.add(new_test)
@@ -236,6 +250,10 @@ async def get_test(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
     # Если сотрудник: проверка статуса публикации и персонального назначения
     if current_user.role == "employee":
         assign_check = await db.execute(
@@ -282,6 +300,10 @@ async def update_test(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
     if test_in.title is not None:
         test.title = test_in.title
     if test_in.description is not None:
@@ -303,6 +325,10 @@ async def update_test(
             test.public_token = secrets.token_urlsafe(16)
     if test_in.public_token is not None:
         test.public_token = test_in.public_token
+    if test_in.hide_from_heads is not None:
+        test.hide_from_heads = test_in.hide_from_heads
+    if test_in.is_exam is not None:
+        test.is_exam = test_in.is_exam
 
     if test_in.questions is not None:
         for q in test.questions:
@@ -354,6 +380,10 @@ async def delete_test(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
     await db.delete(test)
     await db.commit()
     return None
@@ -371,6 +401,10 @@ async def assign_test_to_users(
     test_res = await db.execute(select(Test).where(Test.id == test_id))
     test = test_res.scalar_one_or_none()
     if not test:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
     target_user_ids = set()
@@ -398,6 +432,20 @@ async def assign_test_to_users(
 
     # Department head restriction
     if current_user.role == "department_head":
+        if assign_req.department_ids:
+            for d_id in assign_req.department_ids:
+                if d_id != current_user.department_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Руководитель отдела может назначать тесты только сотрудникам своего отдела",
+                    )
+        if assign_req.departments:
+            for d_name in assign_req.departments:
+                if d_name != current_user.department:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Руководитель отдела может назначать тесты только сотрудникам своего отдела",
+                    )
         dept_filter = (User.department_id == current_user.department_id) | (User.department == current_user.department)
         allowed_res = await db.execute(select(User.id).where(User.is_active.is_(True), dept_filter, User.role == "employee"))
         allowed_ids = set(uid for (uid,) in allowed_res.fetchall())
@@ -465,6 +513,10 @@ async def get_test_assignments(
     test_res = await db.execute(select(Test).where(Test.id == test_id))
     test = test_res.scalar_one_or_none()
     if not test:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
     assignments_res = await db.execute(
@@ -588,6 +640,10 @@ async def get_test_analytics(
     if not test:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
 
+    # Руководитель отдела не может просматривать скрытые тесты или экзамены
+    if current_user.role == "department_head" and (test.hide_from_heads or test.is_exam):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тест не найден")
+
     max_possible = sum(q.points for q in test.questions)
 
     # Загружаем попытки вместе с ответами (чтобы посчитать unreviewed_count)
@@ -661,3 +717,145 @@ async def get_test_analytics(
         summary=summary,
         attempts=attempt_details,
     )
+
+
+@router.post("/{test_id}/convert-to-exam", response_model=TestAdminResponse)
+async def convert_test_to_exam(
+    test_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    """
+    Создать независимую копию теста как экзамен (только для администраторов).
+    Копирует все вопросы и варианты ответов, помечает is_exam=True, hide_from_heads=True.
+    """
+    stmt = (
+        select(Test)
+        .where(Test.id == test_id)
+        .options(selectinload(Test.questions).selectinload(Question.options))
+    )
+    res = await db.execute(stmt)
+    source = res.scalar_one_or_none()
+    if not source:
+        raise HTTPException(status_code=404, detail="Исходный тест не найден")
+
+    # Cloned exam
+    new_title = source.title if source.title.lower().startswith("экзамен") else f"Экзамен: {source.title}"
+    new_exam = Test(
+        title=new_title,
+        description=source.description,
+        time_limit_minutes=source.time_limit_minutes or 30,
+        passing_score=source.passing_score,
+        max_attempts=source.max_attempts,
+        is_assigned_only=source.is_assigned_only,
+        is_published=True,
+        allow_guest=source.allow_guest,
+        public_token=None,
+        hide_from_heads=True,  # По умолчанию экзамены видят только администраторы!
+        is_exam=True,
+        author_id=current_user.id,
+    )
+    db.add(new_exam)
+    await db.flush()
+
+    for q in source.questions:
+        new_q = Question(
+            test_id=new_exam.id,
+            text=q.text,
+            question_type=q.question_type,
+            points=q.points,
+            order=q.order,
+        )
+        db.add(new_q)
+        await db.flush()
+
+        for opt in q.options:
+            new_opt = QuestionOption(
+                question_id=new_q.id,
+                text=opt.text,
+                is_correct=opt.is_correct,
+            )
+            db.add(new_opt)
+
+    await db.commit()
+
+    refetched = await db.execute(
+        select(Test)
+        .where(Test.id == new_exam.id)
+        .options(selectinload(Test.questions).selectinload(Question.options))
+    )
+    saved = refetched.scalar_one()
+    res_obj = TestAdminResponse.model_validate(saved)
+    res_obj.total_points = sum(q.points for q in saved.questions)
+    return res_obj
+
+
+@router.post("/{test_id}/convert-to-test", response_model=TestAdminResponse)
+async def convert_exam_to_test(
+    test_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin")),
+):
+    """
+    Создать независимую копию экзамена как обычный тест.
+    Копирует все вопросы и варианты ответов, помечает is_exam=False, hide_from_heads=False.
+    """
+    stmt = (
+        select(Test)
+        .where(Test.id == test_id)
+        .options(selectinload(Test.questions).selectinload(Question.options))
+    )
+    res = await db.execute(stmt)
+    source = res.scalar_one_or_none()
+    if not source:
+        raise HTTPException(status_code=404, detail="Исходный экзамен не найден")
+
+    clean_title = re.sub(r"^экзамен:\s*", "", source.title, flags=re.IGNORECASE)
+    new_test = Test(
+        title=f"Тест: {clean_title}",
+        description=source.description,
+        time_limit_minutes=source.time_limit_minutes,
+        passing_score=source.passing_score,
+        max_attempts=source.max_attempts,
+        is_assigned_only=source.is_assigned_only,
+        is_published=True,
+        allow_guest=source.allow_guest,
+        public_token=None,
+        hide_from_heads=False,
+        is_exam=False,
+        author_id=current_user.id,
+    )
+    db.add(new_test)
+    await db.flush()
+
+    for q in source.questions:
+        new_q = Question(
+            test_id=new_test.id,
+            text=q.text,
+            question_type=q.question_type,
+            points=q.points,
+            order=q.order,
+        )
+        db.add(new_q)
+        await db.flush()
+
+        for opt in q.options:
+            new_opt = QuestionOption(
+                question_id=new_q.id,
+                text=opt.text,
+                is_correct=opt.is_correct,
+            )
+            db.add(new_opt)
+
+    await db.commit()
+
+    refetched = await db.execute(
+        select(Test)
+        .where(Test.id == new_test.id)
+        .options(selectinload(Test.questions).selectinload(Question.options))
+    )
+    saved = refetched.scalar_one()
+    res_obj = TestAdminResponse.model_validate(saved)
+    res_obj.total_points = sum(q.points for q in saved.questions)
+    return res_obj
+

@@ -65,6 +65,8 @@ export const TestConstructorPage = () => {
   const [allowGuest, setAllowGuest] = useState(false);
   const [disallowRetake, setDisallowRetake] = useState(false);
   const [isAssignedOnly, setIsAssignedOnly] = useState(true);
+  const [hideFromHeads, setHideFromHeads] = useState(false);
+  const [isExam, setIsExam] = useState(false);
   const [publicToken, setPublicToken] = useState(null);
 
   // Вопросы теста
@@ -116,6 +118,8 @@ export const TestConstructorPage = () => {
       setAllowGuest(Boolean(data.allow_guest));
       setDisallowRetake(Boolean(data.disallow_retake));
       setIsAssignedOnly(data.is_assigned_only !== undefined ? Boolean(data.is_assigned_only) : true);
+      setHideFromHeads(Boolean(data.hide_from_heads));
+      setIsExam(Boolean(data.is_exam));
       setPublicToken(data.public_token || null);
 
       if (data.time_limit_minutes) {
@@ -374,6 +378,8 @@ export const TestConstructorPage = () => {
         allow_guest: allowGuest,
         disallow_retake: disallowRetake,
         is_assigned_only: isAssignedOnly,
+        hide_from_heads: hideFromHeads,
+        is_exam: isExam,
         questions: questions.map((q, idx) => ({
           text: q.text.trim(),
           question_type: q.question_type,
@@ -1227,6 +1233,89 @@ export const TestConstructorPage = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* 4. Type & Department Head Visibility */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Тип материала и видимость для начальников</h3>
+                  <p className="text-xs text-[#777777]">Разделение тестов и экзаменов, ограничения для руководителей отделов</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                {/* Type: Test vs Exam */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label
+                    className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
+                      !isExam
+                        ? 'bg-white border-[#141414] ring-2 ring-[#141414]/10 shadow-sm'
+                        : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        name="material_type"
+                        checked={!isExam}
+                        onChange={() => setIsExam(false)}
+                        className="text-[#141414] focus:ring-[#141414] border-[#CED4DA] w-4 h-4"
+                      />
+                      <span className="text-xs font-bold text-[#222222]">Обычный тест</span>
+                    </div>
+                    <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
+                      Тест для самостоятельного обучения или аттестации сотрудников компании.
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
+                      isExam
+                        ? 'bg-purple-50/50 border-purple-600 ring-2 ring-purple-600/10 shadow-sm'
+                        : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        name="material_type"
+                        checked={isExam}
+                        onChange={() => {
+                          setIsExam(true);
+                          setHideFromHeads(true);
+                        }}
+                        className="text-purple-600 focus:ring-purple-600 border-[#CED4DA] w-4 h-4"
+                      />
+                      <span className="text-xs font-bold text-[#222222]">Синхронный экзамен</span>
+                    </div>
+                    <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
+                      Экзамен под контролем преподавателя (по PIN-коду, с таймером и античитом). По умолчанию видят только администраторы.
+                    </span>
+                  </label>
+                </div>
+
+                {/* Hide from Heads checkbox */}
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hideFromHeads}
+                    onChange={(e) => setHideFromHeads(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-amber-600 focus:ring-amber-600 w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Скрыть от начальников отделов (только для администраторов)
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      Начальники отделов не будут видеть этот материал в списках и не смогут назначать его своим сотрудникам. Доступен строго администраторам и суперадминистраторам.
+                    </span>
+                  </div>
+                </label>
               </div>
             </div>
           </div>

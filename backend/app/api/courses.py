@@ -100,6 +100,8 @@ async def get_courses(
                 (Course.department_tag == department) | (Course.department_tag == "Общий")
             )
     else:
+        if current_user.role == "department_head":
+            stmt = stmt.where(Course.hide_from_heads.is_(False))
         if department and department != "Все":
             stmt = stmt.where(Course.department_tag == department)
 
@@ -187,6 +189,7 @@ async def create_course(
         cover_image_url=payload.cover_image_url,
         is_published=payload.is_published,
         is_public=payload.is_public if payload.is_public is not None else False,
+        hide_from_heads=payload.hide_from_heads,
         author_id=current_user.id,
     )
     db.add(new_course)
@@ -236,6 +239,9 @@ async def get_course_detail(
     course = res.scalar_one_or_none()
 
     if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if current_user.role == "department_head" and course.hide_from_heads:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
     if current_user.role == "employee":
@@ -312,6 +318,9 @@ async def update_course(
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
+    if current_user.role == "department_head" and course.hide_from_heads:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
     if payload.title is not None:
         course.title = payload.title
     if payload.description is not None:
@@ -324,6 +333,8 @@ async def update_course(
         course.is_published = payload.is_published
     if payload.is_public is not None:
         course.is_public = payload.is_public
+    if payload.hide_from_heads is not None:
+        course.hide_from_heads = payload.hide_from_heads
 
     course.updated_at = datetime.now(timezone.utc)
     await db.commit()
@@ -342,6 +353,9 @@ async def delete_course(
     res = await db.execute(stmt)
     course = res.scalar_one_or_none()
     if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if current_user.role == "department_head" and course.hide_from_heads:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
     await db.delete(course)
@@ -624,6 +638,9 @@ async def get_course_learn_state(
     res = await db.execute(stmt)
     course = res.scalar_one_or_none()
     if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if current_user.role == "department_head" and course.hide_from_heads:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
     # Check access for employee: must be assigned or course must be public
@@ -962,6 +979,9 @@ async def assign_course_to_users(
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
+    if current_user.role == "department_head" and course.hide_from_heads:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
     target_user_ids = set(payload.user_ids or [])
     if payload.department_ids or payload.departments:
         dept_conditions = []
@@ -977,6 +997,20 @@ async def assign_course_to_users(
 
     # Restriction for Department Head: only their department's employees
     if current_user.role == "department_head":
+        if payload.department_ids:
+            for d_id in payload.department_ids:
+                if d_id != current_user.department_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Руководитель отдела может назначать курсы только своему отделу",
+                    )
+        if payload.departments:
+            for d_name in payload.departments:
+                if d_name != current_user.department:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Руководитель отдела может назначать курсы только своему отделу",
+                    )
         dept_filter = (User.department_id == current_user.department_id) | (User.department == current_user.department)
         allowed_users_res = await db.execute(select(User.id).where(User.is_active.is_(True), dept_filter, User.role == "employee"))
         allowed_ids = set(uid for (uid,) in allowed_users_res.fetchall())
@@ -1105,6 +1139,9 @@ async def get_course_assigned_users(
     course_res = await db.execute(select(Course).where(Course.id == course_id))
     course = course_res.scalar_one_or_none()
     if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+
+    if current_user.role == "department_head" and course.hide_from_heads:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
 
     stmt = (

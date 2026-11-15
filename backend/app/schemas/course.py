@@ -70,6 +70,7 @@ class CourseBase(BaseModel):
     cover_image_url: Optional[str] = None
     is_published: bool = False
     is_public: bool = False
+    hide_from_heads: bool = False
 
 
 class CourseCreate(CourseBase):
@@ -83,6 +84,7 @@ class CourseUpdate(BaseModel):
     cover_image_url: Optional[str] = None
     is_published: Optional[bool] = None
     is_public: Optional[bool] = None
+    hide_from_heads: Optional[bool] = None
 
 
 class CourseListItemResponse(CourseBase):

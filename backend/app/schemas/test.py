@@ -88,6 +88,8 @@ class TestBase(BaseModel):
     is_published: bool = True
     allow_guest: bool = False
     public_token: Optional[str] = None
+    hide_from_heads: bool = False
+    is_exam: bool = False
 
 
 class TestCreate(TestBase):
@@ -104,6 +106,8 @@ class TestUpdate(BaseModel):
     is_published: Optional[bool] = None
     allow_guest: Optional[bool] = None
     public_token: Optional[str] = None
+    hide_from_heads: Optional[bool] = None
+    is_exam: Optional[bool] = None
     questions: Optional[List[QuestionCreate]] = None
 
 
@@ -118,6 +122,8 @@ class TestListItemResponse(BaseModel):
     is_published: bool
     allow_guest: bool = False
     public_token: Optional[str] = None
+    hide_from_heads: bool = False
+    is_exam: bool = False
     question_count: int = 0
     total_points: int = 0
     created_at: datetime

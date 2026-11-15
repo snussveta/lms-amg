@@ -17,8 +17,11 @@ import {
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 import { ConfirmModal } from '../ConfirmModal';
+import { useAuth } from '../../context/AuthContext';
 
 export const TestAssignmentModal = ({ test, onClose }) => {
+  const { user } = useAuth();
+  const isHead = user?.role === 'department_head';
   const [activeTab, setActiveTab] = useState('assign'); // 'assign' | 'list'
   const [targetMode, setTargetMode] = useState('users'); // 'users' | 'department'
   const [users, setUsers] = useState([]);
@@ -47,8 +50,29 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         api.get('/departments'),
         api.get(`/tests/${test.id}/assignments`),
       ]);
-      setUsers(usersRes.data || []);
-      setDepartments(deptsRes.data || []);
+      const allUsers = usersRes.data || [];
+      const allDepts = deptsRes.data || [];
+
+      // Начальник отдела видит ТОЛЬКО свой отдел и ТОЛЬКО своих сотрудников
+      const filteredDepts = isHead
+        ? allDepts.filter(
+            (d) =>
+              (user?.department_id != null && String(d.id) === String(user.department_id)) ||
+              (user?.department && d.name && d.name.trim().toLowerCase() === user.department.trim().toLowerCase())
+          )
+        : allDepts;
+
+      const filteredUsersList = isHead
+        ? allUsers.filter(
+            (u) =>
+              u.role === 'employee' &&
+              ((user?.department_id != null && String(u.department_id) === String(user.department_id)) ||
+                (user?.department && u.department && u.department.trim().toLowerCase() === user.department.trim().toLowerCase()))
+          )
+        : allUsers;
+
+      setUsers(filteredUsersList);
+      setDepartments(filteredDepts);
       setAssignments(assignRes.data.assignments || []);
     } catch (err) {
       console.error('Ошибка загрузки данных назначения:', err);
@@ -299,17 +323,19 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold text-[#777777]">
-                      Выберите отделы для назначения теста:
+                      {isHead ? 'Ваш отдел для назначения теста:' : 'Выберите отделы для назначения теста:'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={selectAllDepts}
-                      className="text-xs font-bold text-[#141414] hover:underline"
-                    >
-                      {departments.length > 0 && selectedDeptIds.length === departments.length
-                        ? 'Снять выбор'
-                        : 'Выбрать все отделы'}
-                    </button>
+                    {!isHead && (
+                      <button
+                        type="button"
+                        onClick={selectAllDepts}
+                        className="text-xs font-bold text-[#141414] hover:underline"
+                      >
+                        {departments.length > 0 && selectedDeptIds.length === departments.length
+                          ? 'Снять выбор'
+                          : 'Выбрать все отделы'}
+                      </button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">

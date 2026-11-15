@@ -48,6 +48,7 @@ export const CourseConstructorPage = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
+  const [hideFromHeads, setHideFromHeads] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [departmentsList, setDepartmentsList] = useState([]);
   const [confirmState, setConfirmState] = useState(null);
@@ -163,6 +164,7 @@ export const CourseConstructorPage = () => {
       setCoverImageUrl(data.cover_image_url || '');
       setIsPublished(Boolean(data.is_published));
       setIsPublic(Boolean(data.is_public));
+      setHideFromHeads(Boolean(data.hide_from_heads));
       setModules(data.modules || []);
 
       if (data.modules?.length > 0 && data.modules[0].lessons?.length > 0) {
@@ -208,6 +210,7 @@ export const CourseConstructorPage = () => {
           cover_image_url: coverImageUrl,
           is_published: isPublished,
           is_public: isPublic,
+          hide_from_heads: hideFromHeads,
         };
         const res = await api.post('/courses', payload);
         currentCId = res.data.id;
@@ -243,6 +246,7 @@ export const CourseConstructorPage = () => {
           cover_image_url: coverImageUrl,
           is_published: isPublished,
           is_public: isPublic,
+          hide_from_heads: hideFromHeads,
         });
 
         // Persist all modules and lessons across all sections
@@ -1044,17 +1048,32 @@ export const CourseConstructorPage = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="checkbox"
-                id="isPublished"
-                checked={isPublished}
-                onChange={(e) => setIsPublished(e.target.checked)}
-                className="w-4 h-4 rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] cursor-pointer"
-              />
-              <label htmlFor="isPublished" className="text-xs font-bold text-[#222222] cursor-pointer">
-                Опубликовать курс
-              </label>
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isPublished"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#EEEEEE] text-[#141414] focus:ring-[#141414] cursor-pointer"
+                />
+                <label htmlFor="isPublished" className="text-xs font-bold text-[#222222] cursor-pointer">
+                  Опубликовать курс
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="hideFromHeads"
+                  checked={hideFromHeads}
+                  onChange={(e) => setHideFromHeads(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#EEEEEE] text-amber-600 focus:ring-amber-600 cursor-pointer"
+                />
+                <label htmlFor="hideFromHeads" className="text-xs font-bold text-amber-800 cursor-pointer">
+                  Скрыть от начальников отделов (только для администраторов)
+                </label>
+              </div>
             </div>
           </div>
         </div>
