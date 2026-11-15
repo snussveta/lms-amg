@@ -20,6 +20,7 @@ import api, { getErrorMessage } from '../../api/client';
 import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { CreateExamSessionModal } from '../../components/exam/CreateExamSessionModal';
+import { GoogleFormsImportModal } from '../../components/GoogleFormsImportModal';
 
 export const AdminTestsPage = () => {
   const [tests, setTests] = useState([]);
@@ -29,9 +30,14 @@ export const AdminTestsPage = () => {
   const [examTest, setExamTest] = useState(null);
   const [confirmDeleteTest, setConfirmDeleteTest] = useState(null);
   const [copiedToken, setCopiedToken] = useState(null);
+  const [googleModalOpen, setGoogleModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTests();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('google_connected') === 'true') {
+      setGoogleModalOpen(true);
+    }
   }, []);
 
   const fetchTests = async () => {
@@ -124,13 +130,26 @@ export const AdminTestsPage = () => {
           </div>
         </div>
 
-        <Link
-          to="/admin/tests/new"
-          className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 self-start sm:self-auto shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Создать новый тест</span>
-        </Link>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={() => setGoogleModalOpen(true)}
+            className="btn-secondary text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#7248B9]/30 text-[#7248B9] hover:bg-[#7248B9]/5 shadow-xs py-2 px-3.5 transition-all"
+          >
+            <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+              <path d="M19.321 5.562l-3.883-3.883C14.939 1.18 14.28 1 13.6 1H6.4C4.522 1 3 2.522 3 4.4v15.2C3 21.478 4.522 23 6.4 23h11.2c1.878 0 3.4-1.522 3.4-3.4V7.4c0-.68-.18-1.339-.679-1.838zM14 3.414L18.586 8H14V3.414zM19 19.6c0 .772-.628 1.4-1.4 1.4H6.4c-.772 0-1.4-.628-1.4-1.4V4.4c0-.772.628-1.4 1.4-1.4h6.6v6c0 .552.448 1 1 1h6v9.6zM8 12h8v2H8zm0 4h5v2H8z" />
+            </svg>
+            <span>Импорт из Google Forms</span>
+          </button>
+
+          <Link
+            to="/admin/tests/new"
+            className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Создать новый тест</span>
+          </Link>
+        </div>
       </div>
 
       {/* Tests Table */}
@@ -180,11 +199,10 @@ export const AdminTestsPage = () => {
                       <div className="flex flex-col gap-1.5 items-start">
                         <button
                           onClick={() => handleTogglePublish(t)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all ${
-                            t.is_published
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                          }`}
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all ${t.is_published
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                            }`}
                           title="Нажмите для переключения статуса"
                         >
                           {t.is_published ? (
@@ -201,11 +219,10 @@ export const AdminTestsPage = () => {
                         </button>
 
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                            t.is_assigned_only
-                              ? 'bg-[#FCECEB] text-[#E84C3D] border-[#F8D3D0]'
-                              : 'bg-[#F0F5FA] text-[#141414] border-[#B8D5ED]'
-                          }`}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${t.is_assigned_only
+                            ? 'bg-[#FCECEB] text-[#E84C3D] border-[#F8D3D0]'
+                            : 'bg-[#F0F5FA] text-[#141414] border-[#B8D5ED]'
+                            }`}
                         >
                           {t.is_assigned_only ? 'Только назначенные' : 'Общий доступ'}
                         </span>
@@ -229,11 +246,10 @@ export const AdminTestsPage = () => {
                       {t.allow_guest && t.public_token ? (
                         <button
                           onClick={() => handleCopyPublicLink(t.public_token)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
-                            copiedToken === t.public_token
-                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                              : 'bg-white border-[#EEEEEE] text-[#141414] hover:bg-[#F5F5F7]'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${copiedToken === t.public_token
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : 'bg-white border-[#EEEEEE] text-[#141414] hover:bg-[#F5F5F7]'
+                            }`}
                           title="Скопировать ссылку для гостей"
                         >
                           {copiedToken === t.public_token ? (
@@ -337,6 +353,17 @@ export const AdminTestsPage = () => {
           test={examTest}
           isOpen={Boolean(examTest)}
           onClose={() => setExamTest(null)}
+        />
+      )}
+
+      {/* Google Forms Import Modal */}
+      {googleModalOpen && (
+        <GoogleFormsImportModal
+          isOpen={googleModalOpen}
+          onClose={() => setGoogleModalOpen(false)}
+          onTestImported={() => {
+            fetchTests();
+          }}
         />
       )}
     </div>

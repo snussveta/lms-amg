@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     SMTP_SSL: bool = True
     FRONTEND_URL: str = "https://lms-amg.duckdns.org"
 
+    # Google OAuth & Google Forms Integration
+    GOOGLE_CLIENT_ID: Union[str, None] = None
+    GOOGLE_CLIENT_SECRET: Union[str, None] = None
+    GOOGLE_REDIRECT_URI: Union[str, None] = None
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["*"]
 

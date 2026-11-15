@@ -17,6 +17,7 @@ from app.models.course import (
 )
 from app.models.knowledge import KnowledgeFile, KnowledgeFileAssignment
 from app.models.exam import ExamSession, ExamParticipant
+from app.models.google_token import UserGoogleToken
 
 __all__ = [
     "Base",
@@ -40,4 +41,5 @@ __all__ = [
     "KnowledgeFileAssignment",
     "ExamSession",
     "ExamParticipant",
+    "UserGoogleToken",
 ]

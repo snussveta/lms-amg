@@ -204,6 +204,19 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS detect_right_clicks BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS block_copy_paste BOOLEAN DEFAULT TRUE;",
                     "ALTER TABLE exam_participants ADD COLUMN IF NOT EXISTS right_clicks_count INTEGER DEFAULT 0;",
+                    # Google OAuth & Forms Import table
+                    """CREATE TABLE IF NOT EXISTS user_google_tokens (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        google_email VARCHAR(255),
+                        access_token TEXT NOT NULL,
+                        refresh_token TEXT,
+                        token_uri VARCHAR(255) DEFAULT 'https://oauth2.googleapis.com/token' NOT NULL,
+                        expires_at TIMESTAMP WITH TIME ZONE,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+                    );""",
+                    "CREATE INDEX IF NOT EXISTS ix_user_google_tokens_user_id ON user_google_tokens(user_id);",
                 ]
                 for stmt in migration_sqls:
                     try:

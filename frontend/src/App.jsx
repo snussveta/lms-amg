@@ -37,6 +37,7 @@ import { DirectJoinExamPage } from './pages/public/DirectJoinExamPage';
 import { LiveExamRoomPage } from './pages/employee/LiveExamRoomPage';
 import { LiveExamControlPage } from './pages/admin/LiveExamControlPage';
 import { LiveExamStatsPage } from './pages/admin/LiveExamStatsPage';
+import { GoogleOAuthCallbackPage } from './pages/admin/GoogleOAuthCallbackPage';
 
 function App() {
   return (
@@ -72,6 +73,14 @@ function App() {
                 element={
                   <ProtectedRoute requireManager>
                     <LiveExamStatsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/google-callback"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <GoogleOAuthCallbackPage />
                   </ProtectedRoute>
                 }
               />
