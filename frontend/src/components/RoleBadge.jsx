@@ -6,27 +6,27 @@ export const RoleBadge = ({ role, className = '' }) => {
     case 'superadmin':
       return (
         <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0] shadow-2xs ${className}`}
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0] shadow-2xs whitespace-nowrap shrink-0 ${className}`}
         >
-          <ShieldAlert className="w-3.5 h-3.5 text-[#E84C3D]" />
+          <ShieldAlert className="w-3.5 h-3.5 text-[#E84C3D] shrink-0" />
           Суперадмин
         </span>
       );
     case 'admin':
       return (
         <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#141414] text-white border border-[#2A2A2A] shadow-2xs ${className}`}
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#141414] text-white border border-[#2A2A2A] shadow-2xs whitespace-nowrap shrink-0 ${className}`}
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+          <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           Администратор
         </span>
       );
     case 'department_head':
       return (
         <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#141414] text-[#E84C3D] border border-[#383838] shadow-2xs ${className}`}
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#141414] text-[#E84C3D] border border-[#383838] shadow-2xs whitespace-nowrap shrink-0 ${className}`}
         >
-          <Briefcase className="w-3.5 h-3.5 text-[#E84C3D]" />
+          <Briefcase className="w-3.5 h-3.5 text-[#E84C3D] shrink-0" />
           Руководитель отдела
         </span>
       );
@@ -34,9 +34,9 @@ export const RoleBadge = ({ role, className = '' }) => {
     default:
       return (
         <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F5F5F7] text-[#555555] border border-[#E5E7EB] ${className}`}
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F5F5F7] text-[#555555] border border-[#E5E7EB] whitespace-nowrap shrink-0 ${className}`}
         >
-          <UserCheck className="w-3.5 h-3.5 text-[#777777]" />
+          <UserCheck className="w-3.5 h-3.5 text-[#777777] shrink-0" />
           Сотрудник
         </span>
       );
