@@ -224,6 +224,15 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "CREATE INDEX IF NOT EXISTS ix_tests_is_exam ON tests(is_exam);",
                     "CREATE INDEX IF NOT EXISTS ix_tests_hide_from_heads ON tests(hide_from_heads);",
                     "CREATE INDEX IF NOT EXISTS ix_courses_hide_from_heads ON courses(hide_from_heads);",
+                    # Telegram & Notification Preferences
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR(100);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_username VARCHAR(100);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_link_code VARCHAR(10);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_link_expires_at TIMESTAMP WITH TIME ZONE;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_email BOOLEAN DEFAULT TRUE;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_telegram BOOLEAN DEFAULT TRUE;",
+                    "CREATE INDEX IF NOT EXISTS ix_users_telegram_chat_id ON users(telegram_chat_id);",
+                    "CREATE INDEX IF NOT EXISTS ix_users_telegram_link_code ON users(telegram_link_code);",
                 ]
                 for stmt in migration_sqls:
                     try:

@@ -502,16 +502,47 @@ async def assign_test_to_users(
     await db.commit()
 
     if target_list:
-        u_res = await db.execute(select(User.email, User.full_name).where(User.id.in_(target_list)))
-        users_info = [{"email": r[0], "full_name": r[1]} for r in u_res.fetchall() if r[0]]
-        if users_info:
+        u_res = await db.execute(
+            select(
+                User.email,
+                User.full_name,
+                User.telegram_chat_id,
+                User.notify_email,
+                User.notify_telegram,
+            ).where(User.id.in_(target_list))
+        )
+        all_targets = u_res.fetchall()
+
+        # Email notification (только тем сотрудникам, у кого включен notify_email)
+        email_users = [
+            {"email": r[0], "full_name": r[1]}
+            for r in all_targets
+            if r[0] and (r[3] is not False)
+        ]
+        if email_users:
             background_tasks.add_task(
                 send_bulk_test_assigned_email,
-                users=users_info,
+                users=email_users,
                 test_title=test.title,
                 test_id=test.id,
                 passing_score=test.passing_score,
                 due_date=assign_req.due_date,
+            )
+
+        # Telegram notification (только тем, у кого подключен Telegram и включен notify_telegram)
+        from app.core.telegram import send_bulk_test_assigned_telegram
+        tg_users = [
+            {"telegram_chat_id": r[2], "full_name": r[1]}
+            for r in all_targets
+            if r[2] and (r[4] is not False)
+        ]
+        if tg_users:
+            background_tasks.add_task(
+                send_bulk_test_assigned_telegram,
+                users=tg_users,
+                test_title=test.title,
+                due_date=str(assign_req.due_date) if assign_req.due_date else None,
+                test_id=test.id,
             )
 
     return {"message": f"Тест успешно назначен {len(target_list)} сотрудникам"}

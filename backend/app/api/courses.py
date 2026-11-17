@@ -970,6 +970,7 @@ async def mark_lesson_complete(
 async def assign_course_to_users(
     course_id: int,
     payload: CourseAssignRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
 ):
@@ -1074,6 +1075,50 @@ async def assign_course_to_users(
     course.is_published = True
 
     await db.commit()
+
+    if target_list:
+        u_res = await db.execute(
+            select(
+                User.email,
+                User.full_name,
+                User.telegram_chat_id,
+                User.notify_email,
+                User.notify_telegram,
+            ).where(User.id.in_(target_list))
+        )
+        all_targets = u_res.fetchall()
+
+        # Email notifications (только тем, у кого включен notify_email)
+        email_users = [
+            {"email": r[0], "full_name": r[1]}
+            for r in all_targets
+            if r[0] and (r[3] is not False)
+        ]
+        if email_users:
+            background_tasks.add_task(
+                send_bulk_course_assigned_email,
+                users=email_users,
+                course_title=course.title,
+                course_id=course.id,
+                deadline=payload.deadline,
+            )
+
+        # Telegram notifications (только тем, у кого подключен Telegram и включен notify_telegram)
+        from app.core.telegram import send_bulk_course_assigned_telegram
+        tg_users = [
+            {"telegram_chat_id": r[2], "full_name": r[1]}
+            for r in all_targets
+            if r[2] and (r[4] is not False)
+        ]
+        if tg_users:
+            background_tasks.add_task(
+                send_bulk_course_assigned_telegram,
+                users=tg_users,
+                course_title=course.title,
+                deadline=str(payload.deadline) if payload.deadline else None,
+                course_id=course.id,
+            )
+
     return {
         "status": "assigned",
         "course_id": course_id,

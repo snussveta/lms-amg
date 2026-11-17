@@ -25,7 +25,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database on startup: {e}")
         raise e
+
+    # Запуск фонового опроса Telegram бота (если указан TELEGRAM_BOT_TOKEN)
+    from app.core.telegram import start_telegram_bot_poller, stop_telegram_bot_poller
+    await start_telegram_bot_poller()
+
     yield
+
+    await stop_telegram_bot_poller()
     logger.info("Shutting down application...")
 
 

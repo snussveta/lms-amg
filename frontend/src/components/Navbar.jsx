@@ -15,10 +15,12 @@ import {
   X,
   ChevronDown,
   Zap,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { RoleBadge } from './RoleBadge';
 import { JoinExamModal } from './exam/JoinExamModal';
+import { ProfileModal } from './ProfileModal';
 
 export const Navbar = () => {
   const { user, logout, isAdmin, isDepartmentHead, isManager } = useAuth();
@@ -27,6 +29,7 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [isJoinExamModalOpen, setIsJoinExamModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -247,13 +250,24 @@ export const Navbar = () => {
 
               {user ? (
                 <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-                  <div className="flex items-center gap-2 pr-2 border-r border-white/15 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] flex items-center justify-center font-bold text-xs text-white shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="flex items-center gap-2 pr-2 py-1 px-1.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/5 transition-all text-left shrink-0 group cursor-pointer focus:outline-none"
+                    title="Настройки профиля и уведомлений"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] group-hover:border-[#E84C3D] flex items-center justify-center font-bold text-xs text-white shrink-0 relative transition-colors">
                       {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                      {user.telegram_connected && (
+                        <span
+                          className="w-2.5 h-2.5 rounded-full bg-[#2AABEE] ring-2 ring-[#141414] absolute -bottom-0.5 -right-0.5"
+                          title="Telegram подключен"
+                        />
+                      )}
                     </div>
                     <div className="flex flex-col text-left shrink-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[100px] lg:max-w-[140px]">
+                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[100px] lg:max-w-[140px] group-hover:text-white">
                           {user.full_name}
                         </span>
                         <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left" />
@@ -262,7 +276,10 @@ export const Navbar = () => {
                         {user.email}
                       </span>
                     </div>
-                  </div>
+                    <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors ml-1 hidden lg:block" />
+                  </button>
+
+                  <div className="w-px h-5 bg-white/15 shrink-0" />
 
                   <button
                     onClick={handleLogout}
@@ -321,10 +338,23 @@ export const Navbar = () => {
             {user ? (
               <>
                 {/* User Info Card on Mobile */}
-                <div className="p-3.5 rounded-xl bg-white/10 border border-white/15 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="w-full p-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 flex items-center justify-between gap-3 text-left transition-all"
+                >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-bold text-sm text-white shrink-0 relative">
                       {user.full_name?.charAt(0).toUpperCase() || 'U'}
+                      {user.telegram_connected && (
+                        <span
+                          className="w-2.5 h-2.5 rounded-full bg-[#2AABEE] ring-2 ring-[#141414] absolute -bottom-0.5 -right-0.5"
+                          title="Telegram подключен"
+                        />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="font-semibold text-sm text-white truncate">
@@ -333,8 +363,33 @@ export const Navbar = () => {
                       <div className="text-xs text-white/70 truncate">{user.email}</div>
                     </div>
                   </div>
-                  <RoleBadge role={user.role} />
-                </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <RoleBadge role={user.role} />
+                    <Settings className="w-4 h-4 text-white/70" />
+                  </div>
+                </button>
+
+                {/* Telegram & Notifications Quick Button on Mobile */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#2AABEE]/15 to-[#2AABEE]/5 border border-[#2AABEE]/30 text-white text-xs font-semibold hover:bg-[#2AABEE]/20 transition-all text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-[#2AABEE]" />
+                    <span>Уведомления и Telegram</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    user.telegram_connected
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-[#2AABEE]/20 text-[#2AABEE] border border-[#2AABEE]/30'
+                  }`}>
+                    {user.telegram_connected ? 'Telegram подключен' : 'Подключить бота'}
+                  </span>
+                </button>
 
                 {/* Main Navigation Links */}
                 <div className="space-y-1">
@@ -587,6 +642,12 @@ export const Navbar = () => {
       <JoinExamModal
         isOpen={isJoinExamModalOpen}
         onClose={() => setIsJoinExamModalOpen(false)}
+      />
+
+      {/* User Profile & Notification Settings Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
       />
     </>
   );

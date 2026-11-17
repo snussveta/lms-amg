@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, computed_field
 
 
 class UserBase(BaseModel):
@@ -45,11 +45,32 @@ class UserUpdateRole(BaseModel):
     role: str = Field(..., pattern="^(superadmin|admin|department_head|employee)$")
 
 
+class NotificationSettingsUpdate(BaseModel):
+    notify_email: Optional[bool] = None
+    notify_telegram: Optional[bool] = None
+
+
+class TelegramLinkCodeResponse(BaseModel):
+    code: str
+    bot_username: Optional[str] = None
+    deep_link: Optional[str] = None
+    expires_in_seconds: int = 900
+
+
 class UserResponse(UserBase):
     id: int
     role: str
     is_active: bool
+    telegram_chat_id: Optional[str] = None
+    telegram_username: Optional[str] = None
+    notify_email: bool = True
+    notify_telegram: bool = True
     created_at: datetime
+
+    @computed_field
+    @property
+    def telegram_connected(self) -> bool:
+        return bool(self.telegram_chat_id)
 
     model_config = {"from_attributes": True}
 

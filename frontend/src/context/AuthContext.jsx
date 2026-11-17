@@ -67,6 +67,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      try {
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        return res.data;
+      } catch (err) {
+        console.warn('Failed to refresh user:', err);
+        return null;
+      }
+    }
+    return null;
+  };
+
   const isSuperAdmin = user?.role === 'superadmin';
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const isDepartmentHead = user?.role === 'department_head';
@@ -82,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         setAuthData,
+        refreshUser,
         logout,
         isSuperAdmin,
         isAdmin,

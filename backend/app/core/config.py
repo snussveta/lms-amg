@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Union[str, None] = None
     GOOGLE_REDIRECT_URI: Union[str, None] = None
 
+    # Telegram Bot Notification Integration
+    TELEGRAM_BOT_TOKEN: Union[str, None] = None
+    TELEGRAM_BOT_USERNAME: Union[str, None] = None
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["*"]
 

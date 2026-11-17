@@ -26,6 +26,15 @@ class User(Base):
         Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    
+    # Telegram & Notification Preferences
+    telegram_chat_id: Mapped[Optional[str]] = mapped_column(String(100), default=None, nullable=True, index=True)
+    telegram_username: Mapped[Optional[str]] = mapped_column(String(100), default=None, nullable=True)
+    telegram_link_code: Mapped[Optional[str]] = mapped_column(String(10), default=None, nullable=True, index=True)
+    telegram_link_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None, nullable=True)
+    notify_email: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    notify_telegram: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

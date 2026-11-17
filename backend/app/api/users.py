@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import (
     create_password_reset_token,
@@ -14,7 +15,14 @@ from app.core.security import (
 from app.core.email import send_welcome_email, send_test_smtp_email
 from app.models.department import Department
 from app.models.user import User
-from app.schemas.user import UserAdminCreate, UserAdminUpdate, UserResponse, UserUpdateRole
+from app.schemas.user import (
+    UserAdminCreate,
+    UserAdminUpdate,
+    UserResponse,
+    UserUpdateRole,
+    NotificationSettingsUpdate,
+    TelegramLinkCodeResponse,
+)
 
 router = APIRouter(prefix="/users", tags=["Users Management"])
 
@@ -335,3 +343,86 @@ async def delete_user(
     await db.delete(target_user)
     await db.commit()
     return None
+
+
+# ==============================================================================
+# УВЕДОМЛЕНИЯ И ПРИВЯЗКА TELEGRAM ДЛЯ АВТОРИЗОВАННОГО ПОЛЬЗОВАТЕЛЯ
+# ==============================================================================
+
+@router.get("/me/notifications", response_model=dict)
+async def get_my_notifications(current_user: User = Depends(get_current_user)):
+    """Получить текущие настройки уведомлений и статус Telegram."""
+    bot_name = (settings.TELEGRAM_BOT_USERNAME or "").lstrip("@")
+    return {
+        "notify_email": current_user.notify_email,
+        "notify_telegram": current_user.notify_telegram,
+        "telegram_connected": bool(current_user.telegram_chat_id),
+        "telegram_username": current_user.telegram_username,
+        "bot_configured": bool(settings.TELEGRAM_BOT_TOKEN),
+        "bot_username": bot_name,
+    }
+
+
+@router.put("/me/notifications", response_model=dict)
+async def update_my_notifications(
+    payload: NotificationSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Обновление тумблеров уведомлений (Email / Telegram)."""
+    if payload.notify_email is not None:
+        current_user.notify_email = payload.notify_email
+    if payload.notify_telegram is not None:
+        current_user.notify_telegram = payload.notify_telegram
+    await db.commit()
+    await db.refresh(current_user)
+    bot_name = (settings.TELEGRAM_BOT_USERNAME or "").lstrip("@")
+    return {
+        "status": "success",
+        "notify_email": current_user.notify_email,
+        "notify_telegram": current_user.notify_telegram,
+        "telegram_connected": bool(current_user.telegram_chat_id),
+        "telegram_username": current_user.telegram_username,
+        "bot_configured": bool(settings.TELEGRAM_BOT_TOKEN),
+        "bot_username": bot_name,
+    }
+
+
+@router.post("/me/telegram/generate-code", response_model=TelegramLinkCodeResponse)
+async def generate_my_telegram_code(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Генерация 4-значного кода для привязки Telegram бота."""
+    from app.core.telegram import generate_telegram_link_code
+    from datetime import datetime, timezone, timedelta
+
+    code = generate_telegram_link_code()
+    current_user.telegram_link_code = code
+    current_user.telegram_link_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+    await db.commit()
+
+    bot_name = (settings.TELEGRAM_BOT_USERNAME or "").lstrip("@")
+    deep_link = f"https://t.me/{bot_name}?start={code}" if bot_name else None
+
+    return TelegramLinkCodeResponse(
+        code=code,
+        bot_username=bot_name,
+        deep_link=deep_link,
+        expires_in_seconds=900,
+    )
+
+
+@router.delete("/me/telegram", status_code=status.HTTP_200_OK)
+async def unlink_my_telegram(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Отвязать Telegram от текущего аккаунта."""
+    current_user.telegram_chat_id = None
+    current_user.telegram_username = None
+    current_user.telegram_link_code = None
+    current_user.telegram_link_expires_at = None
+    current_user.notify_telegram = False
+    await db.commit()
+    return {"status": "unlinked", "message": "Telegram успешно отключен"}
