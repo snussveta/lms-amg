@@ -1,15 +1,55 @@
 import asyncio
+import json
 import logging
 import random
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, List
 
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
 from sqlalchemy import select
 
 from app.core.config import settings
 
 logger = logging.getLogger("telegram")
+
+
+def _sync_http_post(url: str, payload: dict, timeout: float = 10.0) -> tuple[int, str]:
+    """Синхронный POST-запрос через стандартную библиотеку urllib (на случай отсутствия httpx)."""
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json", "User-Agent": "AMG-LMS-Telegram/1.0"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status, resp.read().decode("utf-8", errors="ignore")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", errors="ignore")
+
+
+def _sync_http_get(url: str, params: dict, timeout: float = 25.0) -> tuple[int, dict]:
+    """Синхронный GET-запрос через стандартную библиотеку urllib (на случай отсутствия httpx)."""
+    query = urllib.parse.urlencode(params)
+    full_url = f"{url}?{query}" if query else url
+    req = urllib.request.Request(
+        full_url,
+        headers={"User-Agent": "AMG-LMS-Telegram/1.0"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status, json.loads(resp.read().decode("utf-8", errors="ignore"))
+    except urllib.error.HTTPError as e:
+        return e.code, {}
 
 
 def is_telegram_configured() -> bool:
@@ -45,14 +85,20 @@ async def send_telegram_message(
         payload["reply_markup"] = reply_markup
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            res = await client.post(url, json=payload)
-            if res.status_code == 200:
-                logger.info(f"[Telegram] Сообщение успешно отправлено в чат {chat_id}")
-                return True
-            else:
-                logger.warning(f"[Telegram] Ошибка отправки в чат {chat_id}: {res.status_code} {res.text}")
-                return False
+        if httpx is not None:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.post(url, json=payload)
+                status_code = res.status_code
+                resp_text = res.text
+        else:
+            status_code, resp_text = await asyncio.to_thread(_sync_http_post, url, payload, 10.0)
+
+        if status_code == 200:
+            logger.info(f"[Telegram] Сообщение успешно отправлено в чат {chat_id}")
+            return True
+        else:
+            logger.warning(f"[Telegram] Ошибка отправки в чат {chat_id}: {status_code} {resp_text}")
+            return False
     except Exception as e:
         logger.error(f"[Telegram] Исключение при отправке сообщения в чат {chat_id}: {e}")
         return False
@@ -268,35 +314,39 @@ async def run_telegram_bot_poller() -> None:
             url = f"https://api.telegram.org/bot{token}/getUpdates"
             params = {"offset": offset, "timeout": 20}
 
-            async with httpx.AsyncClient(timeout=25.0) as client:
-                res = await client.get(url, params=params)
+            if httpx is not None:
+                async with httpx.AsyncClient(timeout=25.0) as client:
+                    res = await client.get(url, params=params)
+                    status_code = res.status_code
+                    data = res.json() if status_code == 200 else {}
+            else:
+                status_code, data = await asyncio.to_thread(_sync_http_get, url, params, 25.0)
 
-                if res.status_code == 200:
-                    data = res.json()
-                    for update in data.get("result", []):
-                        offset = update["update_id"] + 1
-                        message = update.get("message")
-                        if not message:
-                            continue
+            if status_code == 200:
+                for update in data.get("result", []):
+                    offset = update["update_id"] + 1
+                    message = update.get("message")
+                    if not message:
+                        continue
 
-                        chat_id = str(message["chat"]["id"])
-                        text = (message.get("text") or "").strip()
-                        from_user = message.get("from", {})
-                        username = from_user.get("username")
-                        first_name = from_user.get("first_name", "Сотрудник")
+                    chat_id = str(message["chat"]["id"])
+                    text = (message.get("text") or "").strip()
+                    from_user = message.get("from", {})
+                    username = from_user.get("username")
+                    first_name = from_user.get("first_name", "Сотрудник")
 
-                        # Обработка команд и кодов
-                        await _handle_incoming_telegram_message(
-                            chat_id=chat_id,
-                            text=text,
-                            username=username,
-                            first_name=first_name,
-                        )
-                elif res.status_code in [401, 404]:
-                    logger.error(f"[Telegram] Неверный токен бота ({res.status_code}). Поллинг приостановлен на 60 сек.")
-                    await asyncio.sleep(60)
-                else:
-                    await asyncio.sleep(5)
+                    # Обработка команд и кодов
+                    await _handle_incoming_telegram_message(
+                        chat_id=chat_id,
+                        text=text,
+                        username=username,
+                        first_name=first_name,
+                    )
+            elif status_code in [401, 404]:
+                logger.error(f"[Telegram] Неверный токен бота ({status_code}). Поллинг приостановлен на 60 сек.")
+                await asyncio.sleep(60)
+            else:
+                await asyncio.sleep(5)
 
         except asyncio.CancelledError:
             break
