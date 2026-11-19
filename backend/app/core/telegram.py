@@ -114,18 +114,21 @@ async def notify_telegram_test_assigned(
     test_title: str,
     due_date: Optional[str] = None,
     test_id: Optional[int] = None,
+    available_from: Optional[str] = None,
 ) -> bool:
     """Уведомление о персональном назначении теста."""
     base_url = settings.FRONTEND_URL.rstrip("/")
     target_link = f"{base_url}/tests"
 
     due_str = f"⏰ <b>Дедлайн сдачи:</b> {due_date}\n" if due_date else "⏰ <b>Срок:</b> Без ограничений по времени\n"
+    avail_str = f"📅 <b>Доступен с:</b> {available_from}\n" if available_from else ""
 
     text = (
         f"📋 <b>AMG LMS • Назначено тестирование</b>\n\n"
         f"Здравствуйте, <b>{user_name}</b>!\n"
         f"Вам назначен тест для аттестации:\n\n"
         f"📝 <b>«{test_title}»</b>\n"
+        f"{avail_str}"
         f"{due_str}\n"
         f"Пожалуйста, пройдите тестирование вовремя."
     )
@@ -221,6 +224,7 @@ async def send_bulk_test_assigned_telegram(
     test_title: str,
     due_date: Optional[str] = None,
     test_id: Optional[int] = None,
+    available_from: Optional[str] = None,
 ) -> None:
     """Массовая отправка Telegram-уведомлений о назначенном тесте."""
     for u in users:
@@ -234,6 +238,7 @@ async def send_bulk_test_assigned_telegram(
                     test_title=test_title,
                     due_date=due_date,
                     test_id=test_id,
+                    available_from=available_from,
                 )
                 await asyncio.sleep(0.05)
             except Exception as e:

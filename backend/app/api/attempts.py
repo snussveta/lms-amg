@@ -111,6 +111,18 @@ async def start_attempt(
                 detail="Этот тест вам не назначен",
             )
 
+        # Проверка отложенного старта тестирования
+        if assignment and assignment.available_from:
+            avail_dt = assignment.available_from
+            if avail_dt.tzinfo is None:
+                avail_dt = avail_dt.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) < avail_dt:
+                formatted_time = avail_dt.strftime("%d.%m.%Y в %H:%M")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Тестирование откроется {formatted_time} (UTC). Доступ заблокирован до указанного времени.",
+                )
+
     now = datetime.now(timezone.utc)
 
     # Проверка активной незавершенной попытки

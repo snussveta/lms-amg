@@ -34,6 +34,10 @@ class TestAssignment(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    available_from: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     status: Mapped[str] = mapped_column(
         String(50), default="pending", nullable=False
     )  # pending, in_progress, completed

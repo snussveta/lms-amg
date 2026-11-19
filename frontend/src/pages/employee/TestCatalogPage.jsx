@@ -11,6 +11,7 @@ import {
   FileQuestion,
   Globe,
   HelpCircle,
+  Lock,
   Play,
   RotateCcw,
   Search,
@@ -407,6 +408,11 @@ export const TestCatalogPage = () => {
                         <Clock className="w-3.5 h-3.5 animate-spin text-[#141414]" />
                         В процессе
                       </span>
+                    ) : test.is_locked_until_available ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                        <Lock className="w-3.5 h-3.5 text-amber-600" />
+                        Откроется: {formatDate(test.assignment_available_from)}
+                      </span>
                     ) : test.is_assigned ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0] shadow-2xs">
                         <CheckSquare className="w-3.5 h-3.5 text-[#E84C3D]" />
@@ -441,33 +447,57 @@ export const TestCatalogPage = () => {
 
                   {/* Дедлайн / Срок сдачи (для назначенных тестов) */}
                   {test.is_assigned && (
-                    <div
-                      className={`mt-3.5 p-2.5 rounded-xl text-xs flex items-center justify-between border ${
-                        isExpired && !hasCompleted
-                          ? 'bg-[#FCECEB] border-[#F8D3D0] text-[#E84C3D]'
-                          : isUrgent && !hasCompleted
-                          ? 'bg-amber-50 border-amber-200 text-amber-800'
-                          : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#495057]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-[#777777]" />
-                        <span className="font-medium">
-                          {test.assignment_due_date
-                            ? `Дедлайн: ${formatDate(test.assignment_due_date)}`
-                            : 'Срок: Бессрочно'}
-                        </span>
+                    <div className="space-y-1.5 mt-3.5">
+                      {test.assignment_available_from && (
+                        <div
+                          className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
+                            test.is_locked_until_available
+                              ? 'bg-amber-50/70 border-amber-200 text-amber-900 font-medium'
+                              : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#495057]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 flex-shrink-0 text-[#777777]" />
+                            <span>
+                              Доступен с: {formatDate(test.assignment_available_from)}
+                            </span>
+                          </div>
+                          {test.is_locked_until_available && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                              Ожидание
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div
+                        className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
+                          isExpired && !hasCompleted
+                            ? 'bg-[#FCECEB] border-[#F8D3D0] text-[#E84C3D]'
+                            : isUrgent && !hasCompleted
+                            ? 'bg-amber-50 border-amber-200 text-amber-800'
+                            : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#495057]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-[#777777]" />
+                          <span className="font-medium">
+                            {test.assignment_due_date
+                              ? `Дедлайн: ${formatDate(test.assignment_due_date)}`
+                              : 'Срок: Бессрочно'}
+                          </span>
+                        </div>
+                        {isExpired && !hasCompleted && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#E84C3D]">
+                            Срок истек
+                          </span>
+                        )}
+                        {isUrgent && !hasCompleted && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                            Срочно
+                          </span>
+                        )}
                       </div>
-                      {isExpired && !hasCompleted && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#E84C3D]">
-                          Срок истек
-                        </span>
-                      )}
-                      {isUrgent && !hasCompleted && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                          Срочно
-                        </span>
-                      )}
                     </div>
                   )}
 
@@ -550,6 +580,15 @@ export const TestCatalogPage = () => {
                       <Play className="w-4 h-4 fill-white" />
                       <span>Продолжить попытку</span>
                     </button>
+                  ) : test.is_locked_until_available ? (
+                    <button
+                      disabled
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] text-[#777777] font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
+                      title={`Тест станет доступен ${formatDate(test.assignment_available_from)}`}
+                    >
+                      <Lock className="w-3.5 h-3.5 text-[#777777]" />
+                      <span>Откроется {formatDate(test.assignment_available_from)}</span>
+                    </button>
                   ) : (
                     <button
                       onClick={() => setSelectedTestModal(test)}
@@ -618,10 +657,24 @@ export const TestCatalogPage = () => {
                     : 'Без ограничений'}
                 </span>
               </div>
+              {selectedTestModal.assignment_available_from && (
+                <div className="flex items-center justify-between pt-2 border-t border-[#EEEEEE] text-amber-800 font-semibold">
+                  <span>Доступен с:</span>
+                  <span>{formatDate(selectedTestModal.assignment_available_from)}</span>
+                </div>
+              )}
               {selectedTestModal.assignment_due_date && (
                 <div className="flex items-center justify-between pt-2 border-t border-[#EEEEEE] text-amber-800 font-semibold">
                   <span>Срок сдачи (дедлайн):</span>
                   <span>{formatDate(selectedTestModal.assignment_due_date)}</span>
+                </div>
+              )}
+              {selectedTestModal.is_locked_until_available && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2">
+                  <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                  <span>
+                    Тестирование откроется {formatDate(selectedTestModal.assignment_available_from)}. До этого времени прохождение заблокировано.
+                  </span>
                 </div>
               )}
               <div className="pt-2 border-t border-[#EEEEEE] text-[11px] text-[#777777] flex items-start gap-2">
@@ -644,10 +697,14 @@ export const TestCatalogPage = () => {
               <button
                 type="button"
                 onClick={() => handleStartTest(selectedTestModal.id)}
-                disabled={starting}
+                disabled={starting || selectedTestModal.is_locked_until_available}
                 className="btn-primary text-xs sm:text-sm py-2.5 min-w-[160px]"
               >
-                {starting ? 'Запуск...' : 'Начать тестирование'}
+                {starting
+                  ? 'Запуск...'
+                  : selectedTestModal.is_locked_until_available
+                  ? 'Заблокировано до начала'
+                  : 'Начать тестирование'}
               </button>
             </div>
           </div>

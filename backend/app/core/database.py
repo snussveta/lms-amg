@@ -244,6 +244,9 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_before INTEGER;",
                     "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_after INTEGER;",
                     "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_action VARCHAR(50);",
+                    # Test Assignment availability / scheduled starts
+                    "ALTER TABLE test_assignments ADD COLUMN IF NOT EXISTS available_from TIMESTAMP WITH TIME ZONE;",
+                    "CREATE INDEX IF NOT EXISTS ix_test_assignments_available_from ON test_assignments(available_from);",
                 ]
                 for stmt in migration_sqls:
                     try:

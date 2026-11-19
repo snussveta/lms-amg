@@ -29,6 +29,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
   const [assignments, setAssignments] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [selectedDeptIds, setSelectedDeptIds] = useState([]);
+  const [availableFrom, setAvailableFrom] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -142,6 +143,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         const payload = {
           department_ids: selectedDeptIds,
           assign_all: false,
+          available_from: availableFrom ? new Date(availableFrom).toISOString() : null,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
         };
 
@@ -158,6 +160,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         const payload = {
           user_ids: selectedUserIds,
           assign_all: false,
+          available_from: availableFrom ? new Date(availableFrom).toISOString() : null,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
         };
 
@@ -166,6 +169,7 @@ export const TestAssignmentModal = ({ test, onClose }) => {
         setSelectedUserIds([]);
       }
 
+      setAvailableFrom('');
       setDueDate('');
 
       // Перезагружаем список
@@ -304,18 +308,37 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                 </button>
               </div>
 
-              {/* Optional Deadline */}
-              <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-[#222222] font-semibold">
-                  <Calendar className="w-4 h-4 text-[#141414]" />
-                  <span>Дедлайн сдачи (опционально):</span>
+              {/* Schedule and Deadline options */}
+              <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2 text-xs text-[#222222] font-semibold">
+                    <Clock className="w-4 h-4 text-[#141414]" />
+                    <span>Доступен с (Дата и время начала):</span>
+                  </div>
+                  <input
+                    type="datetime-local"
+                    value={availableFrom}
+                    onChange={(e) => setAvailableFrom(e.target.value)}
+                    className="input-field text-xs sm:text-sm py-1.5 max-w-xs bg-white"
+                  />
                 </div>
-                <input
-                  type="datetime-local"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="input-field text-xs sm:text-sm py-1.5 max-w-xs bg-white"
-                />
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-[#EEEEEE]">
+                  <div className="flex items-center gap-2 text-xs text-[#222222] font-semibold">
+                    <Calendar className="w-4 h-4 text-[#141414]" />
+                    <span>Дедлайн сдачи (Срок окончания):</span>
+                  </div>
+                  <input
+                    type="datetime-local"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="input-field text-xs sm:text-sm py-1.5 max-w-xs bg-white"
+                  />
+                </div>
+
+                <p className="text-[11px] text-[#777777] leading-relaxed pt-1 border-t border-[#EEEEEE]">
+                  💡 Если указать «Доступен с», тестирование появится в расписании, но будет заблокировано для сотрудника до наступления указанного времени.
+                </p>
               </div>
 
               {/* MODE A: BY DEPARTMENT */}
@@ -498,8 +521,14 @@ export const TestAssignmentModal = ({ test, onClose }) => {
                       <div className="font-bold text-[#222222] text-sm">
                         {a.user_name}
                       </div>
-                      <div className="text-[11px] text-[#777777] flex items-center gap-2 mt-0.5">
+                      <div className="text-[11px] text-[#777777] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                         <span>{a.user_email}</span>
+                        {a.available_from && (
+                          <>
+                            <span>•</span>
+                            <span className="text-amber-800 font-medium">Открытие: {formatDate(a.available_from)}</span>
+                          </>
+                        )}
                         <span>•</span>
                         <span>Дедлайн: {formatDate(a.due_date)}</span>
                       </div>

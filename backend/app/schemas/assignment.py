@@ -9,6 +9,7 @@ class TestAssignRequest(BaseModel):
     departments: List[str] = Field(default_factory=list)
     assign_all: bool = False
     due_date: Optional[datetime] = None
+    available_from: Optional[datetime] = None
 
 
 class TestAssignmentItemResponse(BaseModel):
@@ -19,6 +20,7 @@ class TestAssignmentItemResponse(BaseModel):
     user_email: str
     assigned_at: datetime
     due_date: Optional[datetime] = None
+    available_from: Optional[datetime] = None
     status: str  # pending, in_progress, completed
     attempt_status: Optional[str] = None  # None, passed, failed, in_progress, needs_review
     score: Optional[int] = None

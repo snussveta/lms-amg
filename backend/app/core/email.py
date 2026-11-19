@@ -331,12 +331,14 @@ def send_test_assigned_email(
     test_id: int,
     passing_score: int,
     due_date: Optional[Any] = None,
+    available_from: Optional[Any] = None,
 ) -> bool:
     """Notifies employee about a test/certification assigned to them."""
     test_url = f"{settings.FRONTEND_URL.rstrip('/')}/tests/{test_id}"
     subject = f"Вам назначена аттестация: «{test_title}»"
 
     due_str = _format_datetime(due_date)
+    avail_str = f"<br><strong>Доступен с:</strong> {_format_datetime(available_from)}" if available_from else ""
 
     content = f"""
     <h2 style="margin-top: 0; color: #141414; font-size: 20px; font-weight: 800;">
@@ -351,7 +353,7 @@ def send_test_assigned_email(
             {test_title}
         </div>
         <div style="font-size: 13px; color: #495057; line-height: 1.6;">
-            <strong>Проходной балл:</strong> {passing_score}%<br>
+            <strong>Проходной балл:</strong> {passing_score}%{avail_str}<br>
             <strong>Срок сдачи:</strong> {due_str}
         </div>
     </div>
@@ -376,6 +378,7 @@ def send_bulk_test_assigned_email(
     test_id: int,
     passing_score: int,
     due_date: Optional[Any] = None,
+    available_from: Optional[Any] = None,
 ) -> None:
     """Helper to send test assignment notification to multiple users in background."""
     for u in users:
@@ -389,6 +392,7 @@ def send_bulk_test_assigned_email(
                 test_id=test_id,
                 passing_score=passing_score,
                 due_date=due_date,
+                available_from=available_from,
             )
 
 

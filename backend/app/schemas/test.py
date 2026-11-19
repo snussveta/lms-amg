@@ -153,7 +153,9 @@ class TestListItemResponse(BaseModel):
     # Assignment fields
     is_assigned: bool = False
     assignment_due_date: Optional[datetime] = None
+    assignment_available_from: Optional[datetime] = None
     assignment_status: Optional[str] = None  # pending, in_progress, completed
+    is_locked_until_available: bool = False
 
     model_config = {"from_attributes": True}
 

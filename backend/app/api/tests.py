@@ -139,7 +139,18 @@ async def get_tests(
         assignment = assigned_map.get(t.id)
         is_assigned = assignment is not None
         due_date = assignment.due_date if assignment else None
+        available_from = assignment.available_from if assignment else None
         assignment_status = assignment.status if assignment else None
+
+        is_locked_until_available = False
+        if available_from:
+            avail_dt = available_from
+            if avail_dt.tzinfo is None:
+                avail_dt = avail_dt.replace(tzinfo=timezone.utc)
+            now_dt = datetime.now(timezone.utc)
+            if now_dt < avail_dt:
+                is_locked_until_available = True
+                can_attempt = False
 
         response_items.append(
             TestListItemResponse(
@@ -170,7 +181,9 @@ async def get_tests(
                 user_attempt_id=user_attempt_id,
                 is_assigned=is_assigned,
                 assignment_due_date=due_date,
+                assignment_available_from=available_from,
                 assignment_status=assignment_status,
+                is_locked_until_available=is_locked_until_available,
             )
         )
 
@@ -504,14 +517,16 @@ async def assign_test_to_users(
 
     for uid in target_list:
         if uid in existing_assignments:
-            # Обновляем дедлайн
+            # Обновляем дедлайн и дату доступности
             existing_assignments[uid].due_date = assign_req.due_date
+            existing_assignments[uid].available_from = assign_req.available_from
         else:
             new_assignment = TestAssignment(
                 test_id=test_id,
                 user_id=uid,
                 assigned_by_id=current_user.id,
                 due_date=assign_req.due_date,
+                available_from=assign_req.available_from,
                 status="pending",
             )
             db.add(new_assignment)
@@ -547,6 +562,7 @@ async def assign_test_to_users(
                 test_id=test.id,
                 passing_score=test.passing_score,
                 due_date=assign_req.due_date,
+                available_from=assign_req.available_from,
             )
 
         # Telegram notification (только тем, у кого подключен Telegram и включен notify_telegram)
@@ -563,6 +579,7 @@ async def assign_test_to_users(
                 test_title=test.title,
                 due_date=str(assign_req.due_date) if assign_req.due_date else None,
                 test_id=test.id,
+                available_from=str(assign_req.available_from) if assign_req.available_from else None,
             )
 
     return {"message": f"Тест успешно назначен {len(target_list)} сотрудникам"}
@@ -637,6 +654,7 @@ async def get_test_assignments(
                 user_email=a.user.email if a.user else "—",
                 assigned_at=a.assigned_at,
                 due_date=a.due_date,
+                available_from=a.available_from,
                 status=a.status,
                 attempt_status=att_status,
                 score=score,
