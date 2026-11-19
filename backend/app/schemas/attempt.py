@@ -73,6 +73,9 @@ class AttemptResultResponse(BaseModel):
     is_passed: bool
     is_guest: bool = False
     guest_name: Optional[str] = None
+    category_before: Optional[int] = None
+    category_after: Optional[int] = None
+    category_action: Optional[str] = None
     started_at: datetime
     submitted_at: Optional[datetime] = None
     time_spent_seconds: Optional[int] = None
@@ -92,6 +95,9 @@ class AttemptListItemResponse(BaseModel):
     status: str
     is_guest: bool = False
     guest_name: Optional[str] = None
+    category_before: Optional[int] = None
+    category_after: Optional[int] = None
+    category_action: Optional[str] = None
     started_at: datetime
     submitted_at: Optional[datetime] = None
 

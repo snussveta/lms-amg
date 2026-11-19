@@ -233,6 +233,17 @@ async def init_db(max_retries: int = 15, delay: float = 2.0) -> None:
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_telegram BOOLEAN DEFAULT TRUE;",
                     "CREATE INDEX IF NOT EXISTS ix_users_telegram_chat_id ON users(telegram_chat_id);",
                     "CREATE INDEX IF NOT EXISTS ix_users_telegram_link_code ON users(telegram_link_code);",
+                    # Employee Category & Test Shuffling / Category Grading Fork
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS category INTEGER DEFAULT 1;",
+                    "CREATE INDEX IF NOT EXISTS ix_users_category ON users(category);",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS shuffle_questions BOOLEAN DEFAULT FALSE;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS shuffle_options BOOLEAN DEFAULT FALSE;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category_rating_enabled BOOLEAN DEFAULT TRUE;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category_demote_threshold DOUBLE PRECISION DEFAULT 80.0;",
+                    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS category_promote_threshold DOUBLE PRECISION DEFAULT 90.0;",
+                    "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_before INTEGER;",
+                    "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_after INTEGER;",
+                    "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS category_action VARCHAR(50);",
                 ]
                 for stmt in migration_sqls:
                     try:

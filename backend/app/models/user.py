@@ -26,6 +26,7 @@ class User(Base):
         Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    category: Mapped[int] = mapped_column(Integer, default=1, nullable=False, index=True)  # Qualification level 1 to 4
     
     # Telegram & Notification Preferences
     telegram_chat_id: Mapped[Optional[str]] = mapped_column(String(100), default=None, nullable=True, index=True)

@@ -36,6 +36,11 @@ class Attempt(Base):
     max_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_passed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Employee Category Rating outcome (promoted, retained, demoted)
+    category_before: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    category_after: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    category_action: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="attempts")
     test: Mapped["Test"] = relationship("Test", back_populates="attempts")

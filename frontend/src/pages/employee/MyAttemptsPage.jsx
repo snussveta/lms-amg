@@ -135,8 +135,23 @@ export const MyAttemptsPage = () => {
                       className="hover:bg-[#F8F9FA] transition-colors cursor-pointer group"
                     >
                       <td className="py-4 px-5 font-bold text-[#222222] group-hover:text-[#141414] transition-colors">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span>{att.test_title}</span>
+                          {att.category_action === 'promoted' && (
+                            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">
+                              Кат. ↑{att.category_after}
+                            </span>
+                          )}
+                          {att.category_action === 'demoted' && (
+                            <span className="text-[10px] bg-red-100 text-[#E84C3D] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">
+                              Кат. ↓{att.category_after}
+                            </span>
+                          )}
+                          {att.category_action === 'retained' && (
+                            <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">
+                              Кат. {att.category_after}
+                            </span>
+                          )}
                           <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-70 transition-opacity text-[#141414]" />
                         </div>
                       </td>

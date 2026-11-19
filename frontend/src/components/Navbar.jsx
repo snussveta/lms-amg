@@ -14,10 +14,10 @@ import {
   X,
   Zap,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { RoleBadge } from './RoleBadge';
-import { JoinExamModal } from './exam/JoinExamModal';
 import { ProfileModal } from './ProfileModal';
 
 export const Navbar = () => {
@@ -25,7 +25,6 @@ export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isJoinExamModalOpen, setIsJoinExamModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Close mobile menu on route change
@@ -93,7 +92,7 @@ export const Navbar = () => {
                   <Link
                     to={isAdmin ? '/admin/tests' : '/tests'}
                     className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                      isActive('/tests') || isActive('/admin/tests')
+                      isActive('/tests') || (isActive('/admin/tests') && !location.search.includes('tab=attestations'))
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
@@ -102,18 +101,18 @@ export const Navbar = () => {
                     <span>Тесты</span>
                   </Link>
 
-                  {/* Экзамены (для администраторов и начальников отделов) */}
-                  {(isAdmin || isDepartmentHead) && (
+                  {/* Аттестации (Строго только для администраторов) */}
+                  {isAdmin && (
                     <Link
-                      to="/admin/exam-stats"
+                      to="/admin/tests?tab=attestations"
                       className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                        isActive('/admin/exam-stats')
+                        location.pathname === '/admin/tests' && location.search.includes('tab=attestations')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <BarChart3 className="w-4 h-4 text-white/90 shrink-0" />
-                      <span>Экзамены</span>
+                      <ShieldCheck className="w-4 h-4 text-[#E84C3D] shrink-0" />
+                      <span>Аттестации</span>
                     </Link>
                   )}
 
@@ -180,18 +179,6 @@ export const Navbar = () => {
 
             {/* Desktop User Profile & Actions */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
-              {/* Join Live Exam Button */}
-              <button
-                type="button"
-                onClick={() => setIsJoinExamModalOpen(true)}
-                className="btn-dark-pill py-1.5 px-3 min-h-[36px] border-[#E84C3D]/60 hover:border-[#E84C3D] hover:shadow-[0_0_16px_rgba(232,76,61,0.35)] whitespace-nowrap shrink-0 group select-none"
-                title="Войти в очный экзамен по PIN-коду"
-              >
-                <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D] group-hover:scale-110 transition-transform" />
-                <span className="hidden xl:inline">Войти в </span>
-                <span>Экзамен</span>
-              </button>
-
               {user ? (
                 <div className="flex items-center gap-2 lg:gap-3 shrink-0">
                   <button
@@ -215,6 +202,9 @@ export const Navbar = () => {
                           {user.full_name}
                         </span>
                         <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left" />
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E84C3D]/20 text-[#E84C3D] border border-[#E84C3D]/30 whitespace-nowrap">
+                          Кат. {user.category || 1}
+                        </span>
                       </div>
                       <span className="text-[11px] text-[#888888] truncate max-w-[150px] hidden xl:block">
                         {user.email}
@@ -267,18 +257,6 @@ export const Navbar = () => {
         {/* Mobile Full Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#242424] bg-[#141414] text-white px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-xl">
-            {/* Quick Live Exam Join Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setIsJoinExamModalOpen(true);
-              }}
-              className="btn-dark-pill w-full py-2.5 px-3 border-[#E84C3D]/60 hover:border-[#E84C3D] hover:shadow-[0_0_16px_rgba(232,76,61,0.35)] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
-            >
-              <Zap className="w-4 h-4 fill-[#E84C3D] text-[#E84C3D]" />
-              <span>Войти в очный экзамен (PIN)</span>
-            </button>
             {user ? (
               <>
                 {/* User Info Card on Mobile */}
@@ -301,8 +279,11 @@ export const Navbar = () => {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm text-white truncate">
-                        {user.full_name}
+                      <div className="font-semibold text-sm text-white truncate flex items-center gap-2">
+                        <span>{user.full_name}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#E84C3D]/20 text-[#E84C3D] border border-[#E84C3D]/30">
+                          Кат. {user.category || 1}
+                        </span>
                       </div>
                       <div className="text-xs text-white/70 truncate">{user.email}</div>
                     </div>
@@ -394,32 +375,18 @@ export const Navbar = () => {
                   </Link>
 
                   {isDepartmentHead && (
-                    <>
-                      <Link
-                        to="/admin/users"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                          isActive('/admin/users')
-                            ? 'bg-white/20 text-white font-semibold'
-                            : 'text-white/90 hover:bg-white/10'
-                        }`}
-                      >
-                        <Users className="w-4 h-4 text-white/80" />
-                        <span>Сотрудники отдела</span>
-                      </Link>
-                      <Link
-                        to="/admin/exam-stats"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                          isActive('/admin/exam-stats')
-                            ? 'bg-white/20 text-white font-semibold'
-                            : 'text-white/90 hover:bg-white/10'
-                        }`}
-                      >
-                        <BarChart3 className="w-4 h-4 text-white/80" />
-                        <span>Экзамены отдела</span>
-                      </Link>
-                    </>
+                    <Link
+                      to="/admin/users"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                        isActive('/admin/users')
+                          ? 'bg-white/20 text-white font-semibold'
+                          : 'text-white/90 hover:bg-white/10'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-white/80" />
+                      <span>Сотрудники отдела</span>
+                    </Link>
                   )}
                 </div>
 
@@ -442,8 +409,16 @@ export const Navbar = () => {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-[#E84C3D]" />
+                      <FileQuestion className="w-4 h-4 text-[#E84C3D]" />
                       <span>Управление тестами</span>
+                    </Link>
+                    <Link
+                      to="/admin/tests?tab=attestations"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-[#E84C3D]" />
+                      <span>Аттестации сотрудников</span>
                     </Link>
                     <Link
                       to="/admin/question-bank"
@@ -452,14 +427,6 @@ export const Navbar = () => {
                     >
                       <BookOpen className="w-4 h-4 text-[#E84C3D]" />
                       <span>Банк вопросов</span>
-                    </Link>
-                    <Link
-                      to="/admin/exam-stats"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/90 hover:bg-white/10 min-h-[40px]"
-                    >
-                      <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
-                      <span>Прошедшие экзамены и проверка</span>
                     </Link>
                     <Link
                       to="/admin/users"
@@ -581,12 +548,6 @@ export const Navbar = () => {
           </button>
         </div>
       )}
-
-      {/* Join Exam PIN Modal */}
-      <JoinExamModal
-        isOpen={isJoinExamModalOpen}
-        onClose={() => setIsJoinExamModalOpen(false)}
-      />
 
       {/* User Profile & Notification Settings Modal */}
       <ProfileModal

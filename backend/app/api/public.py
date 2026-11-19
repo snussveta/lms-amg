@@ -18,6 +18,7 @@ from app.schemas.attempt import (
     GuestAttemptStartResponse,
 )
 from app.schemas.test import PublicTestInfoResponse, TestEmployeeResponse
+from app.api.attempts import apply_shuffling
 
 router = APIRouter(prefix="/public", tags=["Public Guest Testing"])
 
@@ -107,6 +108,7 @@ async def start_guest_attempt(
 
     sanitized_test = TestEmployeeResponse.model_validate(test)
     sanitized_test.total_points = tot_points
+    apply_shuffling(test, sanitized_test, new_attempt.id)
 
     return GuestAttemptStartResponse(
         attempt_id=new_attempt.id,
@@ -150,6 +152,7 @@ async def get_active_guest_attempt(
 
     sanitized_test = TestEmployeeResponse.model_validate(test)
     sanitized_test.total_points = sum(q.points for q in test.questions)
+    apply_shuffling(test, sanitized_test, attempt.id)
 
     return GuestAttemptStartResponse(
         attempt_id=attempt.id,

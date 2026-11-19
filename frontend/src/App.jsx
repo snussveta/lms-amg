@@ -56,25 +56,17 @@ function App() {
               <Route path="/t/:token" element={<GuestTakeTestPage />} />
               <Route path="/public-test/:testId" element={<GuestTakeTestPage />} />
 
-              {/* Synchronous Live Exam Routes */}
-              <Route path="/exam/join" element={<DirectJoinExamPage />} />
-              <Route path="/exam/join/:code" element={<DirectJoinExamPage />} />
-              <Route path="/exam/room/:sessionId" element={<LiveExamRoomPage />} />
+              {/* Legacy Exam Routes Redirection */}
+              <Route path="/exam/join" element={<Navigate to="/tests" replace />} />
+              <Route path="/exam/join/:code" element={<Navigate to="/tests" replace />} />
+              <Route path="/exam/room/:sessionId" element={<Navigate to="/tests" replace />} />
               <Route
                 path="/admin/exam/:sessionId"
-                element={
-                  <ProtectedRoute requireManager>
-                    <LiveExamControlPage />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/admin/tests?tab=attestations" replace />}
               />
               <Route
                 path="/admin/exam-stats"
-                element={
-                  <ProtectedRoute requireManager>
-                    <LiveExamStatsPage />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/admin/tests?tab=attestations" replace />}
               />
               <Route
                 path="/admin/google-callback"

@@ -27,6 +27,9 @@ class AttemptAdminDetail(BaseModel):
     percentage: float
     is_passed: bool
     status: str
+    category_before: Optional[int] = None
+    category_after: Optional[int] = None
+    category_action: Optional[str] = None
     needs_review: bool = False
     unreviewed_count: int = 0
     started_at: datetime

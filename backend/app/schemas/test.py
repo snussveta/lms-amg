@@ -90,6 +90,13 @@ class TestBase(BaseModel):
     public_token: Optional[str] = None
     hide_from_heads: bool = False
     is_exam: bool = False
+    # Shuffling
+    shuffle_questions: bool = False
+    shuffle_options: bool = False
+    # Category Rating Fork
+    category_rating_enabled: bool = True
+    category_demote_threshold: float = 80.0
+    category_promote_threshold: float = 90.0
 
 
 class TestCreate(TestBase):
@@ -108,6 +115,11 @@ class TestUpdate(BaseModel):
     public_token: Optional[str] = None
     hide_from_heads: Optional[bool] = None
     is_exam: Optional[bool] = None
+    shuffle_questions: Optional[bool] = None
+    shuffle_options: Optional[bool] = None
+    category_rating_enabled: Optional[bool] = None
+    category_demote_threshold: Optional[float] = None
+    category_promote_threshold: Optional[float] = None
     questions: Optional[List[QuestionCreate]] = None
 
 
@@ -124,6 +136,11 @@ class TestListItemResponse(BaseModel):
     public_token: Optional[str] = None
     hide_from_heads: bool = False
     is_exam: bool = False
+    shuffle_questions: bool = False
+    shuffle_options: bool = False
+    category_rating_enabled: bool = True
+    category_demote_threshold: float = 80.0
+    category_promote_threshold: float = 90.0
     question_count: int = 0
     total_points: int = 0
     created_at: datetime

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3,
   Check,
@@ -10,6 +10,7 @@ import {
   FileQuestion,
   Globe,
   Plus,
+  ShieldCheck,
   Trash2,
   UserPlus,
   Users,
@@ -19,12 +20,12 @@ import {
 import api, { getErrorMessage } from '../../api/client';
 import { TestAssignmentModal } from '../../components/admin/TestAssignmentModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { CreateExamSessionModal } from '../../components/exam/CreateExamSessionModal';
 import { GoogleFormsImportModal } from '../../components/GoogleFormsImportModal';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminTestsPage = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const isHead = user?.role === 'department_head';
 
   const [tests, setTests] = useState([]);
@@ -32,7 +33,6 @@ export const AdminTestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [assigningTest, setAssigningTest] = useState(null);
-  const [examTest, setExamTest] = useState(null);
   const [confirmDeleteTest, setConfirmDeleteTest] = useState(null);
   const [copiedToken, setCopiedToken] = useState(null);
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
@@ -40,10 +40,13 @@ export const AdminTestsPage = () => {
   useEffect(() => {
     fetchTests();
     const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'attestations' && !isHead) {
+      setTabMode('exams');
+    }
     if (params.get('google_connected') === 'true') {
       setGoogleModalOpen(true);
     }
-  }, []);
+  }, [location.search, isHead]);
 
   const fetchTests = async () => {
     try {
@@ -98,22 +101,22 @@ export const AdminTestsPage = () => {
   };
 
   const handleConvertToExam = async (test) => {
-    if (!window.confirm(`Создать независимую копию теста «${test.title}» как синхронный экзамен?`)) return;
+    if (!window.confirm(`Создать независимую копию теста «${test.title}» как аттестацию (только для администраторов)?`)) return;
     try {
       setLoading(true);
       await api.post(`/tests/${test.id}/convert-to-exam`);
       await fetchTests();
       setTabMode('exams');
     } catch (err) {
-      console.error('Ошибка преобразования в экзамен:', err);
-      alert(getErrorMessage(err, 'Не удалось создать копию как экзамен.'));
+      console.error('Ошибка преобразования в аттестацию:', err);
+      alert(getErrorMessage(err, 'Не удалось создать копию как аттестацию.'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleConvertToTest = async (test) => {
-    if (!window.confirm(`Создать независимую копию экзамена «${test.title}» как обычный тест?`)) return;
+    if (!window.confirm(`Создать независимую копию аттестации «${test.title}» как обычный тест?`)) return;
     try {
       setLoading(true);
       await api.post(`/tests/${test.id}/convert-to-test`);
@@ -133,27 +136,9 @@ export const AdminTestsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-      {/* Top Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#EEEEEE] pb-3">
-        <Link
-          to="/admin/tests"
-          className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white text-[#141414] shadow-xs border border-[#E5E5E5] flex items-center gap-2"
-        >
-          <FileQuestion className="w-4 h-4 text-[#E84C3D]" />
-          <span>Управление тестами</span>
-        </Link>
-        <Link
-          to="/admin/exam-stats"
-          className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#777777] hover:text-[#141414] hover:bg-white transition-all flex items-center gap-2 border border-transparent"
-        >
-          <BarChart3 className="w-4 h-4 text-[#777777]" />
-          <span>Прошедшие экзамены и проверка</span>
-        </Link>
-      </div>
-
-      {/* Sub-tabs: Regular Tests vs Synchronous Exams (Only for Admins) */}
+      {/* Sub-tabs: Regular Tests vs Attestations (Only for Admins) */}
       {!isHead && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 border-b border-[#EEEEEE] pb-3">
           <button
             type="button"
             onClick={() => setTabMode('tests')}
@@ -170,12 +155,12 @@ export const AdminTestsPage = () => {
             type="button"
             onClick={() => setTabMode('exams')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border select-none ${tabMode === 'exams'
-              ? 'bg-purple-700 hover:bg-purple-800 text-white border-purple-600 shadow-md shadow-purple-900/25 active:scale-[0.98]'
+              ? 'bg-[#141414] text-white border-[#E84C3D] shadow-md shadow-[#E84C3D]/20 active:scale-[0.98]'
               : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] hover:text-[#141414] active:scale-[0.98]'
               }`}
           >
-            <Zap className="w-4 h-4 fill-current text-amber-300" />
-            <span>Экзамены ({examTests.length})</span>
+            <ShieldCheck className="w-4 h-4 text-[#E84C3D]" />
+            <span>Аттестации ({examTests.length})</span>
             <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded font-black">
               Только админы
             </span>
@@ -188,14 +173,16 @@ export const AdminTestsPage = () => {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414] hover:scale-105 transition-transform">
-              <FileQuestion className="w-5 h-5" />
+              {tabMode === 'exams' ? <ShieldCheck className="w-5 h-5 text-[#E84C3D]" /> : <FileQuestion className="w-5 h-5" />}
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
-                Управление тестами AMG
+                {tabMode === 'exams' ? 'Аттестации сотрудников AMG' : 'Управление тестами AMG'}
               </h1>
               <p className="text-xs text-[#777777] mt-0.5">
-                Создание, редактирование, публикация, назначение сотрудникам и аудит результатов аттестации
+                {tabMode === 'exams'
+                  ? 'Официальные аттестации с автоматической вилкой квалификационных категорий (1–4) и перемешиванием заданий'
+                  : 'Создание, редактирование, публикация, персональное назначение тестов сотрудникам и аналитика'}
               </p>
             </div>
           </div>
@@ -214,11 +201,11 @@ export const AdminTestsPage = () => {
           </button>
 
           <Link
-            to="/admin/tests/new"
+            to={tabMode === 'exams' ? '/admin/tests/new?type=attestation' : '/admin/tests/new'}
             className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Создать новый тест</span>
+            <span>{tabMode === 'exams' ? 'Создать аттестацию' : 'Создать новый тест'}</span>
           </Link>
         </div>
       </div>
@@ -234,15 +221,18 @@ export const AdminTestsPage = () => {
         <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto my-8 border border-[#EEEEEE] shadow-card animate-scale-in">
           <FileQuestion className="w-10 h-10 mx-auto text-[#CED4DA] mb-3" />
           <h3 className="text-base font-bold text-[#222222]">
-            {tabMode === 'exams' ? 'Экзамены еще не созданы' : 'Тесты еще не созданы'}
+            {tabMode === 'exams' ? 'Аттестации еще не созданы' : 'Тесты еще не созданы'}
           </h3>
           <p className="text-xs sm:text-sm text-[#777777] mt-1 mb-5">
             {tabMode === 'exams'
-              ? 'Создайте экзамен или преобразуйте любой существующий тест в независимый экзамен.'
+              ? 'Создайте аттестацию или преобразуйте любой существующий тест в независимую аттестацию.'
               : 'Начните с создания первого теста для сотрудников или кандидатов компании.'}
           </p>
-          <Link to="/admin/tests/new" className="btn-primary text-xs sm:text-sm">
-            {tabMode === 'exams' ? 'Создать экзамен' : 'Создать тест'}
+          <Link
+            to={tabMode === 'exams' ? '/admin/tests/new?type=attestation' : '/admin/tests/new'}
+            className="btn-primary text-xs sm:text-sm"
+          >
+            {tabMode === 'exams' ? 'Создать аттестацию' : 'Создать тест'}
           </Link>
         </div>
       ) : (
@@ -371,57 +361,36 @@ export const AdminTestsPage = () => {
 
                     <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
-                        {t.is_exam ? (
-                          <>
-                            <button
-                              onClick={() => setExamTest(t)}
-                              className="btn-dark-pill border-purple-500/40 hover:border-purple-400 bg-[#1E112A] hover:bg-[#281638] text-[11px] py-1.5 px-3 min-h-[34px] shadow-sm hover:shadow-purple-900/30"
-                              title="Запустить синхронный экзамен по PIN-коду"
-                            >
-                              <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
-                              <span>Запустить</span>
-                            </button>
-
-                            {!isHead && (
-                              <button
-                                onClick={() => handleConvertToTest(t)}
-                                className="icon-btn bg-white hover:bg-[#F5F5F7] text-purple-700 border-purple-200"
-                                title="Создать независимую копию как обычный тест"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => setExamTest(t)}
-                              className="btn-dark-pill text-[11px] py-1.5 px-3 min-h-[34px] border-[#E84C3D]/30 hover:border-[#E84C3D]/70 hover:shadow-[0_0_12px_rgba(232,76,61,0.25)]"
-                              title="Запустить синхронный экзамен по PIN-коду"
-                            >
-                              <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />
-                              <span>Экзамен</span>
-                            </button>
-
-                            {!isHead && (
-                              <button
-                                onClick={() => handleConvertToExam(t)}
-                                className="icon-btn bg-white hover:bg-purple-50 text-purple-700 border-purple-200"
-                                title="Создать независимую копию как синхронный экзамен"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </>
-                        )}
-
+                        {/* Назначить сотрудникам (доступно и для тестов, и для аттестаций) */}
                         <button
                           onClick={() => setAssigningTest(t)}
-                          className="icon-btn bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE]"
+                          className="btn-dark-pill text-[11px] py-1.5 px-3 min-h-[34px] border-[#E84C3D]/40 hover:border-[#E84C3D] hover:shadow-[0_0_12px_rgba(232,76,61,0.25)] flex items-center gap-1.5"
                           title="Назначить сотрудникам"
                         >
-                          <UserPlus className="w-3.5 h-3.5" />
+                          <UserPlus className="w-3.5 h-3.5 text-[#E84C3D]" />
+                          <span>Назначить</span>
                         </button>
+
+                        {/* Преобразование Тест <-> Аттестация (только для админов) */}
+                        {!isHead && (
+                          t.is_exam ? (
+                            <button
+                              onClick={() => handleConvertToTest(t)}
+                              className="icon-btn bg-white hover:bg-[#F5F5F7] text-[#141414] border-[#EEEEEE]"
+                              title="Создать независимую копию как обычный тест"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleConvertToExam(t)}
+                              className="icon-btn bg-white hover:bg-red-50 text-[#E84C3D] border-[#E84C3D]/30"
+                              title="Создать независимую копию как аттестацию (только для админов)"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                            </button>
+                          )
+                        )}
 
                         <Link
                           to={`/admin/tests/${t.id}/analytics`}
@@ -434,7 +403,7 @@ export const AdminTestsPage = () => {
                         <Link
                           to={`/admin/tests/${t.id}/edit`}
                           className="icon-btn bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE]"
-                          title="Редактировать тест"
+                          title="Редактировать параметры и вопросы"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </Link>
@@ -443,7 +412,7 @@ export const AdminTestsPage = () => {
                           onClick={() => requestDeleteTest(t)}
                           disabled={deletingId === t.id}
                           className="icon-btn bg-[#FCECEB] hover:bg-[#FDE8E9] text-[#E84C3D] border-[#F8D3D0]"
-                          title="Удалить тест"
+                          title="Удалить"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -479,14 +448,6 @@ export const AdminTestsPage = () => {
           description="Все связанные вопросы, персональные назначения и результаты прохождения сотрудников будут безвозвратно удалены."
           confirmText="Удалить тест"
           variant="danger"
-        />
-      )}
-      {/* Create Exam Session Modal */}
-      {examTest && (
-        <CreateExamSessionModal
-          test={examTest}
-          isOpen={Boolean(examTest)}
-          onClose={() => setExamTest(null)}
         />
       )}
 

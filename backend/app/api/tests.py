@@ -155,6 +155,11 @@ async def get_tests(
                 public_token=t.public_token,
                 hide_from_heads=t.hide_from_heads,
                 is_exam=t.is_exam,
+                shuffle_questions=t.shuffle_questions,
+                shuffle_options=t.shuffle_options,
+                category_rating_enabled=t.category_rating_enabled,
+                category_demote_threshold=t.category_demote_threshold,
+                category_promote_threshold=t.category_promote_threshold,
                 question_count=q_count,
                 total_points=tot_points,
                 created_at=t.created_at,
@@ -195,6 +200,11 @@ async def create_test(
         public_token=public_token,
         hide_from_heads=test_in.hide_from_heads,
         is_exam=test_in.is_exam,
+        shuffle_questions=test_in.shuffle_questions,
+        shuffle_options=test_in.shuffle_options,
+        category_rating_enabled=test_in.category_rating_enabled,
+        category_demote_threshold=test_in.category_demote_threshold,
+        category_promote_threshold=test_in.category_promote_threshold,
         author_id=current_user.id,
     )
     db.add(new_test)
@@ -343,6 +353,16 @@ async def update_test(
         test.hide_from_heads = test_in.hide_from_heads
     if test_in.is_exam is not None:
         test.is_exam = test_in.is_exam
+    if test_in.shuffle_questions is not None:
+        test.shuffle_questions = test_in.shuffle_questions
+    if test_in.shuffle_options is not None:
+        test.shuffle_options = test_in.shuffle_options
+    if test_in.category_rating_enabled is not None:
+        test.category_rating_enabled = test_in.category_rating_enabled
+    if test_in.category_demote_threshold is not None:
+        test.category_demote_threshold = test_in.category_demote_threshold
+    if test_in.category_promote_threshold is not None:
+        test.category_promote_threshold = test_in.category_promote_threshold
 
     if test_in.questions is not None:
         for q in test.questions:
@@ -738,6 +758,9 @@ async def get_test_analytics(
                 percentage=pct,
                 is_passed=a.is_passed,
                 status=a.status,
+                category_before=a.category_before,
+                category_after=a.category_after,
+                category_action=a.category_action,
                 needs_review=(a.status == "needs_review"),
                 unreviewed_count=unreviewed,
                 started_at=a.started_at,
@@ -771,8 +794,9 @@ async def convert_test_to_exam(
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """
-    Создать независимую копию теста как экзамен (только для администраторов).
+    Создать независимую копию теста как аттестацию (только для администраторов).
     Копирует все вопросы и варианты ответов, помечает is_exam=True, hide_from_heads=True.
+    По умолчанию включает перемешивание вопросов и вариантов ответов.
     """
     stmt = (
         select(Test)
@@ -784,8 +808,9 @@ async def convert_test_to_exam(
     if not source:
         raise HTTPException(status_code=404, detail="Исходный тест не найден")
 
-    # Cloned exam
-    new_title = source.title if source.title.lower().startswith("экзамен") else f"Экзамен: {source.title}"
+    # Cloned attestation
+    clean_title = re.sub(r"^(тест|аттестация|экзамен):\s*", "", source.title, flags=re.IGNORECASE)
+    new_title = f"Аттестация: {clean_title}"
     new_exam = Test(
         title=new_title,
         description=source.description,
@@ -796,8 +821,13 @@ async def convert_test_to_exam(
         is_published=True,
         allow_guest=source.allow_guest,
         public_token=None,
-        hide_from_heads=True,  # По умолчанию экзамены видят только администраторы!
+        hide_from_heads=True,  # Аттестации видят только администраторы!
         is_exam=True,
+        shuffle_questions=True,
+        shuffle_options=True,
+        category_rating_enabled=source.category_rating_enabled,
+        category_demote_threshold=source.category_demote_threshold,
+        category_promote_threshold=source.category_promote_threshold,
         author_id=current_user.id,
     )
     db.add(new_exam)
@@ -842,7 +872,7 @@ async def convert_exam_to_test(
     current_user: User = Depends(require_role("admin", "superadmin")),
 ):
     """
-    Создать независимую копию экзамена как обычный тест.
+    Создать независимую копию аттестации как обычный тест.
     Копирует все вопросы и варианты ответов, помечает is_exam=False, hide_from_heads=False.
     """
     stmt = (
@@ -853,9 +883,9 @@ async def convert_exam_to_test(
     res = await db.execute(stmt)
     source = res.scalar_one_or_none()
     if not source:
-        raise HTTPException(status_code=404, detail="Исходный экзамен не найден")
+        raise HTTPException(status_code=404, detail="Исходная аттестация не найдена")
 
-    clean_title = re.sub(r"^экзамен:\s*", "", source.title, flags=re.IGNORECASE)
+    clean_title = re.sub(r"^(аттестация|экзамен|тест):\s*", "", source.title, flags=re.IGNORECASE)
     new_test = Test(
         title=f"Тест: {clean_title}",
         description=source.description,
@@ -868,6 +898,11 @@ async def convert_exam_to_test(
         public_token=None,
         hide_from_heads=False,
         is_exam=False,
+        shuffle_questions=source.shuffle_questions,
+        shuffle_options=source.shuffle_options,
+        category_rating_enabled=source.category_rating_enabled,
+        category_demote_threshold=source.category_demote_threshold,
+        category_promote_threshold=source.category_promote_threshold,
         author_id=current_user.id,
     )
     db.add(new_test)

@@ -14,6 +14,7 @@ import {
   Unlink,
   RefreshCw,
   Sparkles,
+  Award,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -186,6 +187,10 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                   {user?.full_name || 'Профиль сотрудника'}
                 </h2>
                 <RoleBadge role={user?.role} className="scale-90 origin-left" />
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#E84C3D]/15 text-[#E84C3D] border border-[#E84C3D]/30 flex items-center gap-1">
+                  <Award className="w-3 h-3 text-[#E84C3D]" />
+                  <span>Категория {user?.category || 1}</span>
+                </span>
               </div>
               <p className="text-xs text-[#777777] truncate mt-0.5">
                 {user?.email} • {user?.department || 'Без отдела'}
@@ -204,6 +209,32 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
         {/* Modal Body */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-left">
+          {/* Employee Category Info Card */}
+          <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] flex items-center justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#777777] block">
+                Квалификационная категория
+              </span>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span className="text-base font-black text-[#222222]">
+                  Уровень {user?.category || 1}
+                </span>
+                <span className="text-xs text-[#777777]">
+                  {user?.category === 4
+                    ? '— Эксперт / Высшая категория'
+                    : user?.category === 3
+                    ? '— Мастер'
+                    : user?.category === 2
+                    ? '— Специалист'
+                    : '— Начальный уровень'}
+                </span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-white border border-[#EEEEEE] flex items-center justify-center text-[#E84C3D] shadow-xs shrink-0">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+
           {/* Status Banners */}
           {statusMsg && (
             <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2.5 animate-fade-in">

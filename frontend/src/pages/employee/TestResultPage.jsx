@@ -207,6 +207,68 @@ export const TestResultPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Category Result Card */}
+        {result.category_action && (
+          <div
+            className={`p-4 sm:p-5 rounded-2xl border transition-all mt-6 ${
+              result.category_action === 'promoted'
+                ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-emerald-300 text-emerald-900 shadow-sm'
+                : result.category_action === 'demoted'
+                ? 'bg-gradient-to-r from-red-50 to-rose-100/50 border-red-300 text-[#E84C3D] shadow-sm'
+                : 'bg-white border-[#EEEEEE] text-[#222222] shadow-xs'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold shrink-0 ${
+                    result.category_action === 'promoted'
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+                      : result.category_action === 'demoted'
+                      ? 'bg-[#E84C3D] text-white shadow-md shadow-red-600/25'
+                      : 'bg-[#141414] text-white'
+                  }`}
+                >
+                  <Award className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider opacity-75">
+                    Квалификационная категория
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight mt-0.5">
+                    {result.category_action === 'promoted' && 'Поздравляем! Ваша категория повышена'}
+                    {result.category_action === 'retained' && 'Категория подтверждена'}
+                    {result.category_action === 'demoted' && 'Квалификационная категория снижена'}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-xs px-4 py-2 rounded-xl border border-black/10">
+                <span className="text-xs text-[#777777]">Уровень:</span>
+                {result.category_action !== 'retained' ? (
+                  <>
+                    <span className="text-sm font-bold text-[#777777] line-through">
+                      {result.category_before}
+                    </span>
+                    <span className="text-sm font-bold text-[#141414]">➔</span>
+                  </>
+                ) : null}
+                <span
+                  className={`text-base font-black ${
+                    result.category_action === 'promoted'
+                      ? 'text-emerald-700'
+                      : result.category_action === 'demoted'
+                      ? 'text-[#E84C3D]'
+                      : 'text-[#141414]'
+                  }`}
+                >
+                  Уровень {result.category_after}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Кнопки перехода */}

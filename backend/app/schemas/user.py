@@ -9,6 +9,7 @@ class UserBase(BaseModel):
     branch: Optional[str] = None
     department: Optional[str] = None
     department_id: Optional[int] = None
+    category: int = Field(default=1, ge=1, le=4)
 
 
 class UserCreate(UserBase):
@@ -24,6 +25,7 @@ class UserAdminCreate(BaseModel):
     branch: Optional[str] = None
     department: Optional[str] = None
     department_id: Optional[int] = None
+    category: int = Field(default=1, ge=1, le=4)
 
 
 class UserAdminUpdate(BaseModel):
@@ -34,6 +36,7 @@ class UserAdminUpdate(BaseModel):
     branch: Optional[str] = None
     department: Optional[str] = None
     department_id: Optional[int] = None
+    category: Optional[int] = Field(None, ge=1, le=4)
 
 
 class UserLogin(BaseModel):

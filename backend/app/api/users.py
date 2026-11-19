@@ -121,6 +121,7 @@ async def create_user_by_admin(
         branch=payload.branch.strip() if payload.branch else None,
         department=dept_name,
         department_id=dept_id,
+        category=max(1, min(4, payload.category)) if payload.category else 1,
         is_active=True,
     )
     db.add(new_user)
@@ -248,6 +249,9 @@ async def update_user(
 
     if payload.branch is not None:
         target_user.branch = payload.branch.strip() if payload.branch else None
+
+    if payload.category is not None:
+        target_user.category = max(1, min(4, payload.category))
 
     if payload.password is not None and payload.password.strip():
         target_user.hashed_password = get_password_hash(payload.password.strip())

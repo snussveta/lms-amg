@@ -189,7 +189,24 @@ export const TestAnalyticsPage = () => {
                   return (
                     <tr key={att.id} className="hover:bg-[#F5F5F7]/70 transition-colors">
                       <td className="py-3.5 px-4 sm:px-5">
-                        <div className="font-bold text-[#222222]">{att.user_name}</div>
+                        <div className="font-bold text-[#222222] flex items-center gap-1.5 flex-wrap">
+                          <span>{att.user_name}</span>
+                          {att.category_action === 'promoted' && (
+                            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                              Кат. {att.category_before} ➔ {att.category_after} (↑)
+                            </span>
+                          )}
+                          {att.category_action === 'demoted' && (
+                            <span className="text-[10px] bg-red-100 text-[#E84C3D] px-1.5 py-0.5 rounded font-bold">
+                              Кат. {att.category_before} ➔ {att.category_after} (↓)
+                            </span>
+                          )}
+                          {att.category_action === 'retained' && (
+                            <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-bold">
+                              Кат. {att.category_after} (=)
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11px] text-[#777777]">{att.user_email}</div>
                         {att.guest_phone && (
                           <div className="text-[10px] text-[#777777]">Тел: {att.guest_phone}</div>

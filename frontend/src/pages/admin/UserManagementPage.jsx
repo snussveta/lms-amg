@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   AlertCircle,
+  Award,
   Briefcase,
   Building2,
   Check,
@@ -51,6 +52,7 @@ export const UserManagementPage = () => {
     department: '',
     department_id: null,
     role: 'employee',
+    category: 1,
   });
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
@@ -64,6 +66,7 @@ export const UserManagementPage = () => {
     department: '',
     department_id: null,
     role: 'employee',
+    category: 1,
   });
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
@@ -168,6 +171,7 @@ export const UserManagementPage = () => {
       department: initialDept ? initialDept.name : '',
       department_id: initialDept ? initialDept.id : null,
       role: 'employee',
+      category: 1,
     });
     setCopiedPassword(false);
     setIsRegisterModalOpen(true);
@@ -228,6 +232,7 @@ export const UserManagementPage = () => {
       department: resolvedDeptName,
       department_id: resolvedDeptId,
       role: targetUser.role || 'employee',
+      category: targetUser.category || 1,
     });
     setIsSubmittingEdit(false);
   };
@@ -250,6 +255,7 @@ export const UserManagementPage = () => {
         department: matchedDept ? matchedDept.name : (editForm.department?.trim() || ''),
         department_id: matchedDept ? matchedDept.id : 0,
         role: editForm.role,
+        category: editForm.category || 1,
       };
       if (editForm.password && editForm.password.trim()) {
         payload.password = editForm.password.trim();
@@ -688,6 +694,7 @@ export const UserManagementPage = () => {
                     <th className="py-3.5 px-5">Сотрудник</th>
                     <th className="py-3.5 px-5">Логин / Email</th>
                     <th className="py-3.5 px-5">Отдел</th>
+                    <th className="py-3.5 px-5">Категория</th>
                     <th className="py-3.5 px-5">Роль</th>
                     <th className="py-3.5 px-5">Дата рег.</th>
                     <th className="py-3.5 px-5 text-right">Действия</th>
@@ -696,13 +703,13 @@ export const UserManagementPage = () => {
                 <tbody className="divide-y divide-[#EEEEEE] text-xs text-[#222222]">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-[#777777]">
+                      <td colSpan="7" className="py-12 text-center text-[#777777]">
                         Загрузка сотрудников...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-[#777777]">
+                      <td colSpan="7" className="py-12 text-center text-[#777777]">
                         По заданным критериям сотрудники не найдены.
                       </td>
                     </tr>
@@ -741,6 +748,13 @@ export const UserManagementPage = () => {
                                 Без отдела
                               </span>
                             )}
+                          </td>
+
+                          <td className="py-3.5 px-5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#141414]/5 text-[#141414] border border-[#141414]/15">
+                              <Award className="w-3.5 h-3.5 text-[#E84C3D]" />
+                              <span>Категория {u.category || 1}</span>
+                            </span>
                           </td>
 
                           <td className="py-3.5 px-5">
@@ -1139,6 +1153,25 @@ export const UserManagementPage = () => {
                 )}
               </div>
 
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Квалификационная категория сотрудника *
+                </label>
+                <select
+                  value={registerForm.category}
+                  onChange={(e) => setRegisterForm({ ...registerForm, category: parseInt(e.target.value, 10) })}
+                  className="input-field text-xs w-full bg-white"
+                >
+                  <option value="1">Категория 1 (Начальный уровень)</option>
+                  <option value="2">Категория 2 (Специалист)</option>
+                  <option value="3">Категория 3 (Мастер)</option>
+                  <option value="4">Категория 4 (Эксперт / Высшая)</option>
+                </select>
+                <span className="text-[10px] text-[#777777] mt-0.5 block">
+                  Уровень квалификации от 1 до 4 (автоматически изменяется при сдаче тестов и аттестаций)
+                </span>
+              </div>
+
               {!isDepartmentHead && (
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
@@ -1338,6 +1371,22 @@ export const UserManagementPage = () => {
                       )}
                   </select>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
+                  Квалификационная категория (Уровни 1 — 4) *
+                </label>
+                <select
+                  value={editForm.category}
+                  onChange={(e) => setEditForm({ ...editForm, category: parseInt(e.target.value, 10) })}
+                  className="input-field text-xs w-full bg-white"
+                >
+                  <option value="1">Категория 1 (Начальный уровень)</option>
+                  <option value="2">Категория 2 (Специалист)</option>
+                  <option value="3">Категория 3 (Мастер)</option>
+                  <option value="4">Категория 4 (Эксперт / Высшая)</option>
+                </select>
               </div>
 
               {!isDepartmentHead && (

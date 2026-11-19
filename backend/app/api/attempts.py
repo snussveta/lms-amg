@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import random
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy import func, select
@@ -26,6 +27,28 @@ from app.schemas.test import TestEmployeeResponse
 from app.models.course import Course, CourseModule, CourseLesson
 
 router = APIRouter(prefix="/attempts", tags=["Test Attempts"])
+
+
+def apply_shuffling(test: Test, sanitized_test: TestEmployeeResponse, attempt_id: int):
+    """
+    Детерминированное перемешивание порядка вопросов и вариантов ответов.
+    Seed привязан к attempt_id (и attempt_id * 1000 + q.id для вариантов),
+    поэтому при перезагрузке страницы в рамках одной попытки порядок сохраняется,
+    но в каждой новой попытке формируется уникальный порядок.
+    """
+    if getattr(test, "shuffle_questions", False) and sanitized_test.questions:
+        rng = random.Random(attempt_id)
+        shuffled_q = list(sanitized_test.questions)
+        rng.shuffle(shuffled_q)
+        sanitized_test.questions = shuffled_q
+
+    if getattr(test, "shuffle_options", False) and sanitized_test.questions:
+        for q in sanitized_test.questions:
+            if q.options:
+                opt_rng = random.Random(attempt_id * 1000 + q.id)
+                shuffled_opts = list(q.options)
+                opt_rng.shuffle(shuffled_opts)
+                q.options = shuffled_opts
 
 
 @router.post("/start", response_model=AttemptStartResponse)
@@ -163,6 +186,7 @@ async def start_attempt(
 
     sanitized_test = TestEmployeeResponse.model_validate(test)
     sanitized_test.total_points = sum(q.points for q in test.questions)
+    apply_shuffling(test, sanitized_test, active_attempt.id)
 
     return AttemptStartResponse(
         attempt_id=active_attempt.id,
@@ -207,6 +231,9 @@ async def get_my_attempts(
                 guest_name=a.guest_name,
                 started_at=a.started_at,
                 submitted_at=a.submitted_at,
+                category_before=a.category_before,
+                category_after=a.category_after,
+                category_action=a.category_action,
             )
         )
     return items
@@ -248,6 +275,7 @@ async def get_active_attempt(
 
     sanitized_test = TestEmployeeResponse.model_validate(test)
     sanitized_test.total_points = sum(q.points for q in test.questions)
+    apply_shuffling(test, sanitized_test, attempt.id)
 
     return AttemptStartResponse(
         attempt_id=attempt.id,
@@ -418,6 +446,24 @@ async def submit_attempt(
         if assignment:
             assignment.status = "completed"
 
+        # Оценка и изменение квалификационной категории сотрудника (Вилка 1 — 4 уровни)
+        if test.category_rating_enabled:
+            current_cat = current_user.category if getattr(current_user, "category", None) else 1
+            attempt.category_before = current_cat
+            if percentage < test.category_demote_threshold:
+                new_cat = max(1, current_cat - 1)
+                cat_action = "demoted"
+            elif percentage >= test.category_promote_threshold:
+                new_cat = min(4, current_cat + 1)
+                cat_action = "promoted"
+            else:
+                new_cat = current_cat
+                cat_action = "retained"
+
+            current_user.category = new_cat
+            attempt.category_after = new_cat
+            attempt.category_action = cat_action
+
     await db.commit()
     await db.refresh(attempt)
 
@@ -462,6 +508,9 @@ async def submit_attempt(
         is_passed=attempt.is_passed,
         is_guest=attempt.is_guest,
         guest_name=attempt.guest_name,
+        category_before=attempt.category_before,
+        category_after=attempt.category_after,
+        category_action=attempt.category_action,
         started_at=attempt.started_at,
         submitted_at=attempt.submitted_at,
         time_spent_seconds=time_spent,
@@ -554,6 +603,24 @@ async def review_attempt_answers(
         if assignment:
             assignment.status = "completed"
 
+        # Оценка и изменение квалификационной категории сотрудника (Вилка 1 — 4 уровни)
+        if test.category_rating_enabled and attempt.user:
+            current_cat = attempt.user.category if getattr(attempt.user, "category", None) else 1
+            attempt.category_before = current_cat
+            if percentage < test.category_demote_threshold:
+                new_cat = max(1, current_cat - 1)
+                cat_action = "demoted"
+            elif percentage >= test.category_promote_threshold:
+                new_cat = min(4, current_cat + 1)
+                cat_action = "promoted"
+            else:
+                new_cat = current_cat
+                cat_action = "retained"
+
+            attempt.user.category = new_cat
+            attempt.category_after = new_cat
+            attempt.category_action = cat_action
+
     # Synchronize ExamParticipant if this attempt is part of a live exam
     from app.models.exam import ExamParticipant
     ep_stmt = select(ExamParticipant).where(ExamParticipant.attempt_id == attempt.id)
@@ -643,6 +710,9 @@ async def review_attempt_answers(
         is_passed=attempt.is_passed,
         is_guest=attempt.is_guest,
         guest_name=attempt.guest_name,
+        category_before=attempt.category_before,
+        category_after=attempt.category_after,
+        category_action=attempt.category_action,
         started_at=attempt.started_at,
         submitted_at=attempt.submitted_at,
         time_spent_seconds=time_spent,
@@ -742,6 +812,9 @@ async def get_attempt_result(
         is_passed=attempt.is_passed,
         is_guest=attempt.is_guest,
         guest_name=attempt.guest_name,
+        category_before=attempt.category_before,
+        category_after=attempt.category_after,
+        category_action=attempt.category_action,
         started_at=attempt.started_at,
         submitted_at=attempt.submitted_at,
         time_spent_seconds=time_spent,

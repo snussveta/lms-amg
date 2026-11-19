@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
+  Award,
   BookOpen,
   Check,
   CheckCircle2,
@@ -32,10 +33,12 @@ import {
   Search,
   Settings as SettingsIcon,
   ShieldCheck,
+  Shuffle,
   Sparkles,
   ToggleLeft,
   ToggleRight,
   Trash2,
+  TrendingUp,
   Users,
   X,
   Zap,
@@ -45,7 +48,11 @@ import api, { getErrorMessage } from '../../api/client';
 export const TestConstructorPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditing = Boolean(testId && testId !== 'new');
+
+  const searchParams = new URLSearchParams(location.search);
+  const isAttestationInitial = searchParams.get('type') === 'attestation';
 
   // Top Tabs: 'questions' | 'settings'
   const [activeTab, setActiveTab] = useState('questions');
@@ -57,7 +64,7 @@ export const TestConstructorPage = () => {
   const [answerKeyMode, setAnswerKeyMode] = useState({});
 
   // Основные метаданные теста
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(isAttestationInitial ? 'Новая аттестация' : '');
   const [description, setDescription] = useState('');
   const [passingScore, setPassingScore] = useState(70);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(30);
@@ -66,9 +73,18 @@ export const TestConstructorPage = () => {
   const [allowGuest, setAllowGuest] = useState(false);
   const [disallowRetake, setDisallowRetake] = useState(false);
   const [isAssignedOnly, setIsAssignedOnly] = useState(true);
-  const [hideFromHeads, setHideFromHeads] = useState(false);
-  const [isExam, setIsExam] = useState(false);
+  const [hideFromHeads, setHideFromHeads] = useState(isAttestationInitial);
+  const [isExam, setIsExam] = useState(isAttestationInitial);
   const [publicToken, setPublicToken] = useState(null);
+
+  // Перемешивание вопросов и вариантов ответов
+  const [shuffleQuestions, setShuffleQuestions] = useState(isAttestationInitial);
+  const [shuffleOptions, setShuffleOptions] = useState(isAttestationInitial);
+
+  // Вилка изменения квалификационной категории сотрудников (Уровни 1 — 4)
+  const [categoryRatingEnabled, setCategoryRatingEnabled] = useState(true);
+  const [categoryDemoteThreshold, setCategoryDemoteThreshold] = useState(80.0);
+  const [categoryPromoteThreshold, setCategoryPromoteThreshold] = useState(90.0);
 
   // Вопросы теста
   const [questions, setQuestions] = useState([
@@ -122,6 +138,11 @@ export const TestConstructorPage = () => {
       setHideFromHeads(Boolean(data.hide_from_heads));
       setIsExam(Boolean(data.is_exam));
       setPublicToken(data.public_token || null);
+      setShuffleQuestions(Boolean(data.shuffle_questions));
+      setShuffleOptions(Boolean(data.shuffle_options));
+      setCategoryRatingEnabled(data.category_rating_enabled !== false);
+      setCategoryDemoteThreshold(data.category_demote_threshold ?? 80.0);
+      setCategoryPromoteThreshold(data.category_promote_threshold ?? 90.0);
 
       if (data.time_limit_minutes) {
         setHasTimeLimit(true);
@@ -381,6 +402,11 @@ export const TestConstructorPage = () => {
         is_assigned_only: isAssignedOnly,
         hide_from_heads: hideFromHeads,
         is_exam: isExam,
+        shuffle_questions: Boolean(shuffleQuestions),
+        shuffle_options: Boolean(shuffleOptions),
+        category_rating_enabled: Boolean(categoryRatingEnabled),
+        category_demote_threshold: parseFloat(categoryDemoteThreshold) || 80.0,
+        category_promote_threshold: parseFloat(categoryPromoteThreshold) || 90.0,
         questions: questions.map((q, idx) => ({
           text: q.text.trim(),
           question_type: q.question_type,
@@ -1241,16 +1267,16 @@ export const TestConstructorPage = () => {
             <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
               <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold">
-                  <Zap className="w-5 h-5" />
+                  <ShieldCheck className="w-5 h-5 text-[#E84C3D]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#222222]">Тип материала и видимость для начальников</h3>
-                  <p className="text-xs text-[#777777]">Разделение тестов и экзаменов, ограничения для руководителей отделов</p>
+                  <h3 className="text-base font-bold text-[#222222]">Тип материала и видимость</h3>
+                  <p className="text-xs text-[#777777]">Разделение тестов и аттестаций, допуск начальников отделов</p>
                 </div>
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* Type: Test vs Exam */}
+                {/* Type: Test vs Attestation */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
@@ -1270,14 +1296,14 @@ export const TestConstructorPage = () => {
                       <span className="text-xs font-bold text-[#222222]">Обычный тест</span>
                     </div>
                     <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
-                      Тест для самостоятельного обучения или аттестации сотрудников компании.
+                      Тест для проверки знаний и обучения. Виден и доступен для назначения начальникам отделов и администраторам.
                     </span>
                   </label>
 
                   <label
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-colors ${
                       isExam
-                        ? 'bg-purple-50/50 border-purple-600 ring-2 ring-purple-600/10 shadow-sm'
+                        ? 'bg-[#141414] text-white border-[#E84C3D] ring-2 ring-[#E84C3D]/20 shadow-sm'
                         : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#777777]'
                     }`}
                   >
@@ -1289,13 +1315,17 @@ export const TestConstructorPage = () => {
                         onChange={() => {
                           setIsExam(true);
                           setHideFromHeads(true);
+                          setShuffleQuestions(true);
+                          setShuffleOptions(true);
                         }}
-                        className="text-purple-600 focus:ring-purple-600 border-[#CED4DA] w-4 h-4"
+                        className="text-[#E84C3D] focus:ring-[#E84C3D] border-[#CED4DA] w-4 h-4"
                       />
-                      <span className="text-xs font-bold text-[#222222]">Синхронный экзамен</span>
+                      <span className={`text-xs font-bold ${isExam ? 'text-white' : 'text-[#222222]'}`}>
+                        Аттестация (Только для администраторов)
+                      </span>
                     </div>
-                    <span className="text-[11px] text-[#777777] pl-6 leading-relaxed">
-                      Экзамен под контролем преподавателя (по PIN-коду, с таймером и античитом). По умолчанию видят только администраторы.
+                    <span className={`text-[11px] pl-6 leading-relaxed ${isExam ? 'text-white/80' : 'text-[#777777]'}`}>
+                      Официальная аттестация сотрудников компании. Видна строго администраторам (начальники отделов не имеют доступа).
                     </span>
                   </label>
                 </div>
@@ -1317,6 +1347,196 @@ export const TestConstructorPage = () => {
                     </span>
                   </div>
                 </label>
+              </div>
+            </div>
+
+            {/* 5. Shuffling Questions and Answers */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-bold">
+                  <Shuffle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Случайный порядок (Рандомизация)</h3>
+                  <p className="text-xs text-[#777777]">
+                    Защита от списывания: генерация уникальной последовательности вопросов и вариантов для каждой попытки
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={shuffleQuestions}
+                    onChange={(e) => setShuffleQuestions(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-[#141414] focus:ring-[#141414] w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Перемешивать порядок вопросов
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      При каждом прохождении тестирования вопросы будут выводиться в уникальной случайной последовательности.
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={shuffleOptions}
+                    onChange={(e) => setShuffleOptions(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-[#141414] focus:ring-[#141414] w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Перемешивать варианты ответов
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      Варианты ответов в вопросах одиночного и множественного выбора перемешиваются случайным образом.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* 6. Employee Qualification Category Rating Fork */}
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
+              <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5 text-[#E84C3D]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Вилка квалификационных категорий сотрудников</h3>
+                  <p className="text-xs text-[#777777]">
+                    Автоматическое изменение категории сотрудника (Уровни 1 — 4) по результатам сдачи теста или аттестации
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <label className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={categoryRatingEnabled}
+                    onChange={(e) => setCategoryRatingEnabled(e.target.checked)}
+                    className="rounded border-[#CED4DA] text-[#E84C3D] focus:ring-[#E84C3D] w-5 h-5 mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#222222] block">
+                      Применять изменение квалификационной категории сотрудника по итогам теста
+                    </span>
+                    <span className="text-[11px] text-[#777777] leading-relaxed">
+                      При включении этой функции результат сдачи автоматически пересчитает текущий уровень категории сотрудника (от 1 до 4) согласно заданной вилке.
+                    </span>
+                  </div>
+                </label>
+
+                {categoryRatingEnabled && (
+                  <div className="space-y-4 pt-2 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                      <div>
+                        <label className="text-xs font-bold text-[#222222] block mb-1">
+                          Порог понижения категории (%)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={categoryDemoteThreshold}
+                            onChange={(e) => setCategoryDemoteThreshold(e.target.value)}
+                            className="input-field w-28 text-center font-bold text-sm bg-white"
+                          />
+                          <span className="font-bold text-xs text-[#777777]">%</span>
+                        </div>
+                        <span className="text-[11px] text-[#777777] mt-1 block">
+                          Результат ниже {categoryDemoteThreshold}% понижает категорию на 1 уровень (мин. 1)
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-[#222222] block mb-1">
+                          Порог повышения категории (%)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={categoryPromoteThreshold}
+                            onChange={(e) => setCategoryPromoteThreshold(e.target.value)}
+                            className="input-field w-28 text-center font-bold text-sm bg-white"
+                          />
+                          <span className="font-bold text-xs text-[#777777]">%</span>
+                        </div>
+                        <span className="text-[11px] text-[#777777] mt-1 block">
+                          Результат {categoryPromoteThreshold}% и выше повышает категорию на 1 уровень (макс. 4)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Visual 3-Tier Fork Preview */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Tier 1: Demote */}
+                      <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/60 text-left space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#E84C3D] bg-white px-2 py-0.5 rounded border border-red-200">
+                            Понижение
+                          </span>
+                          <span className="text-xs font-black text-[#E84C3D] font-mono">
+                            &lt; {categoryDemoteThreshold}%
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#222222] pt-0.5">
+                          -1 уровень категории
+                        </div>
+                        <p className="text-[11px] text-[#777777] leading-tight">
+                          Понижает уровень квалификации на 1 (минимальный уровень — 1).
+                        </p>
+                      </div>
+
+                      {/* Tier 2: Retain */}
+                      <div className="p-3.5 rounded-xl border border-[#EEEEEE] bg-white text-left space-y-1 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#141414] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#EEEEEE]">
+                            Сохранение
+                          </span>
+                          <span className="text-xs font-black text-[#141414] font-mono">
+                            {categoryDemoteThreshold}% — {((parseFloat(categoryPromoteThreshold) || 90.0) - 0.01).toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#222222] pt-0.5">
+                          Без изменений
+                        </div>
+                        <p className="text-[11px] text-[#777777] leading-tight">
+                          Текущий квалификационный уровень подтверждается и сохраняется.
+                        </p>
+                      </div>
+
+                      {/* Tier 3: Promote */}
+                      <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 text-left space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                            Повышение
+                          </span>
+                          <span className="text-xs font-black text-emerald-700 font-mono">
+                            &gt;= {categoryPromoteThreshold}%
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#222222] pt-0.5">
+                          +1 уровень категории
+                        </div>
+                        <p className="text-[11px] text-[#777777] leading-tight">
+                          Повышает уровень квалификации на 1 (максимальный уровень — 4).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
