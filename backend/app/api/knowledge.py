@@ -41,13 +41,13 @@ def detect_category_and_dir(filename: str, override_type: Optional[str] = None):
     ext = Path(filename).suffix.lower()
     if override_type and override_type in ["video", "presentation", "document", "image"]:
         cat = override_type
-    elif ext in [".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".wmv"]:
+    elif ext in [".mp4", ".mkv", ".webm", ".mov", ".avi", ".flv", ".wmv", ".m4v", ".3gp"]:
         cat = "video"
-    elif ext in [".pdf", ".ppt", ".pptx"]:
+    elif ext in [".pdf", ".ppt", ".pptx", ".key", ".odp"]:
         cat = "presentation"
-    elif ext in [".doc", ".docx", ".xls", ".xlsx", ".txt", ".odt", ".csv"]:
+    elif ext in [".doc", ".docx", ".xls", ".xlsx", ".txt", ".odt", ".csv", ".zip", ".rar", ".7z", ".tar", ".gz", ".rtf", ".pages", ".numbers"]:
         cat = "document"
-    elif ext in [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"]:
+    elif ext in [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif", ".bmp", ".tiff", ".ico"]:
         cat = "image"
     else:
         cat = "document"
@@ -88,8 +88,8 @@ async def get_knowledge_files(
         )
     )
 
-    # Access control for employees
-    if current_user.role == "employee":
+    # Access control: non-admins cannot see admin_only materials
+    if current_user.role not in ["admin", "superadmin"]:
         user_dept = (current_user.department or "").strip()
         assigned_file_ids_res = await db.execute(
             select(KnowledgeFileAssignment.file_id).where(
@@ -114,7 +114,10 @@ async def get_knowledge_files(
             access_conds.append(
                 (KnowledgeFile.access_type == "users") & (KnowledgeFile.id.in_(assigned_ids))
             )
-        stmt = stmt.where(or_(*access_conds))
+        stmt = stmt.where(
+            (KnowledgeFile.access_type != "admin_only")
+            & or_(*access_conds)
+        )
 
     # Search filter
     if search and search.strip():
@@ -303,6 +306,108 @@ async def upload_knowledge_file(
     )
 
 
+@router.post("/upload-multiple", response_model=List[KnowledgeFileResponse], status_code=status.HTTP_201_CREATED)
+async def upload_multiple_knowledge_files(
+    files: List[UploadFile],
+    department: Optional[str] = Form("Общий"),
+    description: Optional[str] = Form(""),
+    access_type: Optional[str] = Form("admin_only"),
+    accessible_departments: Optional[str] = Form(""),
+    assigned_user_ids: Optional[str] = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "superadmin"])),
+):
+    """
+    Массовая одновременная загрузка нескольких файлов разных форматов в Базу знаний.
+    """
+    if not files:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файлы для загрузки не предоставлены")
+
+    uploaded_responses = []
+
+    parsed_uids = []
+    if assigned_user_ids:
+        for x in str(assigned_user_ids).replace("[", "").replace("]", "").split(","):
+            x = x.strip()
+            if x.isdigit():
+                parsed_uids.append(int(x))
+
+    for file in files:
+        original_name = file.filename or "uploaded_file"
+        cat, target_dir, cat_subdir, ext = detect_category_and_dir(original_name)
+
+        final_file_id = uuid.uuid4().hex
+        final_filename = f"{final_file_id}{ext}"
+        dest_path = target_dir / final_filename
+
+        total_size = 0
+        try:
+            with open(dest_path, "wb") as f_out:
+                while True:
+                    chunk = await file.read(64 * 1024)
+                    if not chunk:
+                        break
+                    f_out.write(chunk)
+                    total_size += len(chunk)
+        finally:
+            await file.close()
+
+        mime_type, _ = mimetypes.guess_type(original_name)
+        if not mime_type:
+            mime_type = "video/mp4" if cat == "video" else "application/octet-stream"
+
+        file_title = Path(original_name).stem.replace("_", " ").replace("-", " ").strip()
+        if not file_title:
+            file_title = original_name
+
+        final_file_url = f"/media/courses/{cat_subdir}/{final_filename}"
+
+        new_file = KnowledgeFile(
+            title=file_title,
+            description=description or "",
+            file_name=original_name,
+            file_url=final_file_url,
+            file_type=cat,
+            file_size_bytes=total_size,
+            mime_type=mime_type,
+            department=department or "Общий",
+            access_type=access_type or "admin_only",
+            accessible_departments=accessible_departments or "",
+            uploaded_by_id=current_user.id,
+        )
+        db.add(new_file)
+        await db.flush()
+
+        for uid in parsed_uids:
+            db.add(KnowledgeFileAssignment(file_id=new_file.id, user_id=uid))
+
+        uploaded_responses.append(
+            KnowledgeFileResponse(
+                id=new_file.id,
+                title=new_file.title,
+                description=new_file.description or "",
+                file_name=new_file.file_name,
+                file_url=new_file.file_url,
+                file_type=new_file.file_type,
+                file_size_bytes=new_file.file_size_bytes,
+                mime_type=new_file.mime_type,
+                department=new_file.department,
+                access_type=new_file.access_type or "admin_only",
+                accessible_departments=new_file.accessible_departments or "",
+                assigned_user_ids=parsed_uids,
+                uploaded_by_id=new_file.uploaded_by_id,
+                uploaded_by_name=current_user.full_name,
+                downloads_count=0,
+                views_count=0,
+                created_at=new_file.created_at,
+                updated_at=new_file.updated_at,
+            )
+        )
+
+    await db.commit()
+    return uploaded_responses
+
+
 # ==========================================
 # 4. VIEW & DOWNLOAD ACTIONS
 # ==========================================
@@ -317,10 +422,18 @@ async def record_file_view(
     stmt = select(KnowledgeFile).where(KnowledgeFile.id == file_id)
     res = await db.execute(stmt)
     kfile = res.scalar_one_or_none()
-    if kfile:
-        kfile.views_count += 1
-        await db.commit()
-    return {"status": "success", "views": kfile.views_count if kfile else 0}
+    if not kfile:
+        return {"status": "error", "message": "Файл не найден"}
+
+    if current_user.role not in ["admin", "superadmin"] and kfile.access_type == "admin_only":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ к данному материалу разрешен только администраторам",
+        )
+
+    kfile.views_count += 1
+    await db.commit()
+    return {"status": "success", "views": kfile.views_count}
 
 
 @router.get("/download/{file_id}")
@@ -338,6 +451,12 @@ async def download_knowledge_file(
     kfile = res.scalar_one_or_none()
     if not kfile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
+
+    if current_user.role not in ["admin", "superadmin"] and kfile.access_type == "admin_only":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ к данному материалу разрешен только администраторам",
+        )
 
     # Increment downloads count
     kfile.downloads_count += 1

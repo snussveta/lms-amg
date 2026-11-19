@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   Edit2,
+  FileSpreadsheet,
   Key,
   Lock,
   Mail,
@@ -30,6 +31,7 @@ import { useAuth } from '../../context/AuthContext';
 import { RoleBadge } from '../../components/RoleBadge';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { UserStatisticsModal } from '../../components/admin/UserStatisticsModal';
+import { EmployeeImportModal } from '../../components/admin/EmployeeImportModal';
 
 export const UserManagementPage = () => {
   const { user: currentUser, isSuperAdmin, isAdmin, isDepartmentHead, isManager } = useAuth();
@@ -44,6 +46,7 @@ export const UserManagementPage = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [confirmState, setConfirmState] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Register Employee Modal State
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -552,6 +555,15 @@ export const UserManagementPage = () => {
               >
                 <Mail className={`w-4 h-4 ${isSendingTestEmail ? 'animate-pulse text-[#E84C3D]' : 'text-[#141414]'}`} />
                 <span>{isSendingTestEmail ? 'Отправка...' : 'Тест почты'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#EEEEEE] bg-white hover:bg-[#F5F5F7] text-[#141414] text-xs sm:text-sm font-bold shadow-sm transition-all min-h-[44px]"
+                title="Массовый импорт сотрудников из Excel (.xlsx, .csv)"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Импорт из Excel</span>
               </button>
 
               <button
@@ -1803,6 +1815,17 @@ export const UserManagementPage = () => {
           onClose={() => setSelectedUserForStats(null)}
         />
       )}
+
+      {/* Employee Bulk Import Modal */}
+      <EmployeeImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        existingUsers={users}
+        onSuccess={() => {
+          fetchUsers();
+          setSuccessMsg('Сотрудники успешно импортированы!');
+        }}
+      />
     </div>
   );
 };

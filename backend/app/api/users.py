@@ -27,6 +27,9 @@ from app.schemas.user import (
     UserTestStatItem,
     UserAttestationStatItem,
     UserStatisticsSummary,
+    UserBulkImportRequest,
+    UserBulkImportResponse,
+    UserBulkImportItemResult,
 )
 
 router = APIRouter(prefix="/users", tags=["Users Management"])
@@ -147,6 +150,169 @@ async def create_user_by_admin(
     )
 
     return UserResponse.model_validate(new_user)
+
+
+@router.post("/bulk-import", response_model=UserBulkImportResponse)
+async def bulk_import_employees(
+    payload: UserBulkImportRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "superadmin", "department_head")),
+):
+    """
+    Массовый импорт сотрудников из Excel / CSV формы:
+    - При повторном импорте обновляет существующих пользователей по совпадению Фамилии и Имени (без создания дублей).
+    - Если пользователя с такими Фамилией и Именем нет, создается новый сотрудник с ролью 'employee'.
+    - Обновляет квалификационную категорию (1-4) и email.
+    """
+    if not payload.employees:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Список сотрудников для импорта пуст",
+        )
+
+    # Загружаем всех пользователей из БД для быстрого сопоставления
+    res_users = await db.execute(select(User))
+    all_users = res_users.scalars().all()
+
+    # Карты поиска
+    name_map = {}
+    email_map = {}
+    for u in all_users:
+        if u.email:
+            email_map[u.email.lower().strip()] = u
+        if u.full_name:
+            parts = [p.strip().lower() for p in u.full_name.split() if p.strip()]
+            if len(parts) >= 2:
+                key1 = f"{parts[0]} {parts[1]}"
+                key2 = f"{parts[1]} {parts[0]}"
+                name_map[key1] = u
+                name_map[key2] = u
+                if len(parts) >= 3:
+                    key3 = f"{parts[0]} {parts[1]} {parts[2]}"
+                    name_map[key3] = u
+            elif len(parts) == 1:
+                name_map[parts[0]] = u
+
+    # Загружаем отделы компании для сопоставления
+    dept_res = await db.execute(select(Department))
+    all_depts = {d.name.lower().strip(): d for d in dept_res.scalars().all()}
+
+    created_count = 0
+    updated_count = 0
+    warnings: List[str] = []
+    results: List[UserBulkImportItemResult] = []
+
+    default_hashed_pwd = get_password_hash("Amg2026!")
+
+    for item in payload.employees:
+        last = item.last_name.strip()
+        first = item.first_name.strip()
+        full_name = f"{last} {first}"
+        email_clean = str(item.email).lower().strip()
+        cat_val = max(1, min(4, item.category))
+
+        # Поиск совпадений: сначала по ФИО (по требованию ТЗ: Фамилия и Имя не дублируются)
+        lookup_name_1 = f"{last.lower()} {first.lower()}"
+        lookup_name_2 = f"{first.lower()} {last.lower()}"
+        existing_user = name_map.get(lookup_name_1) or name_map.get(lookup_name_2)
+
+        # Если по ФИО не найден, проверяем email
+        if not existing_user:
+            existing_user = email_map.get(email_clean)
+
+        # Отдел
+        dept_name = None
+        dept_id = None
+        if current_user.role == "department_head":
+            dept_name = current_user.department or "СТО"
+            dept_id = current_user.department_id
+        elif item.department and item.department.strip():
+            d_clean = item.department.strip()
+            dept_obj = all_depts.get(d_clean.lower())
+            if dept_obj:
+                dept_name = dept_obj.name
+                dept_id = dept_obj.id
+            else:
+                dept_name = d_clean
+
+        if existing_user:
+            # Обновляем существующего сотрудника
+            if existing_user.email.lower().strip() != email_clean:
+                user_with_email = email_map.get(email_clean)
+                if user_with_email and user_with_email.id != existing_user.id:
+                    warnings.append(
+                        f"У сотрудника {full_name} email {email_clean} уже занят аккаунтом «{user_with_email.full_name}». Почта не изменена."
+                    )
+                else:
+                    email_map.pop(existing_user.email.lower().strip(), None)
+                    existing_user.email = email_clean
+                    email_map[email_clean] = existing_user
+
+            existing_user.category = cat_val
+            if dept_name and (current_user.role != "department_head" or not existing_user.department):
+                existing_user.department = dept_name
+                existing_user.department_id = dept_id
+
+            updated_count += 1
+            results.append(
+                UserBulkImportItemResult(
+                    full_name=existing_user.full_name,
+                    email=existing_user.email,
+                    category=existing_user.category,
+                    action="updated",
+                    details=f"Данные обновлены: категория {cat_val}",
+                )
+            )
+        else:
+            # Создаем нового сотрудника
+            if email_clean in email_map:
+                user_with_email = email_map[email_clean]
+                warnings.append(
+                    f"Email {email_clean} для нового сотрудника «{full_name}» уже занят пользователем «{user_with_email.full_name}». Пропущен."
+                )
+                continue
+
+            new_user = User(
+                email=email_clean,
+                hashed_password=default_hashed_pwd,
+                full_name=full_name,
+                role="employee",
+                department=dept_name,
+                department_id=dept_id,
+                branch=item.branch.strip() if item.branch else None,
+                category=cat_val,
+                is_active=True,
+            )
+            db.add(new_user)
+            await db.flush()
+
+            # Добавляем в локальные карты для защиты от дублей внутри одного файла
+            name_map[lookup_name_1] = new_user
+            name_map[lookup_name_2] = new_user
+            email_map[email_clean] = new_user
+
+            created_count += 1
+            results.append(
+                UserBulkImportItemResult(
+                    full_name=full_name,
+                    email=email_clean,
+                    category=cat_val,
+                    action="created",
+                    details="Создан новый сотрудник",
+                )
+            )
+
+    await db.commit()
+
+    return UserBulkImportResponse(
+        success=True,
+        total_processed=len(payload.employees),
+        created_count=created_count,
+        updated_count=updated_count,
+        warnings=warnings,
+        results=results,
+    )
 
 
 @router.post("/test-email")

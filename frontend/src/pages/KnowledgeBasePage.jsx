@@ -27,6 +27,7 @@ import {
   Layers,
   List,
   Loader2,
+  Lock,
   Maximize2,
   Minimize2,
   MoreVertical,
@@ -37,6 +38,7 @@ import {
   Shield,
   SlidersHorizontal,
   Trash2,
+  Unlock,
   Upload,
   User,
   Video,
@@ -225,6 +227,14 @@ const FileCardPreview = ({ file, catInfo, isVideo, isPresentation }) => {
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/95 backdrop-blur border border-[#EEEEEE] text-[#141414] shadow-2xs">
             {file.department}
           </span>
+          {file.access_type === 'admin_only' && (
+            <span
+              className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#E84C3D] text-white shadow-2xs"
+              title="Материал доступен только администраторам"
+            >
+              🔒 Только админы
+            </span>
+          )}
           {file.access_type === 'department' && (
             <span
               className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#141414] text-white shadow-2xs"
@@ -279,17 +289,19 @@ export const KnowledgeBasePage = () => {
   const videoPlayerRef = useRef(null);
 
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadFiles, setUploadFiles] = useState([]);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDesc, setUploadDesc] = useState('');
   const [uploadDept, setUploadDept] = useState('Общий');
   const [uploadCategory, setUploadCategory] = useState('video');
+  const [uploadIsPublic, setUploadIsPublic] = useState(false); // toggle: false = admin_only, true = other roles allowed
   const [uploadAccessType, setUploadAccessType] = useState('all'); // 'all' | 'department' | 'users'
   const [uploadAccessDept, setUploadAccessDept] = useState('СТО');
   const [uploadAssignedUserIds, setUploadAssignedUserIds] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   // Edit Modal states
@@ -298,6 +310,7 @@ export const KnowledgeBasePage = () => {
   const [editDesc, setEditDesc] = useState('');
   const [editDept, setEditDept] = useState('Общий');
   const [editCategory, setEditCategory] = useState('video');
+  const [editIsPublic, setEditIsPublic] = useState(false);
   const [editAccessType, setEditAccessType] = useState('all');
   const [editAccessDept, setEditAccessDept] = useState('СТО');
   const [editAssignedUserIds, setEditAssignedUserIds] = useState([]);
@@ -393,26 +406,74 @@ export const KnowledgeBasePage = () => {
     return 'document';
   };
 
-  // Handle file select for upload modal
-  const handleSelectUploadFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadFile(file);
-    const cat = detectCategoryFromName(file.name);
-    setUploadCategory(cat);
-    const cleanName = file.name.replace(/\.[^/.]+$/, '');
-    setUploadTitle(cleanName);
+  // File icon helper for selected list
+  const getFileIcon = (fileName) => {
+    const cat = detectCategoryFromName(fileName);
+    if (cat === 'video') return <Video className="w-4 h-4 text-blue-600 shrink-0" />;
+    if (cat === 'presentation') return <FileText className="w-4 h-4 text-amber-600 shrink-0" />;
+    if (cat === 'image') return <ImageIcon className="w-4 h-4 text-emerald-600 shrink-0" />;
+    return <File className="w-4 h-4 text-[#777777] shrink-0" />;
+  };
+
+  // Handle files select for upload modal (supports multiple files)
+  const handleSelectUploadFiles = (e) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+    setUploadFiles((prev) => {
+      const existingKeys = new Set(prev.map((f) => `${f.name}-${f.size}`));
+      const newFiles = selected.filter((f) => !existingKeys.has(`${f.name}-${f.size}`));
+      const combined = [...prev, ...newFiles];
+      if (combined.length === 1) {
+        const cat = detectCategoryFromName(combined[0].name);
+        setUploadCategory(cat);
+        const cleanName = combined[0].name.replace(/\.[^/.]+$/, '');
+        setUploadTitle(cleanName);
+      }
+      return combined;
+    });
     setUploadError('');
+    if (e.target) e.target.value = '';
+  };
+
+  const handleDropFiles = (droppedFileList) => {
+    const selected = Array.from(droppedFileList || []);
+    if (!selected.length) return;
+    setUploadFiles((prev) => {
+      const existingKeys = new Set(prev.map((f) => `${f.name}-${f.size}`));
+      const newFiles = selected.filter((f) => !existingKeys.has(`${f.name}-${f.size}`));
+      const combined = [...prev, ...newFiles];
+      if (combined.length === 1) {
+        const cat = detectCategoryFromName(combined[0].name);
+        setUploadCategory(cat);
+        const cleanName = combined[0].name.replace(/\.[^/.]+$/, '');
+        setUploadTitle(cleanName);
+      }
+      return combined;
+    });
+    setUploadError('');
+  };
+
+  const handleRemoveUploadFile = (index) => {
+    setUploadFiles((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 1) {
+        setUploadTitle(updated[0].name.replace(/\.[^/.]+$/, ''));
+        setUploadCategory(detectCategoryFromName(updated[0].name));
+      } else if (updated.length === 0) {
+        setUploadTitle('');
+      }
+      return updated;
+    });
   };
 
   // Handle upload submit
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
-    if (!uploadFile) {
-      setUploadError('Пожалуйста, выберите файл для загрузки.');
+    if (!uploadFiles.length) {
+      setUploadError('Пожалуйста, выберите хотя бы один файл для загрузки.');
       return;
     }
-    if (!uploadTitle.trim()) {
+    if (uploadFiles.length === 1 && !uploadTitle.trim()) {
       setUploadError('Укажите название материала.');
       return;
     }
@@ -422,28 +483,52 @@ export const KnowledgeBasePage = () => {
       setUploadError('');
       setUploadProgress(0);
 
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      formData.append('title', uploadTitle.trim());
-      formData.append('description', uploadDesc.trim());
-      formData.append('department', uploadDept);
-      formData.append('file_type', uploadCategory);
-      formData.append('access_type', uploadAccessType);
-      formData.append('accessible_departments', uploadAccessType === 'department' ? uploadAccessDept : '');
-      formData.append(
-        'assigned_user_ids',
-        uploadAccessType === 'users' ? uploadAssignedUserIds.join(',') : ''
-      );
+      const effectiveAccessType = uploadIsPublic ? uploadAccessType : 'admin_only';
+      const effectiveDept = uploadIsPublic && uploadAccessType === 'department' ? uploadAccessDept : '';
+      const effectiveUsers = uploadIsPublic && uploadAccessType === 'users' ? uploadAssignedUserIds.join(',') : '';
 
-      await api.post('/knowledge/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percent);
-          }
-        },
-      });
+      if (uploadFiles.length === 1) {
+        const formData = new FormData();
+        formData.append('file', uploadFiles[0]);
+        formData.append('title', uploadTitle.trim());
+        formData.append('description', uploadDesc.trim());
+        formData.append('department', uploadDept);
+        formData.append('file_type', uploadCategory);
+        formData.append('access_type', effectiveAccessType);
+        formData.append('accessible_departments', effectiveDept);
+        formData.append('assigned_user_ids', effectiveUsers);
+
+        await api.post('/knowledge/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percent);
+            }
+          },
+        });
+      } else {
+        // Multi-file upload
+        const formData = new FormData();
+        uploadFiles.forEach((file) => {
+          formData.append('files', file);
+        });
+        formData.append('department', uploadDept);
+        formData.append('description', uploadDesc.trim());
+        formData.append('access_type', effectiveAccessType);
+        formData.append('accessible_departments', effectiveDept);
+        formData.append('assigned_user_ids', effectiveUsers);
+
+        await api.post('/knowledge/upload-multiple', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percent);
+            }
+          },
+        });
+      }
 
       confetti({
         particleCount: 70,
@@ -451,11 +536,16 @@ export const KnowledgeBasePage = () => {
         origin: { y: 0.6 },
         colors: ['#141414', '#E84C3D', '#777777', '#ffffff'],
       });
-      showToast('Материал успешно загружен в Базу знаний!');
+      showToast(
+        uploadFiles.length > 1
+          ? `Успешно загружено ${uploadFiles.length} материалов в Базу знаний!`
+          : 'Материал успешно загружен в Базу знаний!'
+      );
       setShowUploadModal(false);
-      setUploadFile(null);
+      setUploadFiles([]);
       setUploadTitle('');
       setUploadDesc('');
+      setUploadIsPublic(false);
       setUploadAccessType('all');
       setUploadAssignedUserIds([]);
       setUploadProgress(0);
@@ -463,7 +553,7 @@ export const KnowledgeBasePage = () => {
       fetchKnowledgeData();
     } catch (err) {
       console.error('Ошибка загрузки материала:', err);
-      setUploadError(getErrorMessage(err, 'Сбой при загрузке файла. Проверьте размер и формат.'));
+      setUploadError(getErrorMessage(err, 'Сбой при загрузке файлов. Проверьте размер и формат.'));
     } finally {
       setUploading(false);
     }
@@ -513,7 +603,9 @@ export const KnowledgeBasePage = () => {
     setEditDesc(file.description || '');
     setEditDept(file.department || 'Общий');
     setEditCategory(file.file_type || 'video');
-    setEditAccessType(file.access_type || 'all');
+    const isPub = file.access_type && file.access_type !== 'admin_only';
+    setEditIsPublic(isPub);
+    setEditAccessType(isPub ? file.access_type : 'all');
     setEditAccessDept(file.accessible_departments || file.department || 'СТО');
     setEditAssignedUserIds(file.assigned_user_ids || []);
   };
@@ -524,14 +616,18 @@ export const KnowledgeBasePage = () => {
     if (!editingFile) return;
     try {
       setSavingEdit(true);
+      const effectiveAccessType = editIsPublic ? editAccessType : 'admin_only';
+      const effectiveDept = editIsPublic && editAccessType === 'department' ? editAccessDept : '';
+      const effectiveUsers = editIsPublic && editAccessType === 'users' ? editAssignedUserIds : [];
+
       const res = await api.put(`/knowledge/${editingFile.id}`, {
         title: editTitle.trim(),
         description: editDesc.trim(),
         department: editDept,
         file_type: editCategory,
-        access_type: editAccessType,
-        accessible_departments: editAccessType === 'department' ? editAccessDept : '',
-        assigned_user_ids: editAccessType === 'users' ? editAssignedUserIds : [],
+        access_type: effectiveAccessType,
+        accessible_departments: effectiveDept,
+        assigned_user_ids: effectiveUsers,
       });
 
       setFiles((prev) => prev.map((f) => (f.id === editingFile.id ? res.data : f)));
@@ -1032,6 +1128,11 @@ export const KnowledgeBasePage = () => {
                             <span className="px-2 py-0.5 rounded bg-[#F5F5F7] border border-[#EEEEEE] text-[10px] font-bold text-[#222222]">
                               {file.department}
                             </span>
+                            {file.access_type === 'admin_only' && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-[#E84C3D] border border-red-200">
+                                🔒 Только админы
+                              </span>
+                            )}
                             {file.access_type === 'department' && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#141414]/10 text-[#141414] border border-[#141414]/20">
                                 🏢 {file.accessible_departments || 'Отдел'}
@@ -1243,252 +1344,363 @@ export const KnowledgeBasePage = () => {
       {/* ==================================================== */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 bg-[#141414]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-          <div className="bg-white max-w-xl w-full rounded-2xl border border-[#EEEEEE] p-5 sm:p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#EEEEEE] pb-3">
-              <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-[#141414]" />
-                <h3 className="text-base font-bold text-[#222222]">Загрузка материала в Базу знаний</h3>
-              </div>
-              <button
-                onClick={() => {
-                  if (!uploading) setShowUploadModal(false);
-                }}
-                className="text-[#777777] hover:text-[#222222] p-1 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUploadSubmit} className="space-y-4">
-              {/* Drag & drop file area */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleSelectUploadFile}
-                className="hidden"
-                accept="video/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,image/*"
-              />
-
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#EEEEEE] hover:border-[#141414] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#F5F5F7] hover:bg-[#141414]/5 space-y-2 group min-h-[120px] flex flex-col justify-center"
-              >
-                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#141414] mx-auto group-hover:scale-110 transition-transform">
-                  <Upload className="w-6 h-6" />
+          <div className="bg-white max-w-xl w-full rounded-2xl border border-[#EEEEEE] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <form onSubmit={handleUploadSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[#EEEEEE] p-5 shrink-0 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#141414] text-white flex items-center justify-center">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#222222]">Загрузка материалов в Базу знаний</h3>
+                    <p className="text-[11px] text-[#777777]">Добавление одного или нескольких файлов любого формата</p>
+                  </div>
                 </div>
-                {uploadFile ? (
-                  <div className="space-y-1">
-                    <div className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1.5">
-                      <Check className="w-4 h-4" />
-                      Выбран: {uploadFile.name}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!uploading) setShowUploadModal(false);
+                  }}
+                  className="text-[#777777] hover:text-[#222222] p-1.5 rounded-lg hover:bg-[#F5F5F7]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
+                {/* Drag & drop file area */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleSelectUploadFiles}
+                  className="hidden"
+                  accept="*/*"
+                />
+
+                {uploadFiles.length === 0 ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      handleDropFiles(e.dataTransfer.files);
+                    }}
+                    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2 group min-h-[140px] flex flex-col justify-center items-center ${
+                      isDragging
+                        ? 'border-[#E84C3D] bg-red-50/50'
+                        : 'border-[#EEEEEE] hover:border-[#141414] bg-[#F5F5F7] hover:bg-[#141414]/5'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#141414] group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6" />
                     </div>
-                    <div className="text-[11px] text-[#777777]">
-                      Размер: {formatBytes(uploadFile.size)} • Нажмите для смены файла
+                    <div>
+                      <span className="text-xs font-bold text-[#222222]">
+                        Нажмите для выбора файлов или перетащите их сюда
+                      </span>
+                      <div className="text-[11px] text-[#777777] mt-1 max-w-md mx-auto">
+                        Поддерживается одновременная загрузка файлов любых форматов: видео (MP4, MKV), презентации (PDF), регламенты и таблицы (Word, Excel), изображения, архивы
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <span className="text-xs font-bold text-[#222222]">
-                      Нажмите для выбора файла или перетащите сюда
-                    </span>
-                    <div className="text-[11px] text-[#777777] mt-1">
-                      Видео (MP4, MKV), презентации (PDF), регламенты (DOCX, XLS), схемы
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#222222]">
+                      <span className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        Выбрано файлов: {uploadFiles.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[11px] font-semibold text-[#141414] hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Добавить еще
+                      </button>
+                    </div>
+
+                    <div className="max-h-36 overflow-y-auto divide-y divide-[#EEEEEE] rounded-xl border border-[#EEEEEE] bg-[#F5F5F7] p-2 space-y-1">
+                      {uploadFiles.map((file, idx) => (
+                        <div
+                          key={`${file.name}-${idx}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-[#EEEEEE] text-xs shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {getFileIcon(file.name)}
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-[#222222] truncate">{file.name}</div>
+                              <div className="text-[10px] text-[#777777]">{formatBytes(file.size)}</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveUploadFile(idx)}
+                            className="text-[#777777] hover:text-[#E84C3D] p-1 rounded-md hover:bg-red-50 transition-colors shrink-0"
+                            title="Удалить файл из списка"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Title & Category */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="text-xs font-bold text-[#222222]">Название материала *</label>
-                  <input
-                    type="text"
-                    required
-                    value={uploadTitle}
-                    onChange={(e) => setUploadTitle(e.target.value)}
-                    placeholder="Например, Регламент замены масла ДВС"
+                {/* Title & Category (if 1 file) */}
+                {uploadFiles.length === 1 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-xs font-bold text-[#222222]">Название материала *</label>
+                      <input
+                        type="text"
+                        required
+                        value={uploadTitle}
+                        onChange={(e) => setUploadTitle(e.target.value)}
+                        placeholder="Например, Регламент замены масла ДВС"
+                        className="input-field text-xs sm:text-sm py-2 bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-[#222222]">Категория</label>
+                      <select
+                        value={uploadCategory}
+                        onChange={(e) => setUploadCategory(e.target.value)}
+                        className="input-field text-xs sm:text-sm py-2 bg-white"
+                      >
+                        <option value="video">Видеоурок</option>
+                        <option value="presentation">Презентация</option>
+                        <option value="document">Документ</option>
+                        <option value="image">Схема / Фото</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Multiple files notice */}
+                {uploadFiles.length > 1 && (
+                  <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200 text-xs text-blue-900 flex items-start gap-2">
+                    <FileText className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                    <span>
+                      Выбрано файлов: <strong>{uploadFiles.length}</strong>. Названия материалов и их форматы определяются автоматически по загружаемым файлам.
+                    </span>
+                  </div>
+                )}
+
+                {/* Department */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#222222]">Отдел компании</label>
+                  <select
+                    value={uploadDept}
+                    onChange={(e) => setUploadDept(e.target.value)}
+                    className="input-field text-xs sm:text-sm py-2 bg-white"
+                  >
+                    {allDepartments.length > 0 ? (
+                      allDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="СТО">СТО (Слесарный цех)</option>
+                        <option value="IT">IT и Информационная безопасность</option>
+                        <option value="Продажи">Отдел продаж</option>
+                        <option value="Бухгалтерия">Бухгалтерия</option>
+                        <option value="Логистика">Логистика</option>
+                        <option value="Общий">Общие регламенты</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#222222]">Описание / Аннотация</label>
+                  <textarea
+                    rows={2}
+                    value={uploadDesc}
+                    onChange={(e) => setUploadDesc(e.target.value)}
+                    placeholder="Кратко опишите, какие навыки и стандарты рассматриваются..."
                     className="input-field text-xs sm:text-sm py-2 bg-white"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#222222]">Категория</label>
-                  <select
-                    value={uploadCategory}
-                    onChange={(e) => setUploadCategory(e.target.value)}
-                    className="input-field text-xs sm:text-sm py-2 bg-white"
-                  >
-                    <option value="video">Видеоурок</option>
-                    <option value="presentation">Презентация</option>
-                    <option value="document">Документ</option>
-                    <option value="image">Схема / Фото</option>
-                  </select>
-                </div>
-              </div>
+                {/* Access Control Settings with Toggle */}
+                <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className={`p-2 rounded-lg ${uploadIsPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-[#E84C3D]'}`}>
+                        {uploadIsPublic ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#141414]">
+                          Доступ для других сотрудников
+                        </div>
+                        <div className="text-[11px] text-[#777777]">
+                          {uploadIsPublic
+                            ? 'Доступ открыт (можно выбрать всех, отдел или конкретных сотрудников)'
+                            : 'Материал скрыт от всех сотрудников и доступен только администраторам'}
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Department */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#222222]">Отдел компании</label>
-                <select
-                  value={uploadDept}
-                  onChange={(e) => setUploadDept(e.target.value)}
-                  className="input-field text-xs sm:text-sm py-2 bg-white"
-                >
-                  {allDepartments.length > 0 ? (
-                    allDepartments.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="СТО">СТО (Слесарный цех)</option>
-                      <option value="IT">IT и Информационная безопасность</option>
-                      <option value="Продажи">Отдел продаж</option>
-                      <option value="Бухгалтерия">Бухгалтерия</option>
-                      <option value="Логистика">Логистика</option>
-                      <option value="Общий">Общие регламенты</option>
-                    </>
-                  )}
-                </select>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#222222]">Описание / Аннотация</label>
-                <textarea
-                  rows={2}
-                  value={uploadDesc}
-                  onChange={(e) => setUploadDesc(e.target.value)}
-                  placeholder="Кратко опишите, какие навыки и стандарты рассматриваются..."
-                  className="input-field text-xs sm:text-sm py-2 bg-white"
-                />
-              </div>
-
-              {/* Access Control Settings */}
-              <div className="space-y-2.5 p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
-                <label className="text-xs font-bold text-[#141414] flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-[#141414]" />
-                  <span>Настройки доступа к материалу</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setUploadAccessType('all')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      uploadAccessType === 'all'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    🌐 Всем
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadAccessType('department')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      uploadAccessType === 'department'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    🏢 Отделу
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadAccessType('users')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      uploadAccessType === 'users'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    👤 Сотрудникам
-                  </button>
-                </div>
-
-                {uploadAccessType === 'department' && (
-                  <div className="pt-2">
-                    <label className="text-[11px] font-semibold text-[#777777] block mb-1">
-                      Выберите отдел с доступом:
-                    </label>
-                    <select
-                      value={uploadAccessDept}
-                      onChange={(e) => setUploadAccessDept(e.target.value)}
-                      className="input-field text-xs bg-white w-full"
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={uploadIsPublic}
+                      onClick={() => setUploadIsPublic(!uploadIsPublic)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        uploadIsPublic ? 'bg-emerald-600' : 'bg-[#CCCCCC]'
+                      }`}
                     >
-                      {allDepartments.length > 0 ? (
-                        allDepartments.map((d) => (
-                          <option key={d.id} value={d.name}>
-                            {d.name}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Нет созданных отделов</option>
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          uploadIsPublic ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {!uploadIsPublic ? (
+                    <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-900 font-medium flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5 text-[#E84C3D] shrink-0" />
+                      <span>
+                        🔒 <strong>Только администраторы:</strong> обычные сотрудники и начальники отделов не увидят этот материал в каталоге Базы знаний.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-[#EEEEEE] space-y-3 animate-fade-in">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#777777] block">
+                        Кому предоставить доступ:
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setUploadAccessType('all')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            uploadAccessType === 'all'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          🌐 Всем
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUploadAccessType('department')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            uploadAccessType === 'department'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          🏢 Отделу
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUploadAccessType('users')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            uploadAccessType === 'users'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          👤 Сотрудникам
+                        </button>
+                      </div>
+
+                      {uploadAccessType === 'department' && (
+                        <div className="pt-1">
+                          <label className="text-[11px] font-semibold text-[#777777] block mb-1">
+                            Выберите отдел с доступом:
+                          </label>
+                          <select
+                            value={uploadAccessDept}
+                            onChange={(e) => setUploadAccessDept(e.target.value)}
+                            className="input-field text-xs bg-white w-full"
+                          >
+                            {allDepartments.length > 0 ? (
+                              allDepartments.map((d) => (
+                                <option key={d.id} value={d.name}>
+                                  {d.name}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="">Нет созданных отделов</option>
+                            )}
+                          </select>
+                        </div>
                       )}
-                    </select>
+
+                      {uploadAccessType === 'users' && (
+                        <div className="pt-1 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-[#777777]">
+                            <span>Выберите сотрудников:</span>
+                            <span>Выбрано: {uploadAssignedUserIds.length}</span>
+                          </div>
+                          <div className="max-h-36 overflow-y-auto divide-y divide-[#EEEEEE] rounded-lg border border-[#EEEEEE] bg-white">
+                            {allEmployees.map((emp) => {
+                              const isSelected = uploadAssignedUserIds.includes(emp.id);
+                              return (
+                                <div
+                                  key={emp.id}
+                                  onClick={() => {
+                                    setUploadAssignedUserIds((prev) =>
+                                      prev.includes(emp.id)
+                                        ? prev.filter((id) => id !== emp.id)
+                                        : [...prev, emp.id]
+                                    );
+                                  }}
+                                  className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
+                                    isSelected ? 'bg-[#141414]/10 font-bold' : 'hover:bg-[#F5F5F7]'
+                                  }`}
+                                >
+                                  <span className="truncate">{emp.full_name}</span>
+                                  <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Progress Bar */}
+                {uploading && (
+                  <div className="space-y-2 p-3 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#141414]">
+                      <span>Загрузка на сервер...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-[#EEEEEE] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#E84C3D] transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
                   </div>
                 )}
 
-                {uploadAccessType === 'users' && (
-                  <div className="pt-2 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-[#777777]">
-                      <span>Выберите сотрудников:</span>
-                      <span>Выбрано: {uploadAssignedUserIds.length}</span>
-                    </div>
-                    <div className="max-h-36 overflow-y-auto divide-y divide-[#EEEEEE] rounded-lg border border-[#EEEEEE] bg-white">
-                      {allEmployees.map((emp) => {
-                        const isSelected = uploadAssignedUserIds.includes(emp.id);
-                        return (
-                          <div
-                            key={emp.id}
-                            onClick={() => {
-                              setUploadAssignedUserIds((prev) =>
-                                prev.includes(emp.id)
-                                  ? prev.filter((id) => id !== emp.id)
-                                  : [...prev, emp.id]
-                              );
-                            }}
-                            className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
-                              isSelected ? 'bg-[#141414]/10 font-bold' : 'hover:bg-[#F5F5F7]'
-                            }`}
-                          >
-                            <span className="truncate">{emp.full_name}</span>
-                            <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                {uploadError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-[#E84C3D] flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{uploadError}</span>
                   </div>
                 )}
               </div>
-
-              {/* Upload Progress Bar */}
-              {uploading && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
-                  <div className="flex items-center justify-between text-xs font-bold text-[#141414]">
-                    <span>Загрузка на сервер...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-[#EEEEEE] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#E84C3D] transition-all duration-150"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {uploadError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-[#E84C3D] flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{uploadError}</span>
-                </div>
-              )}
 
               {/* Submit Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#EEEEEE]">
+              <div className="border-t border-[#EEEEEE] p-4 bg-[#F5F5F7] flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   disabled={uploading}
@@ -1499,18 +1711,22 @@ export const KnowledgeBasePage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={uploading || !uploadFile}
+                  disabled={uploading || uploadFiles.length === 0}
                   className="btn-primary text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] font-bold"
                 >
                   {uploading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Сохранение...</span>
+                      <span>Загрузка на сервер...</span>
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      <span>Сохранить в базу</span>
+                      <span>
+                        {uploadFiles.length > 1
+                          ? `Загрузить ${uploadFiles.length} файлов`
+                          : 'Сохранить в базу'}
+                      </span>
                     </>
                   )}
                 </button>
@@ -1525,167 +1741,220 @@ export const KnowledgeBasePage = () => {
       {/* ==================================================== */}
       {editingFile && (
         <div className="fixed inset-0 z-50 bg-[#141414]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-          <div className="bg-white max-w-lg w-full rounded-2xl border border-[#EEEEEE] p-5 sm:p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#EEEEEE] pb-3">
-              <h3 className="text-base font-bold text-[#222222]">Редактирование материала</h3>
-              <button onClick={() => setEditingFile(null)} className="text-[#777777] hover:text-[#222222] p-1">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#222222]">Название</label>
-                <input
-                  type="text"
-                  required
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="input-field text-xs sm:text-sm py-2 bg-white"
-                />
+          <div className="bg-white max-w-lg w-full rounded-2xl border border-[#EEEEEE] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[#EEEEEE] p-5 shrink-0 bg-white">
+                <div>
+                  <h3 className="text-base font-bold text-[#222222]">Редактирование материала</h3>
+                  <p className="text-[11px] text-[#777777] truncate max-w-sm">{editingFile.file_name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingFile(null)}
+                  className="text-[#777777] hover:text-[#222222] p-1.5 rounded-lg hover:bg-[#F5F5F7]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#222222]">Отдел</label>
-                  <select
-                    value={editDept}
-                    onChange={(e) => setEditDept(e.target.value)}
+                  <label className="text-xs font-bold text-[#222222]">Название</label>
+                  <input
+                    type="text"
+                    required
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
                     className="input-field text-xs sm:text-sm py-2 bg-white"
-                  >
-                    <option value="СТО">СТО (Слесарный цех)</option>
-                    <option value="IT">IT и Безопасность</option>
-                    <option value="Продажи">Отдел продаж</option>
-                    <option value="Бухгалтерия">Бухгалтерия</option>
-                    <option value="Логистика">Логистика</option>
-                    <option value="Общий">Общие регламенты</option>
-                  </select>
+                  />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#222222]">Категория</label>
-                  <select
-                    value={editCategory}
-                    onChange={(e) => setEditCategory(e.target.value)}
-                    className="input-field text-xs sm:text-sm py-2 bg-white"
-                  >
-                    <option value="video">Видеоурок</option>
-                    <option value="presentation">Презентация</option>
-                    <option value="document">Документ</option>
-                    <option value="image">Схема / Фото</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#222222]">Описание</label>
-                <textarea
-                  rows={2}
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  className="input-field text-xs sm:text-sm py-2 bg-white"
-                />
-              </div>
-
-              {/* Access Control Settings */}
-              <div className="space-y-2.5 p-3.5 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
-                <label className="text-xs font-bold text-[#141414] flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-[#141414]" />
-                  <span>Настройки доступа к материалу</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditAccessType('all')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      editAccessType === 'all'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    🌐 Всем
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditAccessType('department')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      editAccessType === 'department'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    🏢 Отделу
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditAccessType('users')}
-                    className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
-                      editAccessType === 'users'
-                        ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
-                        : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
-                    }`}
-                  >
-                    👤 Сотрудникам
-                  </button>
-                </div>
-
-                {editAccessType === 'department' && (
-                  <div className="pt-2">
-                    <label className="text-[11px] font-semibold text-[#777777] block mb-1">
-                      Выберите отдел с доступом:
-                    </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[#222222]">Отдел</label>
                     <select
-                      value={editAccessDept}
-                      onChange={(e) => setEditAccessDept(e.target.value)}
-                      className="input-field text-xs bg-white w-full"
+                      value={editDept}
+                      onChange={(e) => setEditDept(e.target.value)}
+                      className="input-field text-xs sm:text-sm py-2 bg-white"
                     >
-                      {allDepartments.length > 0 ? (
-                        allDepartments.map((d) => (
-                          <option key={d.id} value={d.name}>
-                            {d.name}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Нет созданных отделов</option>
-                      )}
+                      <option value="СТО">СТО (Слесарный цех)</option>
+                      <option value="IT">IT и Безопасность</option>
+                      <option value="Продажи">Отдел продаж</option>
+                      <option value="Бухгалтерия">Бухгалтерия</option>
+                      <option value="Логистика">Логистика</option>
+                      <option value="Общий">Общие регламенты</option>
                     </select>
                   </div>
-                )}
 
-                {editAccessType === 'users' && (
-                  <div className="pt-2 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-[#777777]">
-                      <span>Выберите сотрудников:</span>
-                      <span>Выбрано: {editAssignedUserIds.length}</span>
-                    </div>
-                    <div className="max-h-36 overflow-y-auto divide-y divide-[#EEEEEE] rounded-lg border border-[#EEEEEE] bg-white">
-                      {allEmployees.map((emp) => {
-                        const isSelected = editAssignedUserIds.includes(emp.id);
-                        return (
-                          <div
-                            key={emp.id}
-                            onClick={() => {
-                              setEditAssignedUserIds((prev) =>
-                                prev.includes(emp.id)
-                                  ? prev.filter((id) => id !== emp.id)
-                                  : [...prev, emp.id]
-                              );
-                            }}
-                            className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
-                              isSelected ? 'bg-[#141414]/10 font-bold' : 'hover:bg-[#F5F5F7]'
-                            }`}
-                          >
-                            <span className="truncate">{emp.full_name}</span>
-                            <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[#222222]">Категория</label>
+                    <select
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="input-field text-xs sm:text-sm py-2 bg-white"
+                    >
+                      <option value="video">Видеоурок</option>
+                      <option value="presentation">Презентация</option>
+                      <option value="document">Документ</option>
+                      <option value="image">Схема / Фото</option>
+                    </select>
                   </div>
-                )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#222222]">Описание</label>
+                  <textarea
+                    rows={2}
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    className="input-field text-xs sm:text-sm py-2 bg-white"
+                  />
+                </div>
+
+                {/* Access Toggle */}
+                <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className={`p-2 rounded-lg ${editIsPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-[#E84C3D]'}`}>
+                        {editIsPublic ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#141414]">
+                          Доступ для других сотрудников
+                        </div>
+                        <div className="text-[11px] text-[#777777]">
+                          {editIsPublic
+                            ? 'Доступ открыт (можно выбрать всех, отдел или конкретных сотрудников)'
+                            : 'Материал скрыт от всех сотрудников и доступен только администраторам'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={editIsPublic}
+                      onClick={() => setEditIsPublic(!editIsPublic)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        editIsPublic ? 'bg-emerald-600' : 'bg-[#CCCCCC]'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          editIsPublic ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {!editIsPublic ? (
+                    <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-900 font-medium flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5 text-[#E84C3D] shrink-0" />
+                      <span>
+                        🔒 <strong>Только администраторы:</strong> материал скрыт от обычных сотрудников и начальников отделов.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-[#EEEEEE] space-y-3 animate-fade-in">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#777777] block">
+                        Кому предоставить доступ:
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditAccessType('all')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            editAccessType === 'all'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          🌐 Всем
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditAccessType('department')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            editAccessType === 'department'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          🏢 Отделу
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditAccessType('users')}
+                          className={`py-2 px-2 rounded-lg text-xs font-semibold border text-center transition-all ${
+                            editAccessType === 'users'
+                              ? 'bg-[#141414] text-white border-[#141414] shadow-xs'
+                              : 'bg-white text-[#777777] border-[#EEEEEE] hover:text-[#222222]'
+                          }`}
+                        >
+                          👤 Сотрудникам
+                        </button>
+                      </div>
+
+                      {editAccessType === 'department' && (
+                        <div className="pt-1">
+                          <label className="text-[11px] font-semibold text-[#777777] block mb-1">
+                            Выберите отдел с доступом:
+                          </label>
+                          <select
+                            value={editAccessDept}
+                            onChange={(e) => setEditAccessDept(e.target.value)}
+                            className="input-field text-xs bg-white w-full"
+                          >
+                            {allDepartments.length > 0 ? (
+                              allDepartments.map((d) => (
+                                <option key={d.id} value={d.name}>
+                                  {d.name}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="">Нет созданных отделов</option>
+                            )}
+                          </select>
+                        </div>
+                      )}
+
+                      {editAccessType === 'users' && (
+                        <div className="pt-1 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-[#777777]">
+                            <span>Выберите сотрудников:</span>
+                            <span>Выбрано: {editAssignedUserIds.length}</span>
+                          </div>
+                          <div className="max-h-36 overflow-y-auto divide-y divide-[#EEEEEE] rounded-lg border border-[#EEEEEE] bg-white">
+                            {allEmployees.map((emp) => {
+                              const isSelected = editAssignedUserIds.includes(emp.id);
+                              return (
+                                <div
+                                  key={emp.id}
+                                  onClick={() => {
+                                    setEditAssignedUserIds((prev) =>
+                                      prev.includes(emp.id)
+                                        ? prev.filter((id) => id !== emp.id)
+                                        : [...prev, emp.id]
+                                    );
+                                  }}
+                                  className={`p-2 flex items-center justify-between text-xs cursor-pointer ${
+                                    isSelected ? 'bg-[#141414]/10 font-bold' : 'hover:bg-[#F5F5F7]'
+                                  }`}
+                                >
+                                  <span className="truncate">{emp.full_name}</span>
+                                  <span className="text-[10px] text-[#777777]">{emp.department || 'Без отдела'}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#EEEEEE]">
+              <div className="border-t border-[#EEEEEE] p-4 bg-[#F5F5F7] flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingFile(null)}

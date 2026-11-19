@@ -147,3 +147,36 @@ class UserFullStatisticsResponse(BaseModel):
     courses: List[UserCourseStatItem] = []
     tests: List[UserTestStatItem] = []
     attestations: List[UserAttestationStatItem] = []
+
+
+# -----------------------------------------------------------------------------
+# Bulk Import Schemas
+# -----------------------------------------------------------------------------
+class EmployeeImportItem(BaseModel):
+    last_name: str = Field(..., min_length=1)
+    first_name: str = Field(..., min_length=1)
+    email: EmailStr
+    category: int = Field(default=1, ge=1, le=4)
+    department: Optional[str] = None
+    branch: Optional[str] = None
+
+
+class UserBulkImportRequest(BaseModel):
+    employees: List[EmployeeImportItem]
+
+
+class UserBulkImportItemResult(BaseModel):
+    full_name: str
+    email: str
+    category: int
+    action: str  # "created" | "updated" | "skipped"
+    details: Optional[str] = None
+
+
+class UserBulkImportResponse(BaseModel):
+    success: bool
+    total_processed: int
+    created_count: int
+    updated_count: int
+    warnings: List[str] = []
+    results: List[UserBulkImportItemResult] = []
