@@ -135,19 +135,12 @@ export const TestResultPage = () => {
               <span
                 className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${isNeedsReview
                   ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : isPassed
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   }`}
               >
                 {isNeedsReview
                   ? 'Ожидает проверки экзаменатором'
-                  : isPassed
-                    ? 'Тест успешно сдан'
-                    : 'Тест не сдан'}
-              </span>
-              <span className="text-xs text-[#777777] font-medium">
-                Порог сдачи: {result.passing_score}%
+                  : 'Тестирование завершено'}
               </span>
             </div>
 
@@ -156,10 +149,8 @@ export const TestResultPage = () => {
             </h1>
             <p className="text-[#777777] text-xs sm:text-sm mt-1.5 leading-relaxed">
               {isNeedsReview
-                ? 'В тесте содержатся развернутые вопросы со свободным ответом. Итоговая оценка и статус будут пересчитаны после проверки экзаменатором.'
-                : isPassed
-                  ? 'Поздравляем! Вы успешно преодолели квалификационный порог корпоративного стандарта AMG.'
-                  : 'К сожалению, набранных баллов недостаточно для преодоления порога сдачи. Ознакомьтесь с разбором ответов ниже.'}
+                ? 'В тесте содержатся развернутые вопросы со свободным ответом. Итоговая оценка будет зафиксирована после проверки экзаменатором.'
+                : 'Тестирование завершено. Ниже представлен подробный разбор ваших ответов.'}
             </p>
           </div>
         </div>

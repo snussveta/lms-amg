@@ -864,7 +864,7 @@ export const CoursePlayerPage = () => {
                           <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
                           <h3 className="text-xl font-extrabold text-[#222222]">Тестирование успешно сдано!</h3>
                           <div className="text-sm text-emerald-700 font-bold">
-                            Результат: {quizResult.score_percent}% (Проходной балл: {quizResult.test?.passing_score || 70}%)
+                            Результат: {quizResult.score_percent}%
                           </div>
                           <p className="text-xs text-[#777777] max-w-sm mx-auto">
                             Вы подтвердили квалификацию по этому разделу. Урок отмечен как пройденный!
@@ -904,7 +904,7 @@ export const CoursePlayerPage = () => {
                         <div className="space-y-0.5">
                           <div className="font-bold text-[#222222]">{quizAttempt.test?.title}</div>
                           <div className="text-[#777777]">
-                            Проходной порог: {quizAttempt.test?.passing_score}% • Вопросов: {quizAttempt.test?.questions?.length || 0}
+                            Вопросов: {quizAttempt.test?.questions?.length || 0}
                           </div>
                         </div>
 

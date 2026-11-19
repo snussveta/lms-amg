@@ -22,6 +22,11 @@ from app.schemas.user import (
     UserUpdateRole,
     NotificationSettingsUpdate,
     TelegramLinkCodeResponse,
+    UserFullStatisticsResponse,
+    UserCourseStatItem,
+    UserTestStatItem,
+    UserAttestationStatItem,
+    UserStatisticsSummary,
 )
 
 router = APIRouter(prefix="/users", tags=["Users Management"])
@@ -430,3 +435,205 @@ async def unlink_my_telegram(
     current_user.notify_telegram = False
     await db.commit()
     return {"status": "unlinked", "message": "Telegram успешно отключен"}
+
+
+@router.get("/{user_id}/statistics", response_model=UserFullStatisticsResponse)
+async def get_user_statistics(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Полная статистика по пользователю (все курсы, тесты, аттестации, пройденные им).
+    - Администратор и суперадминистратор видят любого сотрудника.
+    - Начальник отдела видит сотрудников своего отдела (и себя).
+    - Сотрудник может просматривать только свою личную статистику.
+    """
+    from sqlalchemy.orm import selectinload
+    from app.models.attempt import Attempt
+    from app.models.course import (
+        Course,
+        CourseModule,
+        CourseLesson,
+        UserCourseEnrollment,
+        CourseAssignment,
+        UserLessonProgress,
+    )
+
+    target = await db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Проверка прав доступа
+    if current_user.role == "department_head":
+        is_same_dept = False
+        if current_user.department_id and target.department_id:
+            is_same_dept = (current_user.department_id == target.department_id)
+        elif current_user.department and target.department:
+            is_same_dept = (current_user.department.strip().lower() == target.department.strip().lower())
+        if not is_same_dept and target.id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Вы можете просматривать статистику только сотрудников своего отдела",
+            )
+    elif current_user.role not in ["admin", "superadmin"]:
+        if current_user.id != target.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Недостаточно прав для просмотра чужой статистики",
+            )
+
+    # 1. Курсы: получаем зачисления и назначения
+    enroll_stmt = (
+        select(UserCourseEnrollment)
+        .options(
+            selectinload(UserCourseEnrollment.course)
+            .selectinload(Course.modules)
+            .selectinload(CourseModule.lessons)
+        )
+        .where(UserCourseEnrollment.user_id == target.id)
+    )
+    enroll_res = await db.execute(enroll_stmt)
+    enrollments = enroll_res.scalars().all()
+    enroll_map = {e.course_id: e for e in enrollments}
+
+    assign_stmt = (
+        select(CourseAssignment)
+        .options(
+            selectinload(CourseAssignment.course)
+            .selectinload(Course.modules)
+            .selectinload(CourseModule.lessons)
+        )
+        .where(CourseAssignment.user_id == target.id)
+    )
+    assign_res = await db.execute(assign_stmt)
+    assignments = assign_res.scalars().all()
+    assign_map = {a.course_id: a for a in assignments}
+
+    # Завершенные уроки пользователя
+    prog_stmt = select(UserLessonProgress.lesson_id).where(
+        UserLessonProgress.user_id == target.id,
+        UserLessonProgress.status == "completed",
+    )
+    prog_res = await db.execute(prog_stmt)
+    completed_lesson_ids = set(prog_res.scalars().all())
+
+    all_course_ids = sorted(list(set(enroll_map.keys()).union(set(assign_map.keys()))))
+    courses_stat_list: List[UserCourseStatItem] = []
+    completed_courses_count = 0
+    in_progress_courses_count = 0
+
+    for cid in all_course_ids:
+        enr = enroll_map.get(cid)
+        asg = assign_map.get(cid)
+        c_obj = (enr.course if enr else None) or (asg.course if asg else None)
+        if not c_obj:
+            continue
+
+        all_lessons = []
+        for m in getattr(c_obj, "modules", []):
+            all_lessons.extend(getattr(m, "lessons", []))
+        total_lessons_cnt = len(all_lessons)
+        comp_lessons_cnt = sum(1 for les in all_lessons if les.id in completed_lesson_ids)
+
+        if total_lessons_cnt > 0:
+            calc_percent = int((comp_lessons_cnt / total_lessons_cnt) * 100)
+        else:
+            calc_percent = enr.progress_percent if enr else (100 if (asg and asg.is_completed) else 0)
+
+        if calc_percent >= 100 or (enr and enr.status == "completed") or (asg and asg.is_completed):
+            c_status = "completed"
+            completed_courses_count += 1
+        elif calc_percent > 0 or (enr and enr.status == "in_progress"):
+            c_status = "in_progress"
+            in_progress_courses_count += 1
+        else:
+            c_status = "not_started"
+
+        courses_stat_list.append(
+            UserCourseStatItem(
+                course_id=c_obj.id,
+                title=c_obj.title,
+                cover_image_url=c_obj.cover_image_url,
+                status=c_status,
+                progress_percent=calc_percent,
+                enrolled_at=enr.enrolled_at if enr else (asg.assigned_at if asg else None),
+                completed_at=enr.completed_at if enr else None,
+                deadline=asg.deadline if asg else None,
+                total_lessons=total_lessons_cnt,
+                completed_lessons=comp_lessons_cnt,
+            )
+        )
+
+    # 2. Тесты и аттестации
+    att_stmt = (
+        select(Attempt)
+        .options(selectinload(Attempt.test))
+        .where(Attempt.user_id == target.id)
+        .order_by(Attempt.started_at.desc())
+    )
+    att_res = await db.execute(att_stmt)
+    attempts = att_res.scalars().all()
+
+    tests_stat_list: List[UserTestStatItem] = []
+    attestations_stat_list: List[UserAttestationStatItem] = []
+
+    for a in attempts:
+        if not a.test:
+            continue
+        time_spent = None
+        if a.submitted_at and a.started_at:
+            time_spent = int((a.submitted_at - a.started_at).total_seconds())
+
+        pct = round((a.score / a.max_score * 100), 1) if a.max_score > 0 else 0.0
+
+        if a.test.is_exam:
+            attestations_stat_list.append(
+                UserAttestationStatItem(
+                    attempt_id=a.id,
+                    test_id=a.test.id,
+                    test_title=a.test.title,
+                    status=a.status,
+                    score=a.score,
+                    max_score=a.max_score,
+                    percentage=pct,
+                    started_at=a.started_at,
+                    submitted_at=a.submitted_at,
+                    time_spent_seconds=time_spent,
+                    category_before=a.category_before,
+                    category_after=a.category_after,
+                    category_action=a.category_action,
+                )
+            )
+        else:
+            tests_stat_list.append(
+                UserTestStatItem(
+                    attempt_id=a.id,
+                    test_id=a.test.id,
+                    test_title=a.test.title,
+                    status=a.status,
+                    score=a.score,
+                    max_score=a.max_score,
+                    percentage=pct,
+                    started_at=a.started_at,
+                    submitted_at=a.submitted_at,
+                    time_spent_seconds=time_spent,
+                )
+            )
+
+    summary = UserStatisticsSummary(
+        total_courses=len(courses_stat_list),
+        completed_courses=completed_courses_count,
+        in_progress_courses=in_progress_courses_count,
+        total_tests=len(tests_stat_list),
+        total_attestations=len(attestations_stat_list),
+        current_category=target.category or 1,
+    )
+
+    return UserFullStatisticsResponse(
+        user=UserResponse.model_validate(target),
+        summary=summary,
+        courses=courses_stat_list,
+        tests=tests_stat_list,
+        attestations=attestations_stat_list,
+    )

@@ -431,9 +431,6 @@ export const TestCatalogPage = () => {
                           1 попытка
                         </span>
                       )}
-                      <span className="text-xs text-[#777777] font-semibold">
-                        Порог: {test.passing_score}%
-                      </span>
                     </div>
                   </div>
 
@@ -640,10 +637,6 @@ export const TestCatalogPage = () => {
               <div className="flex items-center justify-between">
                 <span className="text-[#777777]">Количество вопросов:</span>
                 <span className="font-bold text-[#222222]">{selectedTestModal.question_count}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[#777777]">Проходной балл:</span>
-                <span className="font-bold text-[#141414]">{selectedTestModal.passing_score}%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#777777]">Максимально баллов:</span>

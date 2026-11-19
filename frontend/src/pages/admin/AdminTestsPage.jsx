@@ -244,7 +244,6 @@ export const AdminTestsPage = () => {
                   <th className="py-3 px-5">Название и описание</th>
                   <th className="py-3 px-5">Статус</th>
                   <th className="py-3 px-5">Вопросы</th>
-                  <th className="py-3 px-5">Проходной балл</th>
                   <th className="py-3 px-5">Регламент</th>
                   <th className="py-3 px-5">Публичная ссылка</th>
                   <th className="py-3 px-5 text-right">Действия</th>
@@ -316,10 +315,6 @@ export const AdminTestsPage = () => {
                     <td className="py-3.5 px-5">
                       <div className="font-bold text-[#222222]">{t.question_count} вопр.</div>
                       <div className="text-[11px] text-[#777777]">{t.total_points} макс. б.</div>
-                    </td>
-
-                    <td className="py-3.5 px-5 font-bold text-[#141414]">
-                      {t.passing_score}%
                     </td>
 
                     <td className="py-3.5 px-5 text-[#222222] text-[11px]">

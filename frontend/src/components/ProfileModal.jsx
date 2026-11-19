@@ -217,16 +217,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
               </span>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="text-base font-black text-[#222222]">
-                  Уровень {user?.category || 1}
-                </span>
-                <span className="text-xs text-[#777777]">
-                  {user?.category === 4
-                    ? '— Эксперт / Высшая категория'
-                    : user?.category === 3
-                    ? '— Мастер'
-                    : user?.category === 2
-                    ? '— Специалист'
-                    : '— Начальный уровень'}
+                  Категория {user?.category || 1}
                 </span>
               </div>
             </div>

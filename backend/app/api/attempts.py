@@ -436,10 +436,7 @@ async def submit_attempt(
         is_passed = False
     else:
         attempt.status = "submitted"
-        if test.passing_score <= 100:
-            is_passed = percentage >= test.passing_score
-        else:
-            is_passed = total_score >= test.passing_score
+        is_passed = True
 
     attempt.score = total_score
     attempt.max_score = max_possible
@@ -459,7 +456,8 @@ async def submit_attempt(
             assignment.status = "completed"
 
         # Оценка и изменение квалификационной категории сотрудника (Вилка 1 — 4 уровни)
-        if test.category_rating_enabled:
+        # В учет категории идут ТОЛЬКО аттестации (is_exam=True), а тесты нет!
+        if test.is_exam and test.category_rating_enabled:
             current_cat = current_user.category if getattr(current_user, "category", None) else 1
             attempt.category_before = current_cat
             if percentage < test.category_demote_threshold:
@@ -594,10 +592,7 @@ async def review_attempt_answers(
     all_reviewed = all(ans.is_reviewed for ans in attempt.answers)
     if all_reviewed:
         attempt.status = "submitted"
-        if test.passing_score <= 100:
-            attempt.is_passed = percentage >= test.passing_score
-        else:
-            attempt.is_passed = new_total_score >= test.passing_score
+        attempt.is_passed = True
     else:
         attempt.status = "needs_review"
 
@@ -616,7 +611,8 @@ async def review_attempt_answers(
             assignment.status = "completed"
 
         # Оценка и изменение квалификационной категории сотрудника (Вилка 1 — 4 уровни)
-        if test.category_rating_enabled and attempt.user:
+        # В учет категории идут ТОЛЬКО аттестации (is_exam=True), а тесты нет!
+        if test.is_exam and test.category_rating_enabled and attempt.user:
             current_cat = attempt.user.category if getattr(attempt.user, "category", None) else 1
             attempt.category_before = current_cat
             if percentage < test.category_demote_threshold:

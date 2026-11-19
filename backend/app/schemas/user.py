@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field, computed_field
 
 
@@ -88,3 +88,62 @@ class TokenPayload(BaseModel):
     sub: Optional[str] = None
     role: Optional[str] = None
     exp: Optional[int] = None
+
+
+class UserCourseStatItem(BaseModel):
+    course_id: int
+    title: str
+    cover_image_url: Optional[str] = None
+    status: str  # not_started, in_progress, completed
+    progress_percent: int = 0
+    enrolled_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    deadline: Optional[datetime] = None
+    total_lessons: int = 0
+    completed_lessons: int = 0
+
+
+class UserTestStatItem(BaseModel):
+    attempt_id: int
+    test_id: int
+    test_title: str
+    status: str  # submitted, in_progress, needs_review, timed_out
+    score: int = 0
+    max_score: int = 0
+    percentage: float = 0.0
+    started_at: datetime
+    submitted_at: Optional[datetime] = None
+    time_spent_seconds: Optional[int] = None
+
+
+class UserAttestationStatItem(BaseModel):
+    attempt_id: int
+    test_id: int
+    test_title: str
+    status: str  # submitted, in_progress, needs_review, timed_out
+    score: int = 0
+    max_score: int = 0
+    percentage: float = 0.0
+    started_at: datetime
+    submitted_at: Optional[datetime] = None
+    time_spent_seconds: Optional[int] = None
+    category_before: Optional[int] = None
+    category_after: Optional[int] = None
+    category_action: Optional[str] = None  # promoted, demoted, retained, None
+
+
+class UserStatisticsSummary(BaseModel):
+    total_courses: int = 0
+    completed_courses: int = 0
+    in_progress_courses: int = 0
+    total_tests: int = 0
+    total_attestations: int = 0
+    current_category: int = 1
+
+
+class UserFullStatisticsResponse(BaseModel):
+    user: UserResponse
+    summary: UserStatisticsSummary
+    courses: List[UserCourseStatItem] = []
+    tests: List[UserTestStatItem] = []
+    attestations: List[UserAttestationStatItem] = []

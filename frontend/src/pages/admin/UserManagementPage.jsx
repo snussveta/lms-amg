@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   AlertCircle,
   Award,
+  BarChart3,
   Briefcase,
   Building2,
   Check,
@@ -28,6 +29,7 @@ import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { RoleBadge } from '../../components/RoleBadge';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { UserStatisticsModal } from '../../components/admin/UserStatisticsModal';
 
 export const UserManagementPage = () => {
   const { user: currentUser, isSuperAdmin, isAdmin, isDepartmentHead, isManager } = useAuth();
@@ -69,6 +71,7 @@ export const UserManagementPage = () => {
     category: 1,
   });
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [selectedUserForStats, setSelectedUserForStats] = useState(null);
 
   // Department Modal State
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
@@ -781,6 +784,14 @@ export const UserManagementPage = () => {
 
                           <td className="py-3.5 px-5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setSelectedUserForStats(u)}
+                                className="p-1.5 rounded-lg text-[#141414] hover:bg-[#141414]/10 transition-colors"
+                                title="Полная статистика (курсы, тесты, аттестации)"
+                              >
+                                <BarChart3 className="w-4 h-4" />
+                              </button>
+
                               {canEditUser(u) && (
                                 <button
                                   onClick={() => openEditModal(u)}
@@ -1162,13 +1173,13 @@ export const UserManagementPage = () => {
                   onChange={(e) => setRegisterForm({ ...registerForm, category: parseInt(e.target.value, 10) })}
                   className="input-field text-xs w-full bg-white"
                 >
-                  <option value="1">Категория 1 (Начальный уровень)</option>
-                  <option value="2">Категория 2 (Специалист)</option>
-                  <option value="3">Категория 3 (Мастер)</option>
-                  <option value="4">Категория 4 (Эксперт / Высшая)</option>
+                  <option value="1">Категория 1</option>
+                  <option value="2">Категория 2</option>
+                  <option value="3">Категория 3</option>
+                  <option value="4">Категория 4</option>
                 </select>
                 <span className="text-[10px] text-[#777777] mt-0.5 block">
-                  Уровень квалификации от 1 до 4 (автоматически изменяется при сдаче тестов и аттестаций)
+                  Уровень квалификации от 1 до 4 (автоматически изменяется при сдаче аттестаций)
                 </span>
               </div>
 
@@ -1382,10 +1393,10 @@ export const UserManagementPage = () => {
                   onChange={(e) => setEditForm({ ...editForm, category: parseInt(e.target.value, 10) })}
                   className="input-field text-xs w-full bg-white"
                 >
-                  <option value="1">Категория 1 (Начальный уровень)</option>
-                  <option value="2">Категория 2 (Специалист)</option>
-                  <option value="3">Категория 3 (Мастер)</option>
-                  <option value="4">Категория 4 (Эксперт / Высшая)</option>
+                  <option value="1">Категория 1</option>
+                  <option value="2">Категория 2</option>
+                  <option value="3">Категория 3</option>
+                  <option value="4">Категория 4</option>
                 </select>
               </div>
 
@@ -1782,6 +1793,14 @@ export const UserManagementPage = () => {
           confirmText={confirmState.confirmText || 'Удалить'}
           cancelText={confirmState.cancelText || 'Отмена'}
           variant={confirmState.variant || 'danger'}
+        />
+      )}
+
+      {/* User Statistics Modal */}
+      {selectedUserForStats && (
+        <UserStatisticsModal
+          user={selectedUserForStats}
+          onClose={() => setSelectedUserForStats(null)}
         />
       )}
     </div>
