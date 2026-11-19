@@ -37,6 +37,30 @@ export const TestCatalogPage = () => {
     fetchTests();
   }, []);
 
+  // Реактивный таймер для автоматической разблокировки заданий в реальном времени
+  const [, setClockTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setClockTick((prev) => prev + 1);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isTestLocked = (test) => {
+    if (!test || !test.assignment_available_from) return false;
+    try {
+      const availTime = new Date(test.assignment_available_from).getTime();
+      if (isNaN(availTime)) return false;
+      // Если текущее местное время достигло запланированного времени начала (с запасом 15 секунд)
+      if (Date.now() >= availTime - 15000) {
+        return false;
+      }
+      return Boolean(test.is_locked_until_available);
+    } catch {
+      return false;
+    }
+  };
+
   const fetchTests = async () => {
     try {
       setLoading(true);
@@ -44,8 +68,8 @@ export const TestCatalogPage = () => {
       const data = res.data || [];
       setTests(data);
 
-      const hasAssigned = data.some((t) => t.is_assigned);
-      if (!hasAssigned && data.some((t) => !t.is_assigned_only)) {
+      const hasAssigned = data.some((t) => t.is_assigned || t.is_exam);
+      if (!hasAssigned && data.some((t) => !t.is_assigned_only && !t.is_exam)) {
         setActiveTab('general');
       }
     } catch (err) {
@@ -107,8 +131,8 @@ export const TestCatalogPage = () => {
   };
 
   // Категории тестов
-  const assignedTests = tests.filter((t) => t.is_assigned);
-  const attestationTests = tests.filter((t) => t.is_exam && t.is_assigned);
+  const assignedTests = tests.filter((t) => t.is_assigned || t.is_exam);
+  const attestationTests = tests.filter((t) => t.is_exam);
   const completedTests = tests.filter(
     (t) => t.user_attempt_status && t.user_attempt_status !== 'in_progress'
   );
@@ -178,6 +202,42 @@ export const TestCatalogPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Баннер назначенных аттестаций сотрудника */}
+      {attestationTests.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-orange-50 border border-red-200 p-5 shadow-sm animate-scale-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#E84C3D] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-extrabold text-[#222222]">
+                    Вам назначена официальная аттестация!
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E84C3D] bg-white border border-red-200 px-2 py-0.5 rounded-full">
+                    {attestationTests.length} {attestationTests.length === 1 ? 'аттестация' : 'аттестации'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#555555] mt-1 leading-relaxed">
+                  По итогам сдачи аттестации пересчитывается ваша квалификационная категория.
+                  {attestationTests.some((t) => isTestLocked(t))
+                    ? ' Тестирование откроется согласно установленному времени расписания.'
+                    : ' Доступ открыт — вы можете приступить прямо сейчас.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab('attestations')}
+              className="btn-primary text-xs py-2.5 px-4 whitespace-nowrap self-start sm:self-auto shrink-0 shadow-sm flex items-center gap-2"
+            >
+              <Award className="w-4 h-4" />
+              <span>Перейти к аттестациям ({attestationTests.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Напоминание об обязательном назначенном тесте, если есть дедлайн */}
       {pendingAssignedTests.some((t) => t.assignment_due_date && isDeadlineUrgent(t.assignment_due_date)) && (
@@ -381,6 +441,26 @@ export const TestCatalogPage = () => {
                 </button>
               )}
             </>
+          ) : activeTab === 'attestations' ? (
+            <>
+              <Award className="w-12 h-12 mx-auto text-[#ADB5BD] mb-3" />
+              <h3 className="text-lg font-bold text-[#222222]">
+                Нет назначенных аттестаций
+              </h3>
+              <p className="text-xs sm:text-sm text-[#777777] mt-1 leading-relaxed">
+                {searchTerm
+                  ? 'По вашему запросу аттестации не найдены.'
+                  : 'Официальные квалификационные аттестации назначаются администрацией компании. Как только вам будет назначена аттестация, она появится здесь.'}
+              </p>
+              {assignedTests.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('assigned')}
+                  className="mt-5 btn-primary text-xs py-2 px-4"
+                >
+                  Перейти к назначенным тестам
+                </button>
+              )}
+            </>
           ) : (
             <>
               <FileQuestion className="w-12 h-12 mx-auto text-[#ADB5BD] mb-3" />
@@ -434,7 +514,7 @@ export const TestCatalogPage = () => {
                         <Clock className="w-3.5 h-3.5 animate-spin text-[#141414]" />
                         В процессе
                       </span>
-                    ) : test.is_locked_until_available ? (
+                    ) : isTestLocked(test) ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
                         <Lock className="w-3.5 h-3.5 text-amber-600" />
                         Откроется: {formatDate(test.assignment_available_from)}
@@ -479,7 +559,7 @@ export const TestCatalogPage = () => {
                       {test.assignment_available_from && (
                         <div
                           className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
-                            test.is_locked_until_available
+                            isTestLocked(test)
                               ? 'bg-amber-50/70 border-amber-200 text-amber-900 font-medium'
                               : 'bg-[#F5F5F7] border-[#EEEEEE] text-[#495057]'
                           }`}
@@ -490,7 +570,7 @@ export const TestCatalogPage = () => {
                               Доступен с: {formatDate(test.assignment_available_from)}
                             </span>
                           </div>
-                          {test.is_locked_until_available && (
+                          {isTestLocked(test) && (
                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
                               Ожидание
                             </span>
@@ -608,11 +688,11 @@ export const TestCatalogPage = () => {
                       <Play className="w-4 h-4 fill-white" />
                       <span>Продолжить попытку</span>
                     </button>
-                  ) : test.is_locked_until_available ? (
+                  ) : isTestLocked(test) ? (
                     <button
                       disabled
                       className="w-full py-2.5 px-3 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] text-[#777777] font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
-                      title={`Тест станет доступен ${formatDate(test.assignment_available_from)}`}
+                      title={`Станет доступно ${formatDate(test.assignment_available_from)}`}
                     >
                       <Lock className="w-3.5 h-3.5 text-[#777777]" />
                       <span>Откроется {formatDate(test.assignment_available_from)}</span>
@@ -623,7 +703,7 @@ export const TestCatalogPage = () => {
                       className="btn-primary w-full py-2.5 flex items-center justify-center gap-2"
                     >
                       <Play className="w-4 h-4 fill-white" />
-                      <span>Начать тест</span>
+                      <span>{test.is_exam ? 'Начать аттестацию' : 'Начать тест'}</span>
                     </button>
                   )}
 
@@ -685,7 +765,7 @@ export const TestCatalogPage = () => {
                 <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-start gap-2">
                   <Award className="w-4 h-4 shrink-0 text-[#E84C3D] mt-0.5" />
                   <span>
-                    Это <strong>квалификационная аттестация</strong>. По ее итогам будет автоматически определена или подтверждена ваша квалификационная категория (Уровни 1 — 4).
+                    Это <strong>квалификационная аттестация</strong>. По ее итогам будет автоматически определена или подтверждена ваша квалификационная категория.
                   </span>
                 </div>
               )}
@@ -701,18 +781,18 @@ export const TestCatalogPage = () => {
                   <span>{formatDate(selectedTestModal.assignment_due_date)}</span>
                 </div>
               )}
-              {selectedTestModal.is_locked_until_available && (
+              {isTestLocked(selectedTestModal) && (
                 <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2">
                   <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                   <span>
-                    Тестирование откроется {formatDate(selectedTestModal.assignment_available_from)}. До этого времени прохождение заблокировано.
+                    {selectedTestModal.is_exam ? 'Аттестация' : 'Тестирование'} откроется {formatDate(selectedTestModal.assignment_available_from)}. До этого времени прохождение заблокировано.
                   </span>
                 </div>
               )}
               <div className="pt-2 border-t border-[#EEEEEE] text-[11px] text-[#777777] flex items-start gap-2">
                 <HelpCircle className="w-4 h-4 flex-shrink-0 text-[#141414] mt-0.5" />
                 <span>
-                  Таймер запустится сразу после нажатия кнопки «Начать тестирование». Ответы сохраняются сервером автоматически.
+                  Таймер запустится сразу после нажатия кнопки «Начать {selectedTestModal.is_exam ? 'аттестацию' : 'тестирование'}». Ответы сохраняются сервером автоматически.
                 </span>
               </div>
             </div>
@@ -729,13 +809,15 @@ export const TestCatalogPage = () => {
               <button
                 type="button"
                 onClick={() => handleStartTest(selectedTestModal.id)}
-                disabled={starting || selectedTestModal.is_locked_until_available}
+                disabled={starting || isTestLocked(selectedTestModal)}
                 className="btn-primary text-xs sm:text-sm py-2.5 min-w-[160px]"
               >
                 {starting
                   ? 'Запуск...'
-                  : selectedTestModal.is_locked_until_available
+                  : isTestLocked(selectedTestModal)
                   ? 'Заблокировано до начала'
+                  : selectedTestModal.is_exam
+                  ? 'Начать аттестацию'
                   : 'Начать тестирование'}
               </button>
             </div>

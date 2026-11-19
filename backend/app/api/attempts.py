@@ -113,14 +113,25 @@ async def start_attempt(
 
         # Проверка отложенного старта тестирования
         if assignment and assignment.available_from:
+            now_utc = datetime.now(timezone.utc)
+            now_local = datetime.now()
             avail_dt = assignment.available_from
-            if avail_dt.tzinfo is None:
-                avail_dt = avail_dt.replace(tzinfo=timezone.utc)
-            if datetime.now(timezone.utc) < avail_dt:
+            is_locked = False
+            if avail_dt.tzinfo is not None:
+                if (now_utc.timestamp() + 30) < avail_dt.timestamp():
+                    is_locked = True
+            else:
+                avail_ts = avail_dt.timestamp()
+                naive_utc_ts = now_utc.replace(tzinfo=None).timestamp() + 30
+                local_ts = now_local.timestamp() + 30
+                if naive_utc_ts < avail_ts and local_ts < avail_ts:
+                    is_locked = True
+
+            if is_locked:
                 formatted_time = avail_dt.strftime("%d.%m.%Y в %H:%M")
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Тестирование откроется {formatted_time} (UTC). Доступ заблокирован до указанного времени.",
+                    detail=f"Тестирование откроется {formatted_time}. Доступ заблокирован до наступления указанного времени.",
                 )
 
     now = datetime.now(timezone.utc)

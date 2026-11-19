@@ -11,6 +11,7 @@ from app.core.security import get_current_user, require_role
 from app.core.email import send_bulk_test_assigned_email
 from app.models.assignment import TestAssignment
 from app.models.attempt import Attempt
+from app.models.department import Department
 from app.models.question import Question, QuestionOption
 from app.models.test import Test
 from app.models.user import User
@@ -148,13 +149,21 @@ async def get_tests(
 
         is_locked_until_available = False
         if available_from:
-            avail_dt = available_from
-            if avail_dt.tzinfo is None:
-                avail_dt = avail_dt.replace(tzinfo=timezone.utc)
-            now_dt = datetime.now(timezone.utc)
-            if now_dt < avail_dt:
-                is_locked_until_available = True
-                can_attempt = False
+            now_utc = datetime.now(timezone.utc)
+            now_local = datetime.now()
+            # Допускаем небольшой зазор в 30 секунд для предотвращения рассинхронизации часов
+            if available_from.tzinfo is not None:
+                if (now_utc.timestamp() + 30) < available_from.timestamp():
+                    is_locked_until_available = True
+                    can_attempt = False
+            else:
+                # На случай если дата сохранена без таймзоны (наивное время)
+                avail_ts = available_from.timestamp()
+                naive_utc_ts = now_utc.replace(tzinfo=None).timestamp() + 30
+                local_ts = now_local.timestamp() + 30
+                if naive_utc_ts < avail_ts and local_ts < avail_ts:
+                    is_locked_until_available = True
+                    can_attempt = False
 
         response_items.append(
             TestListItemResponse(
@@ -484,10 +493,30 @@ async def assign_test_to_users(
         target_user_ids.update(assign_req.user_ids or [])
         if assign_req.department_ids or assign_req.departments:
             dept_conditions = []
+            all_dept_names = set()
+            all_dept_ids = set()
+
             if assign_req.department_ids:
-                dept_conditions.append(User.department_id.in_(assign_req.department_ids))
+                all_dept_ids.update(assign_req.department_ids)
+                # Синхронизация по названиям отделов для пользователей без department_id
+                d_res = await db.execute(select(Department).where(Department.id.in_(assign_req.department_ids)))
+                for d in d_res.scalars().all():
+                    if d.name:
+                        all_dept_names.add(d.name.strip().lower())
+
             if assign_req.departments:
-                dept_conditions.append(User.department.in_(assign_req.departments))
+                for dname in assign_req.departments:
+                    if dname and dname.strip():
+                        all_dept_names.add(dname.strip().lower())
+                d_res2 = await db.execute(select(Department).where(func.lower(Department.name).in_(list(all_dept_names))))
+                for d in d_res2.scalars().all():
+                    all_dept_ids.add(d.id)
+
+            if all_dept_ids:
+                dept_conditions.append(User.department_id.in_(list(all_dept_ids)))
+            if all_dept_names:
+                dept_conditions.append(func.trim(func.lower(User.department)).in_(list(all_dept_names)))
+
             if dept_conditions:
                 dept_users_res = await db.execute(
                     select(User.id).where(User.is_active.is_(True), or_(*dept_conditions))

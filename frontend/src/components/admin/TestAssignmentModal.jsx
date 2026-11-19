@@ -140,8 +140,12 @@ export const TestAssignmentModal = ({ test, onClose }) => {
           return;
         }
 
+        const selectedDeptObjects = departments.filter((d) => selectedDeptIds.includes(d.id));
+        const selectedDeptNames = selectedDeptObjects.map((d) => d.name);
+
         const payload = {
           department_ids: selectedDeptIds,
+          departments: selectedDeptNames,
           assign_all: false,
           available_from: availableFrom ? new Date(availableFrom).toISOString() : null,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,

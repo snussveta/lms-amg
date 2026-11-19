@@ -1178,7 +1178,7 @@ export const UserManagementPage = () => {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                  Квалификационная категория сотрудника *
+                  Квалификационная категория *
                 </label>
                 <select
                   value={registerForm.category}
@@ -1398,7 +1398,7 @@ export const UserManagementPage = () => {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#777777] mb-1">
-                  Квалификационная категория (Уровни 1 — 4) *
+                  Квалификационная категория *
                 </label>
                 <select
                   value={editForm.category}
