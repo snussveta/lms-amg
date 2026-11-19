@@ -22,7 +22,7 @@ class BankQuestionCreate(BaseModel):
     text: str = Field(..., min_length=1)
     question_type: str = Field(..., pattern="^(single_choice|multiple_choice|manual_review|text)$")
     department: str = Field(default="Общий", min_length=1, max_length=100)
-    points: int = Field(default=10, ge=1)
+    points: int = Field(default=10, ge=0)
     options: List[BankOptionCreate] = []
 
 
@@ -30,7 +30,7 @@ class BankQuestionUpdate(BaseModel):
     text: Optional[str] = Field(None, min_length=1)
     question_type: Optional[str] = Field(None, pattern="^(single_choice|multiple_choice|manual_review|text)$")
     department: Optional[str] = Field(None, min_length=1, max_length=100)
-    points: Optional[int] = Field(None, ge=1)
+    points: Optional[int] = Field(None, ge=0)
     options: Optional[List[BankOptionCreate]] = None
 
 

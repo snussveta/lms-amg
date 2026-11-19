@@ -228,11 +228,18 @@ async def create_test(
     await db.flush()
 
     for q_idx, q_in in enumerate(test_in.questions):
+        if q_in.points == 0:
+            calc_points = 0
+        elif q_in.question_type == "multiple_choice":
+            calc_points = sum(1 for opt_in in q_in.options if opt_in.is_correct)
+        else:
+            calc_points = q_in.points
+
         new_q = Question(
             test_id=new_test.id,
             text=q_in.text,
             question_type=q_in.question_type,
-            points=q_in.points,
+            points=calc_points,
             order=q_in.order if q_in.order is not None else q_idx,
         )
         db.add(new_q)
@@ -387,11 +394,18 @@ async def update_test(
         await db.flush()
 
         for q_idx, q_in in enumerate(test_in.questions):
+            if q_in.points == 0:
+                calc_points = 0
+            elif q_in.question_type == "multiple_choice":
+                calc_points = sum(1 for opt_in in q_in.options if opt_in.is_correct)
+            else:
+                calc_points = q_in.points
+
             new_q = Question(
                 test_id=test.id,
                 text=q_in.text,
                 question_type=q_in.question_type,
-                points=q_in.points,
+                points=calc_points,
                 order=q_in.order if q_in.order is not None else q_idx,
             )
             db.add(new_q)

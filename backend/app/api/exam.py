@@ -671,7 +671,10 @@ async def submit_exam_answers(
 
     user_answers_map = {a.question_id: a for a in payload.answers}
 
-    total_possible_points = sum(q.points for q in questions)
+    total_possible_points = sum(
+        0 if q.points == 0 else (len([opt for opt in q.options if opt.is_correct]) if q.question_type == "multiple_choice" else q.points)
+        for q in questions
+    )
     earned_points = 0
     now = datetime.now(timezone.utc)
 
@@ -697,32 +700,33 @@ async def submit_exam_answers(
         correct_options = [opt for opt in q.options if opt.is_correct]
         correct_option_ids = [opt.id for opt in correct_options]
 
+        if q.points == 0:
+            q_max_pts = 0
+        elif q.question_type == "multiple_choice":
+            q_max_pts = len(correct_option_ids)
+        else:
+            q_max_pts = q.points
+
         is_correct = False
         points_awarded = 0
         is_reviewed = True
 
-        if q.question_type in ["single_choice", "dropdown"]:
+        if q.points == 0:
+            points_awarded = 0
+            is_correct = True
+        elif q.question_type in ["single_choice", "dropdown"]:
             if len(selected_ids) == 1 and selected_ids[0] in correct_option_ids:
                 is_correct = True
                 points_awarded = q.points
         elif q.question_type == "multiple_choice":
-            if set(selected_ids) == set(correct_option_ids) and len(correct_option_ids) > 0:
-                is_correct = True
-                points_awarded = q.points
-        elif q.question_type == "text":
-            clean_text = (text_ans or "").strip().lower()
-            if correct_options:
-                if clean_text:
-                    for opt in correct_options:
-                        if opt.text.strip().lower() == clean_text:
-                            is_correct = True
-                            points_awarded = q.points
-                            break
-            else:
-                is_reviewed = False
-                has_unreviewed = True
-                points_awarded = 0
-        elif q.question_type in ["manual_review", "open", "free_text"]:
+            correct_set = set(correct_option_ids)
+            selected_set = set(selected_ids)
+            correct_chosen = len(selected_set.intersection(correct_set))
+            incorrect_chosen = len(selected_set.difference(correct_set))
+            raw_score = correct_chosen - incorrect_chosen
+            points_awarded = max(0, raw_score)
+            is_correct = (points_awarded == q_max_pts and q_max_pts > 0)
+        elif q.question_type in ["manual_review", "open", "free_text", "text"]:
             is_correct = False
             points_awarded = 0
             is_reviewed = False

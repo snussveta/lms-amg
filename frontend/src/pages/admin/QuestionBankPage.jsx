@@ -93,7 +93,7 @@ export const QuestionBankPage = () => {
   const openEditModal = (q) => {
     setEditingQuestion(q);
     setFormText(q.text);
-    setFormType(q.question_type);
+    setFormType(q.question_type === 'text' ? 'manual_review' : q.question_type);
     if (departments.includes(q.department)) {
       setFormDept(q.department);
       setFormCustomDept('');
@@ -101,11 +101,9 @@ export const QuestionBankPage = () => {
       setFormDept('custom');
       setFormCustomDept(q.department);
     }
-    setFormPoints(q.points);
+    setFormPoints(q.points !== undefined && q.points !== null ? q.points : 10);
     if (q.options && q.options.length > 0) {
       setFormOptions(q.options.map((opt) => ({ text: opt.text, is_correct: opt.is_correct })));
-    } else if (q.question_type === 'text') {
-      setFormOptions([{ text: '', is_correct: true }]);
     } else {
       setFormOptions([
         { text: 'Вариант 1', is_correct: true },
@@ -124,9 +122,7 @@ export const QuestionBankPage = () => {
 
   const handleTypeChange = (newType) => {
     setFormType(newType);
-    if (newType === 'text') {
-      setFormOptions([{ text: '', is_correct: true }]);
-    } else if (newType === 'manual_review') {
+    if (newType === 'manual_review') {
       setFormOptions([]);
     } else {
       if (formOptions.length === 0) {
@@ -192,18 +188,16 @@ export const QuestionBankPage = () => {
         setModalError('Заполните текст всех вариантов ответов.');
         return;
       }
-    } else if (formType === 'text') {
-      if (formOptions.length > 0 && !formOptions[0].text.trim()) {
-        setModalError('Введите эталонное ключевое слово или фразу для автоматической проверки.');
-        return;
-      }
     }
+
+    let parsedPts = parseInt(formPoints, 10);
+    if (isNaN(parsedPts) || parsedPts < 0) parsedPts = 0;
 
     const payload = {
       text: formText.trim(),
       question_type: formType,
       department: finalDept,
-      points: parseInt(formPoints, 10) || 10,
+      points: parsedPts,
       options: formOptions.map((opt) => ({
         text: opt.text.trim(),
         is_correct: opt.is_correct,
@@ -515,8 +509,7 @@ export const QuestionBankPage = () => {
                   >
                     <option value="single_choice">Один вариант (Single Choice)</option>
                     <option value="multiple_choice">Несколько вариантов (Multiple Choice)</option>
-                    <option value="text">Текстовый ответ (Автопроверка)</option>
-                    <option value="manual_review">Ручная проверка экзаменатором</option>
+                    <option value="manual_review">Текст (абзац) — ручная проверка</option>
                   </select>
                 </div>
               </div>
@@ -527,7 +520,7 @@ export const QuestionBankPage = () => {
                 </label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   max="100"
                   value={formPoints}
                   onChange={(e) => setFormPoints(e.target.value)}

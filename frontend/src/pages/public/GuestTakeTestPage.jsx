@@ -581,7 +581,7 @@ export const GuestTakeTestPage = () => {
                   </div>
                 )}
 
-                {currentQuestion.question_type === 'manual_review' && (
+                {(currentQuestion.question_type === 'manual_review' || currentQuestion.question_type === 'text') && (
                   <div className="space-y-3">
                     <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-800">
                       <FileEdit className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-700" />
@@ -595,21 +595,6 @@ export const GuestTakeTestPage = () => {
                       onChange={(e) => handleTextAnswerChange(currentQuestion.id, e.target.value)}
                       placeholder="Введите развернутый ответ на вопрос..."
                       className="input-field text-sm leading-relaxed resize-y font-normal"
-                    />
-                  </div>
-                )}
-
-                {currentQuestion.question_type === 'text' && (
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider">
-                      Ваш ответ
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={userAnswers[currentQuestion.id]?.text_answer || ''}
-                      onChange={(e) => handleTextAnswerChange(currentQuestion.id, e.target.value)}
-                      placeholder="Введите точный ответ..."
-                      className="input-field text-sm resize-none font-normal"
                     />
                   </div>
                 )}

@@ -348,7 +348,10 @@ async def submit_attempt(
     submitted_answers_map = {ans.question_id: ans for ans in submission.answers}
     total_score = 0
     has_unreviewed = False
-    max_possible = sum(q.points for q in test.questions)
+    max_possible = sum(
+        0 if q.points == 0 else (len([opt for opt in q.options if opt.is_correct]) if q.question_type == "multiple_choice" else q.points)
+        for q in test.questions
+    )
     answer_details: List[AttemptAnswerDetailResponse] = []
 
     for q in test.questions:
@@ -366,36 +369,36 @@ async def submit_attempt(
         correct_option_ids = [opt.id for opt in correct_options]
         correct_option_texts = [opt.text for opt in correct_options]
 
-        if q.question_type in ("single_choice", "dropdown"):
+        if q.points == 0:
+            q_max_points = 0
+        elif q.question_type == "multiple_choice":
+            q_max_points = len(correct_option_ids)
+        else:
+            q_max_points = q.points
+
+        if q.points == 0:
+            points_earned = 0
+            is_q_correct = True
+        elif q.question_type in ("single_choice", "dropdown"):
             if len(user_selected) == 1 and user_selected[0] in correct_option_ids:
                 is_q_correct = True
                 points_earned = q.points
 
         elif q.question_type == "multiple_choice":
-            if set(user_selected) == set(correct_option_ids) and len(correct_option_ids) > 0:
-                is_q_correct = True
-                points_earned = q.points
+            correct_set = set(correct_option_ids)
+            selected_set = set(user_selected)
+            correct_chosen = len(selected_set.intersection(correct_set))
+            incorrect_chosen = len(selected_set.difference(correct_set))
+            raw_score = correct_chosen - incorrect_chosen
+            points_earned = max(0, raw_score)
+            is_q_correct = (points_earned == q_max_points and q_max_points > 0)
 
-        elif q.question_type in ("manual_review", "open", "free_text"):
+        elif q.question_type in ("manual_review", "open", "free_text", "text"):
             # Открытый вопрос, требующий ручной проверки методистом/экзаменатором
             is_q_reviewed = False
             has_unreviewed = True
             points_earned = 0
             is_q_correct = False
-
-        elif q.question_type == "text":
-            clean_user_text = user_text.strip().lower()
-            if correct_options:
-                if clean_user_text:
-                    for opt in correct_options:
-                        if opt.text.strip().lower() == clean_user_text:
-                            is_q_correct = True
-                            points_earned = q.points
-                            break
-            else:
-                is_q_reviewed = False
-                has_unreviewed = True
-                points_earned = 0
 
         total_score += points_earned
 
@@ -415,7 +418,7 @@ async def submit_attempt(
                 question_id=q.id,
                 question_text=q.text,
                 question_type=q.question_type,
-                points_max=q.points,
+                points_max=q_max_points,
                 points_awarded=points_earned,
                 is_correct=is_q_correct,
                 is_reviewed=is_q_reviewed,
@@ -586,7 +589,10 @@ async def review_attempt_answers(
 
     # Пересчитываем суммарный балл
     new_total_score = sum(ans.points_awarded for ans in attempt.answers)
-    max_possible = sum(q.points for q in test.questions)
+    max_possible = sum(
+        0 if q.points == 0 else (len([opt for opt in q.options if opt.is_correct]) if q.question_type == "multiple_choice" else q.points)
+        for q in test.questions
+    )
     percentage = round((new_total_score / max_possible * 100), 1) if max_possible > 0 else 0.0
 
     all_reviewed = all(ans.is_reviewed for ans in attempt.answers)
@@ -685,12 +691,14 @@ async def review_attempt_answers(
         correct_option_ids = [opt.id for opt in correct_options]
         correct_option_texts = [opt.text for opt in correct_options]
 
+        q_max_pts = 0 if q.points == 0 else (len(correct_options) if q.question_type == "multiple_choice" else q.points)
+
         answer_details.append(
             AttemptAnswerDetailResponse(
                 question_id=q.id,
                 question_text=q.text,
                 question_type=q.question_type,
-                points_max=q.points,
+                points_max=q_max_pts,
                 points_awarded=awarded,
                 is_correct=is_cor,
                 is_reviewed=is_rev,
@@ -786,12 +794,14 @@ async def get_attempt_result(
         correct_option_ids = [opt.id for opt in correct_options]
         correct_option_texts = [opt.text for opt in correct_options]
 
+        q_max_pts = 0 if q.points == 0 else (len(correct_options) if q.question_type == "multiple_choice" else q.points)
+
         answer_details.append(
             AttemptAnswerDetailResponse(
                 question_id=q.id,
                 question_text=q.text,
                 question_type=q.question_type,
-                points_max=q.points,
+                points_max=q_max_pts,
                 points_awarded=awarded,
                 is_correct=is_cor,
                 is_reviewed=is_rev,

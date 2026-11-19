@@ -394,8 +394,8 @@ export const TakeTestPage = () => {
                 </div>
               )}
 
-              {/* Развернутый ответ */}
-              {(['manual_review', 'open', 'free_text'].includes(currentQuestion.question_type) || ['manual_review', 'open', 'free_text'].includes(currentQuestion.type)) && (
+              {/* Развернутый ответ (Текст / абзац) */}
+              {(['manual_review', 'open', 'free_text', 'text'].includes(currentQuestion.question_type) || ['manual_review', 'open', 'free_text', 'text'].includes(currentQuestion.type)) && (
                 <div className="space-y-3">
                   <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-800">
                     <FileEdit className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-700" />
@@ -414,25 +414,6 @@ export const TakeTestPage = () => {
                     <span>Символов: {(userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || '').length}</span>
                     <span>Максимальный балл: {currentQuestion.points}</span>
                   </div>
-                </div>
-              )}
-
-              {/* Текстовый ввод */}
-              {(currentQuestion.question_type === 'text' || currentQuestion.type === 'text') && (
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-[#777777] uppercase tracking-wider">
-                    Ваш ответ
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={userAnswers[currentQuestion.id]?.text_answer || userAnswers[currentQuestion.id]?.answer_text || ''}
-                    onChange={(e) => handleTextAnswerChange(currentQuestion.id, e.target.value)}
-                    placeholder="Введите точный ответ..."
-                    className="input-field text-sm resize-none font-normal"
-                  />
-                  <span className="text-xs text-[#777777] block">
-                    Ответ проверяется автоматически без учета регистра символов.
-                  </span>
                 </div>
               )}
             </div>

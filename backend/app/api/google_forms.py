@@ -204,7 +204,7 @@ def parse_google_form_dict(form_data: Dict[str, Any], default_title: Optional[st
 
             grading = q_info.get("grading", {})
             points_val = grading.get("pointValue")
-            points = int(points_val) if points_val is not None else 1
+            points = max(0, int(points_val)) if points_val is not None else 1
 
             correct_answers_raw = grading.get("correctAnswers", {}).get("answers", [])
             correct_set = {str(a.get("value", "")).strip().lower() for a in correct_answers_raw if a.get("value")}
@@ -234,30 +234,31 @@ def parse_google_form_dict(form_data: Dict[str, Any], default_title: Optional[st
                     options.append({"text": opt_val, "is_correct": is_correct})
 
                 if options:
-                    # If quiz had grading answers, ensure at least one is flagged
+                    if q_type == "multiple_choice":
+                        # If points_val was explicitly 0, preserve 0 points
+                        if points_val is not None and int(points_val) == 0:
+                            q_pts = 0
+                        else:
+                            # In multiple choice, max points equals the count of correct answers
+                            correct_cnt = sum(1 for o in options if o["is_correct"])
+                            q_pts = correct_cnt if correct_cnt > 0 else (points if points > 0 else 1)
+                    else:
+                        q_pts = points
+
                     parsed_questions.append(
                         {
                             "text": title,
                             "question_type": q_type,
-                            "points": points,
+                            "points": q_pts,
                             "order": order_counter,
                             "options": options,
                         }
                     )
                     order_counter += 1
 
-            # Text question (Short answer or Paragraph)
+            # Text question (Short answer or Paragraph) -> in LMS both map to manual_review (Текст (абзац))
             elif "textQuestion" in q_info:
-                tq = q_info["textQuestion"]
-                is_paragraph = tq.get("paragraph", False)
-                q_type = "manual_review" if is_paragraph else "text"
-
-                # If text question has correct answers list, add them as sample options
-                options = []
-                for ans in correct_answers_raw:
-                    val = ans.get("value", "")
-                    if val:
-                        options.append({"text": val, "is_correct": True})
+                q_type = "manual_review"
 
                 parsed_questions.append(
                     {
@@ -265,7 +266,7 @@ def parse_google_form_dict(form_data: Dict[str, Any], default_title: Optional[st
                         "question_type": q_type,
                         "points": points,
                         "order": order_counter,
-                        "options": options,
+                        "options": [],
                     }
                 )
                 order_counter += 1
@@ -307,7 +308,7 @@ def parse_google_form_dict(form_data: Dict[str, Any], default_title: Optional[st
 
                 grading = sq.get("grading", {})
                 points_val = grading.get("pointValue")
-                points = int(points_val) if points_val is not None else 1
+                points = max(0, int(points_val)) if points_val is not None else 1
 
                 correct_answers_raw = grading.get("correctAnswers", {}).get("answers", [])
                 correct_set = {str(a.get("value", "")).strip().lower() for a in correct_answers_raw if a.get("value")}

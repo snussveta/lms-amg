@@ -154,24 +154,30 @@ export const TestConstructorPage = () => {
 
       if (data.questions && data.questions.length > 0) {
         setQuestions(
-          data.questions.map((q) => ({
-            id: q.id,
-            text: q.text,
-            question_type: q.question_type,
-            points: q.points || 1,
-            required: true,
-            options:
-              q.options && q.options.length > 0
-                ? q.options.map((opt) => ({
-                    id: opt.id,
-                    text: opt.text,
-                    is_correct: Boolean(opt.is_correct),
-                  }))
-                : [
-                    { text: 'Вариант 1', is_correct: true },
-                    { text: 'Вариант 2', is_correct: false },
-                  ],
-          }))
+          data.questions.map((q) => {
+            const qType = q.question_type === 'text' ? 'manual_review' : q.question_type;
+            const pts = q.points !== undefined && q.points !== null ? q.points : 1;
+            return {
+              id: q.id,
+              text: q.text,
+              question_type: qType,
+              points: pts,
+              required: true,
+              options:
+                qType === 'manual_review'
+                  ? []
+                  : q.options && q.options.length > 0
+                  ? q.options.map((opt) => ({
+                      id: opt.id,
+                      text: opt.text,
+                      is_correct: Boolean(opt.is_correct),
+                    }))
+                  : [
+                      { text: 'Вариант 1', is_correct: true },
+                      { text: 'Вариант 2', is_correct: false },
+                    ],
+            };
+          })
         );
       }
     } catch (err) {
@@ -192,17 +198,16 @@ export const TestConstructorPage = () => {
 
   // Google Forms: Question Management
   const addQuestion = (type = 'single_choice', insertAfterIndex = null) => {
+    const safeType = type === 'text' ? 'manual_review' : type;
     const newQ = {
       id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       text: '',
-      question_type: type,
+      question_type: safeType,
       points: 1,
       required: true,
       options:
-        type === 'manual_review'
+        safeType === 'manual_review'
           ? []
-          : type === 'text'
-          ? [{ text: '', is_correct: true }]
           : [
               { text: 'Вариант 1', is_correct: true },
               { text: 'Вариант 2', is_correct: false },
@@ -269,9 +274,16 @@ export const TestConstructorPage = () => {
     if (field === 'question_type') {
       if (value === 'manual_review') {
         updated[index].options = [];
-      } else if (value === 'text') {
+      } else if (value === 'multiple_choice') {
         if (!updated[index].options || updated[index].options.length === 0) {
-          updated[index].options = [{ text: '', is_correct: true }];
+          updated[index].options = [
+            { text: 'Вариант 1', is_correct: true },
+            { text: 'Вариант 2', is_correct: false },
+          ];
+        }
+        if (updated[index].points !== 0) {
+          const correctCount = updated[index].options.filter((o) => o.is_correct).length;
+          updated[index].points = correctCount;
         }
       } else {
         if (!updated[index].options || updated[index].options.length === 0) {
@@ -292,6 +304,9 @@ export const TestConstructorPage = () => {
     const nextNum = (updated[qIndex].options?.length || 0) + 1;
     const text = customLabel || `Вариант ${nextNum}`;
     updated[qIndex].options.push({ text, is_correct: false });
+    if (updated[qIndex].question_type === 'multiple_choice' && updated[qIndex].points !== 0) {
+      updated[qIndex].points = updated[qIndex].options.filter((o) => o.is_correct).length;
+    }
     setQuestions(updated);
   };
 
@@ -302,6 +317,9 @@ export const TestConstructorPage = () => {
       return;
     }
     updated[qIndex].options = updated[qIndex].options.filter((_, i) => i !== optIndex);
+    if (updated[qIndex].question_type === 'multiple_choice' && updated[qIndex].points !== 0) {
+      updated[qIndex].points = updated[qIndex].options.filter((o) => o.is_correct).length;
+    }
     setQuestions(updated);
   };
 
@@ -321,8 +339,10 @@ export const TestConstructorPage = () => {
       });
     } else if (qType === 'multiple_choice') {
       updated[qIndex].options[optIndex].is_correct = !updated[qIndex].options[optIndex].is_correct;
-    } else if (qType === 'text') {
-      updated[qIndex].options[optIndex].is_correct = true;
+      if (updated[qIndex].points !== 0) {
+        const correctCount = updated[qIndex].options.filter((o) => o.is_correct).length;
+        updated[qIndex].points = correctCount;
+      }
     }
     setQuestions(updated);
   };
@@ -355,7 +375,7 @@ export const TestConstructorPage = () => {
         return false;
       }
 
-      if (q.question_type !== 'manual_review') {
+      if (q.question_type !== 'manual_review' && q.question_type !== 'text') {
         if (!q.options || q.options.length < 1) {
           setError(`Вопрос #${i + 1} должен содержать варианты ответов.`);
           setActiveQIndex(i);
@@ -372,7 +392,7 @@ export const TestConstructorPage = () => {
         }
 
         const hasCorrect = q.options.some((o) => o.is_correct);
-        if (!hasCorrect) {
+        if (!hasCorrect && q.points !== 0) {
           setError(`В вопросе #${i + 1} укажите правильный ответ (нажмите «Ответы и баллы»).`);
           setActiveQIndex(i);
           setActiveTab('questions');
@@ -407,19 +427,28 @@ export const TestConstructorPage = () => {
         category_rating_enabled: Boolean(categoryRatingEnabled),
         category_demote_threshold: parseFloat(categoryDemoteThreshold) || 80.0,
         category_promote_threshold: parseFloat(categoryPromoteThreshold) || 90.0,
-        questions: questions.map((q, idx) => ({
-          text: q.text.trim(),
-          question_type: q.question_type,
-          points: parseInt(q.points, 10) || 1,
-          order: idx,
-          options:
-            q.question_type === 'manual_review'
-              ? []
-              : q.options.map((opt) => ({
-                  text: opt.text.trim(),
-                  is_correct: Boolean(opt.is_correct),
-                })),
-        })),
+        questions: questions.map((q, idx) => {
+          let pts = 0;
+          if (q.points !== undefined && q.points !== '' && !isNaN(parseInt(q.points, 10))) {
+            pts = Math.max(0, parseInt(q.points, 10));
+          }
+          if (q.question_type === 'multiple_choice' && pts !== 0) {
+            pts = (q.options || []).filter((opt) => opt.is_correct).length;
+          }
+          return {
+            text: q.text.trim(),
+            question_type: q.question_type === 'text' ? 'manual_review' : q.question_type,
+            points: pts,
+            order: idx,
+            options:
+              q.question_type === 'manual_review' || q.question_type === 'text'
+                ? []
+                : q.options.map((opt) => ({
+                    text: opt.text.trim(),
+                    is_correct: Boolean(opt.is_correct),
+                  })),
+          };
+        }),
       };
 
       if (isEditing) {
@@ -472,8 +501,8 @@ export const TestConstructorPage = () => {
     const newItems = toImport.map((bq) => ({
       id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       text: bq.text,
-      question_type: bq.question_type || 'single_choice',
-      points: bq.points || 1,
+      question_type: bq.question_type === 'text' ? 'manual_review' : (bq.question_type || 'single_choice'),
+      points: bq.points !== undefined && bq.points !== null ? bq.points : 1,
       required: true,
       options: (bq.options || []).map((opt) => ({
         text: opt.text,
@@ -498,19 +527,13 @@ export const TestConstructorPage = () => {
       id: 'multiple_choice',
       label: 'Несколько из списка',
       icon: CheckSquare,
-      desc: 'Чекбоксы с несколькими верными ответами',
+      desc: 'Чекбоксы с несколькими верными ответами (+1 верный, -1 неверный)',
     },
     {
       id: 'dropdown',
       label: 'Раскрывающийся список',
       icon: ListOrdered,
       desc: 'Выпадающий селектор из вариантов',
-    },
-    {
-      id: 'text',
-      label: 'Текст (строка)',
-      icon: FileText,
-      desc: 'Краткий текстовый ответ по ключевым словам',
     },
     {
       id: 'manual_review',
@@ -856,54 +879,7 @@ export const TestConstructorPage = () => {
                         </div>
                       )}
 
-                      {/* 3. SHORT TEXT (Краткий текстовый ответ) */}
-                      {q.question_type === 'text' && (
-                        <div className="space-y-3 p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE]">
-                          <div className="text-xs text-[#777777] border-b border-[#CED4DA] pb-2 font-mono">
-                            Краткий ответ (вводится пользователем вручную)
-                          </div>
-                          <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#222222] block mb-1">
-                              Принимаемые правильные ответы (синонимы):
-                            </span>
-                            <div className="space-y-2">
-                              {q.options.map((opt, optIndex) => (
-                                <div key={optIndex} className="flex items-center gap-2">
-                                  <span className="text-xs font-mono text-[#777777] w-6">
-                                    {optIndex + 1}.
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={opt.text}
-                                    onChange={(e) => updateOptionText(qIndex, optIndex, e.target.value)}
-                                    placeholder="Например: ABS, Антиблокировочная система..."
-                                    className="input-field text-xs sm:text-sm bg-white flex-1"
-                                  />
-                                  {q.options.length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => deleteOption(qIndex, optIndex)}
-                                      className="p-1.5 text-[#777777] hover:text-[#E84C3D]"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => addOption(qIndex, '')}
-                              className="text-xs font-bold text-[#E84C3D] hover:underline mt-2 inline-flex items-center gap-1"
-                            >
-                              <Plus className="w-3 h-3" />
-                              <span>Добавить еще один правильный вариант</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 4. PARAGRAPH (Развернутый ответ / ручная проверка) */}
+                      {/* 3. PARAGRAPH (Развернутый ответ / ручная проверка) */}
                       {q.question_type === 'manual_review' && (
                         <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#EEEEEE] space-y-2 text-xs">
                           <div className="flex items-center gap-2 font-bold text-[#222222]">
@@ -923,21 +899,27 @@ export const TestConstructorPage = () => {
                     {/* Google Forms Bottom Bar for Question */}
                     <div className="pt-4 border-t border-[#EEEEEE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       {/* Left: Answer Key / Баллы */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div className="inline-flex items-center gap-1.5 bg-[#F5F5F7] px-3 py-1.5 rounded-xl border border-[#EEEEEE]">
                           <span className="font-bold text-[#777777] text-[11px] uppercase tracking-wider">
                             Баллы:
                           </span>
                           <input
                             type="number"
-                            min="1"
+                            min="0"
                             max="100"
-                            value={q.points}
-                            onChange={(e) =>
-                              updateQuestion(qIndex, 'points', parseInt(e.target.value, 10) || 1)
-                            }
+                            value={q.points ?? 0}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateQuestion(qIndex, 'points', isNaN(val) ? 0 : Math.max(0, val));
+                            }}
                             className="w-12 bg-white text-center font-bold text-xs text-[#141414] rounded border border-[#CED4DA] py-0.5 focus:outline-none focus:border-[#141414]"
                           />
+                          {q.question_type === 'multiple_choice' && (
+                            <span className="text-[10px] text-[#777777]" title="Каждый верный ответ: +1 балл, неверный: -1 балл (мин. 0)">
+                              (+1 / -1)
+                            </span>
+                          )}
                         </div>
 
                         {q.question_type !== 'manual_review' && (

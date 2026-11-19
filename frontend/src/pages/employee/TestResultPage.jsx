@@ -298,12 +298,15 @@ export const TestResultPage = () => {
           return (
             <div
               key={ans.question_id}
-              className={`bg-white rounded-xl p-5 border shadow-2xs transition-colors ${isManual && !ans.is_reviewed
-                ? 'border-amber-200'
-                : isCorrect
+              className={`bg-white rounded-xl p-5 border shadow-2xs transition-colors ${
+                isManual && !ans.is_reviewed
+                  ? 'border-amber-200'
+                  : isCorrect
                   ? 'border-emerald-200'
+                  : ans.points_awarded > 0
+                  ? 'border-amber-200'
                   : 'border-[#F8D3D0]'
-                }`}
+              }`}
             >
               {/* Шапка вопроса */}
               <div className="flex items-center justify-between gap-2 mb-3">
@@ -326,6 +329,10 @@ export const TestResultPage = () => {
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       +{ans.points_awarded} из {ans.points_max} б.
+                    </span>
+                  ) : ans.points_awarded > 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Частично: +{ans.points_awarded} из {ans.points_max} б.
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0]">
