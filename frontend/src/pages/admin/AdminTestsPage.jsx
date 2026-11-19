@@ -229,11 +229,11 @@ export const AdminTestsPage = () => {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl h-20 animate-pulse bg-white border border-[#EEEEEE]" />
+            <div key={i} className="rounded-xl h-20 animate-shimmer border border-[#EEEEEE]" />
           ))}
         </div>
       ) : displayedTests.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto my-8 border border-[#EEEEEE] shadow-card">
+        <div className="bg-white rounded-2xl p-12 text-center max-w-md mx-auto my-8 border border-[#EEEEEE] shadow-card animate-scale-in">
           <FileQuestion className="w-10 h-10 mx-auto text-[#CED4DA] mb-3" />
           <h3 className="text-base font-bold text-[#222222]">
             {tabMode === 'exams' ? 'Экзамены еще не созданы' : 'Тесты еще не созданы'}
@@ -248,7 +248,7 @@ export const AdminTestsPage = () => {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl overflow-hidden border border-[#EEEEEE] shadow-card">
+        <div className="bg-white rounded-xl overflow-hidden border border-[#EEEEEE] shadow-card animate-fade-in">
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
@@ -263,10 +263,14 @@ export const AdminTestsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EEEEEE] text-xs text-[#222222]">
-                {displayedTests.map((t) => (
-                  <tr key={t.id} className="hover:bg-[#F8F9FA] transition-colors">
+                {displayedTests.map((t, idx) => (
+                  <tr
+                    key={t.id}
+                    className="group hover:bg-[#F8F9FA] transition-all duration-200"
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                  >
                     <td className="py-3.5 px-5 max-w-sm">
-                      <div className="font-bold text-[#222222] text-sm">{t.title}</div>
+                      <div className="font-bold text-[#222222] text-sm group-hover:text-[#141414] transition-colors">{t.title}</div>
                       <div className="text-[11px] text-[#777777] truncate mt-0.5">
                         {t.description || 'Описание отсутствует'}
                       </div>
@@ -291,9 +295,9 @@ export const AdminTestsPage = () => {
                       <div className="flex flex-col gap-1.5 items-start">
                         <button
                           onClick={() => handleTogglePublish(t)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all ${t.is_published
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all duration-200 hover:scale-105 active:scale-95 ${t.is_published
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:shadow-sm'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:shadow-sm'
                             }`}
                           title="Нажмите для переключения статуса"
                         >
@@ -331,16 +335,21 @@ export const AdminTestsPage = () => {
                     </td>
 
                     <td className="py-3.5 px-5 text-[#222222] text-[11px]">
-                      {t.time_limit_minutes ? `${t.time_limit_minutes} мин` : 'Без лимита'}
+                      {t.time_limit_minutes ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[#777777]" />
+                          {t.time_limit_minutes} мин
+                        </span>
+                      ) : 'Без лимита'}
                     </td>
 
                     <td className="py-3.5 px-5">
                       {t.allow_guest && t.public_token ? (
                         <button
                           onClick={() => handleCopyPublicLink(t.public_token)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${copiedToken === t.public_token
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-200 hover:scale-105 active:scale-95 ${copiedToken === t.public_token
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                            : 'bg-white border-[#EEEEEE] text-[#141414] hover:bg-[#F5F5F7]'
+                            : 'bg-white border-[#EEEEEE] text-[#141414] hover:bg-[#F5F5F7] hover:shadow-sm'
                             }`}
                           title="Скопировать ссылку для гостей"
                         >
@@ -363,12 +372,12 @@ export const AdminTestsPage = () => {
                     </td>
 
                     <td className="py-3.5 px-5 text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                      <div className="inline-flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
                         {t.is_exam ? (
                           <>
                             <button
                               onClick={() => setExamTest(t)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-[11px] font-bold shadow-sm transition-all"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-[11px] font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
                               title="Запустить синхронный экзамен по PIN-коду"
                             >
                               <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
@@ -378,7 +387,7 @@ export const AdminTestsPage = () => {
                             {!isHead && (
                               <button
                                 onClick={() => handleConvertToTest(t)}
-                                className="p-2 rounded-lg bg-white hover:bg-[#F5F5F7] text-purple-700 border border-purple-200 transition-colors shadow-2xs"
+                                className="icon-btn bg-white hover:bg-[#F5F5F7] text-purple-700 border-purple-200"
                                 title="Создать независимую копию как обычный тест"
                               >
                                 <Copy className="w-3.5 h-3.5" />
@@ -389,7 +398,7 @@ export const AdminTestsPage = () => {
                           <>
                             <button
                               onClick={() => setExamTest(t)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
                               title="Запустить синхронный экзамен по PIN-коду"
                             >
                               <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />
@@ -399,7 +408,7 @@ export const AdminTestsPage = () => {
                             {!isHead && (
                               <button
                                 onClick={() => handleConvertToExam(t)}
-                                className="p-2 rounded-lg bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 transition-colors shadow-2xs"
+                                className="icon-btn bg-white hover:bg-purple-50 text-purple-700 border-purple-200"
                                 title="Создать независимую копию как синхронный экзамен"
                               >
                                 <Copy className="w-3.5 h-3.5" />
@@ -410,7 +419,7 @@ export const AdminTestsPage = () => {
 
                         <button
                           onClick={() => setAssigningTest(t)}
-                          className="p-2 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] transition-colors"
+                          className="icon-btn bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE]"
                           title="Назначить сотрудникам"
                         >
                           <UserPlus className="w-3.5 h-3.5" />
@@ -418,7 +427,7 @@ export const AdminTestsPage = () => {
 
                         <Link
                           to={`/admin/tests/${t.id}/analytics`}
-                          className="p-2 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] transition-colors"
+                          className="icon-btn bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE]"
                           title="Аналитика и попытки"
                         >
                           <BarChart3 className="w-3.5 h-3.5" />
@@ -426,7 +435,7 @@ export const AdminTestsPage = () => {
 
                         <Link
                           to={`/admin/tests/${t.id}/edit`}
-                          className="p-2 rounded-lg bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] transition-colors"
+                          className="icon-btn bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE]"
                           title="Редактировать тест"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -435,7 +444,7 @@ export const AdminTestsPage = () => {
                         <button
                           onClick={() => requestDeleteTest(t)}
                           disabled={deletingId === t.id}
-                          className="p-2 rounded-lg bg-[#FCECEB] hover:bg-[#FDE8E9] text-[#E84C3D] border border-[#F8D3D0] transition-colors"
+                          className="icon-btn bg-[#FCECEB] hover:bg-[#FDE8E9] text-[#E84C3D] border-[#F8D3D0]"
                           title="Удалить тест"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

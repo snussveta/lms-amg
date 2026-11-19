@@ -38,6 +38,7 @@ import {
   Trash2,
   Users,
   X,
+  Zap,
 } from 'lucide-react';
 import api, { getErrorMessage } from '../../api/client';
 
@@ -991,9 +992,9 @@ export const TestConstructorPage = () => {
         {/* TAB 2: SETTINGS (GOOGLE FORMS QUIZ CONFIGURATION)              */}
         {/* ============================================================== */}
         {activeTab === 'settings' && (
-          <div className="space-y-5 animate-fade-in">
+          <div className="space-y-5 animate-fade-in stagger-children">
             {/* 1. Quiz Grading Card */}
-            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
               <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold">
                   <Sparkles className="w-5 h-5" />
@@ -1064,7 +1065,7 @@ export const TestConstructorPage = () => {
             </div>
 
             {/* 2. Security & Attempts Card */}
-            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
               <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
                   <ShieldCheck className="w-5 h-5" />
@@ -1115,7 +1116,7 @@ export const TestConstructorPage = () => {
             </div>
 
             {/* 3. Access Mode & Guest Testing */}
-            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
               <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold">
                   <Globe className="w-5 h-5" />
@@ -1237,7 +1238,7 @@ export const TestConstructorPage = () => {
             </div>
 
             {/* 4. Type & Department Head Visibility */}
-            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4">
+            <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-sm p-6 sm:p-8 space-y-4 hover:shadow-md hover:border-[#D4D4D4] transition-all duration-200">
               <div className="flex items-center gap-3 border-b border-[#EEEEEE] pb-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold">
                   <Zap className="w-5 h-5" />
@@ -1324,11 +1325,11 @@ export const TestConstructorPage = () => {
         {/* ============================================================== */}
         {/* GOOGLE FORMS FLOATING ACTION TOOLBAR (RIGHT OR BOTTOM)        */}
         {/* ============================================================== */}
-        <div className="fixed bottom-6 right-6 md:right-8 z-40 flex md:flex-col items-center gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl border border-[#CED4DA] shadow-2xl">
+        <div className="fixed bottom-6 right-6 md:right-8 z-40 flex md:flex-col items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 rounded-2xl border border-[#CED4DA] shadow-2xl animate-slide-up">
           <button
             type="button"
             onClick={() => addQuestion('single_choice', activeQIndex)}
-            className="w-11 h-11 rounded-xl bg-[#E84C3D] hover:bg-[#D33829] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95"
+            className="w-11 h-11 rounded-xl bg-[#E84C3D] hover:bg-[#D33829] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#E84C3D]/25 active:scale-95"
             title="Добавить вопрос"
           >
             <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -1337,7 +1338,7 @@ export const TestConstructorPage = () => {
           <button
             type="button"
             onClick={openBankModal}
-            className="w-11 h-11 rounded-xl bg-[#141414] hover:bg-[#2A2A2A] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95"
+            className="w-11 h-11 rounded-xl bg-[#141414] hover:bg-[#2A2A2A] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-[#141414]/25 active:scale-95"
             title="Импортировать вопросы из банка"
           >
             <BookOpen className="w-5 h-5" />
@@ -1346,7 +1347,11 @@ export const TestConstructorPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab(activeTab === 'questions' ? 'settings' : 'questions')}
-            className="w-11 h-11 rounded-xl bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border border-[#EEEEEE] flex items-center justify-center shadow-xs transition-transform hover:scale-105"
+            className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${
+              activeTab === 'settings'
+                ? 'bg-[#141414] text-white border-[#141414] shadow-md animate-spin-once'
+                : 'bg-[#F5F5F7] hover:bg-[#EEEEEE] text-[#141414] border-[#EEEEEE] hover:shadow-md'
+            }`}
             title={activeTab === 'questions' ? 'Открыть настройки' : 'Вернуться к вопросам'}
           >
             <SettingsIcon className="w-5 h-5" />
