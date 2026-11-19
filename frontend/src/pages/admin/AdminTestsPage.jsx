@@ -237,7 +237,7 @@ export const AdminTestsPage = () => {
         </div>
       ) : (
         <div className="bg-white rounded-xl overflow-hidden border border-[#EEEEEE] shadow-card animate-fade-in">
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="border-b border-[#EEEEEE] bg-[#F5F5F7] text-[11px] font-bold uppercase tracking-wider text-[#777777]">

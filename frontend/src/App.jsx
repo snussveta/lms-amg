@@ -43,9 +43,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-[#F5F5F7] text-[#222222] selection:bg-[#E84C3D] selection:text-white">
+        <div className="min-h-screen w-full max-w-full flex flex-col bg-[#F5F5F7] text-[#222222] selection:bg-[#E84C3D] selection:text-white overflow-x-hidden">
           <Navbar />
-          <div className="flex-1 pb-20 md:pb-6">
+          <div className="flex-1 w-full min-w-0 max-w-full pb-20 lg:pb-6">
             <Routes>
               {/* Public Auth Routes */}
               <Route path="/login" element={<LoginPage />} />

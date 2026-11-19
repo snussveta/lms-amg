@@ -51,7 +51,7 @@ export const Navbar = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2 lg:gap-4">
             {/* Brand AMG LMS */}
-            <div className="flex items-center gap-3 lg:gap-5 xl:gap-6 shrink-0 min-w-0">
+            <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 flex-1 overflow-hidden">
               <Link to="/" className="flex items-center gap-2.5 group focus:outline-none shrink-0">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center text-white group-hover:bg-[#2e2e2e] transition-all relative shadow-sm shrink-0">
                   <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -74,11 +74,11 @@ export const Navbar = () => {
 
               {/* Desktop Navigation Links - Flat layout across the top */}
               {user && (
-                <div className="hidden md:flex items-center gap-1 lg:gap-1.5 shrink-0">
+                <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 min-w-0 overflow-x-auto scrollbar-none py-1">
                   {/* Курсы */}
                   <Link
                     to={isAdmin ? '/admin/courses' : '/courses'}
-                    className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/courses') || isActive('/admin/courses') || location.pathname === '/'
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -91,7 +91,7 @@ export const Navbar = () => {
                   {/* Тесты */}
                   <Link
                     to={isAdmin ? '/admin/tests' : '/tests'}
-                    className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/tests') || (isActive('/admin/tests') && !location.search.includes('tab=attestations'))
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -105,7 +105,7 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/tests?tab=attestations"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         location.pathname === '/admin/tests' && location.search.includes('tab=attestations')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -120,7 +120,7 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/question-bank"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/question-bank')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -135,7 +135,7 @@ export const Navbar = () => {
                   {(isAdmin || isDepartmentHead) && (
                     <Link
                       to="/admin/users"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/users')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -149,7 +149,7 @@ export const Navbar = () => {
                   {/* База знаний */}
                   <Link
                     to="/knowledge-base"
-                    className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/knowledge-base')
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -163,7 +163,7 @@ export const Navbar = () => {
                   {!isAdmin && !isDepartmentHead && (
                     <Link
                       to="/my-attempts"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/my-attempts')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -178,13 +178,13 @@ export const Navbar = () => {
             </div>
 
             {/* Desktop User Profile & Actions */}
-            <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
+            <div className="hidden lg:flex items-center gap-1.5 xl:gap-3 shrink-0">
               {user ? (
-                <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+                <div className="flex items-center gap-1.5 xl:gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsProfileModalOpen(true)}
-                    className="flex items-center gap-2 pr-2 py-1 px-1.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/5 transition-all text-left shrink-0 group cursor-pointer focus:outline-none"
+                    className="flex items-center gap-2 pr-1.5 xl:pr-2 py-1 px-1.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/5 transition-all text-left shrink-0 group cursor-pointer focus:outline-none"
                     title="Настройки профиля и уведомлений"
                   >
                     <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] group-hover:border-[#E84C3D] flex items-center justify-center font-bold text-xs text-white shrink-0 relative transition-colors">
@@ -198,26 +198,26 @@ export const Navbar = () => {
                     </div>
                     <div className="flex flex-col text-left shrink-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[100px] lg:max-w-[140px] group-hover:text-white">
+                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[75px] xl:max-w-[130px] group-hover:text-white">
                           {user.full_name}
                         </span>
-                        <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left" />
+                        <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left hidden xl:inline-flex" />
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E84C3D]/20 text-[#E84C3D] border border-[#E84C3D]/30 whitespace-nowrap">
                           Кат. {user.category || 1}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[#888888] truncate max-w-[150px] hidden xl:block">
+                      <span className="text-[11px] text-[#888888] truncate max-w-[150px] hidden 2xl:block">
                         {user.email}
                       </span>
                     </div>
-                    <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors ml-1 hidden lg:block" />
+                    <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors ml-1 hidden xl:block" />
                   </button>
 
                   <div className="w-px h-5 bg-white/15 shrink-0" />
 
                   <button
                     onClick={handleLogout}
-                    className="p-1.5 lg:p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                    className="p-1.5 xl:p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0"
                     title="Выйти из системы"
                   >
                     <LogOut className="w-4 h-4" />
@@ -242,7 +242,7 @@ export const Navbar = () => {
             </div>
 
             {/* Mobile Menu Hamburger Button (44px touch target) */}
-            <div className="md:hidden flex items-center">
+            <div className="lg:hidden flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-white hover:bg-white/10 active:bg-white/20 transition-colors focus:outline-none"
@@ -256,7 +256,7 @@ export const Navbar = () => {
 
         {/* Mobile Full Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#242424] bg-[#141414] text-white px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-xl">
+          <div className="lg:hidden border-t border-[#242424] bg-[#141414] text-white px-4 pt-3 pb-6 space-y-3 animate-fade-in shadow-xl">
             {user ? (
               <>
                 {/* User Info Card on Mobile */}
