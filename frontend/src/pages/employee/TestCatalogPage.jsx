@@ -108,10 +108,11 @@ export const TestCatalogPage = () => {
 
   // Категории тестов
   const assignedTests = tests.filter((t) => t.is_assigned);
+  const attestationTests = tests.filter((t) => t.is_exam && t.is_assigned);
   const completedTests = tests.filter(
     (t) => t.user_attempt_status && t.user_attempt_status !== 'in_progress'
   );
-  const generalTests = tests.filter((t) => !t.is_assigned_only);
+  const generalTests = tests.filter((t) => !t.is_assigned_only && !t.is_exam);
   const pendingAssignedTests = assignedTests.filter(
     (t) => t.user_attempt_status !== 'passed'
   );
@@ -120,6 +121,8 @@ export const TestCatalogPage = () => {
     let list = [];
     if (activeTab === 'assigned') {
       list = assignedTests;
+    } else if (activeTab === 'attestations') {
+      list = attestationTests;
     } else if (activeTab === 'completed') {
       list = completedTests;
     } else if (activeTab === 'general') {
@@ -223,6 +226,29 @@ export const TestCatalogPage = () => {
               {assignedTests.length}
             </span>
           </button>
+
+          {attestationTests.length > 0 && (
+            <button
+              onClick={() => setActiveTab('attestations')}
+              className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] select-none ${
+                activeTab === 'attestations'
+                  ? 'btn-dark-pill'
+                  : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] border border-[#EEEEEE] active:scale-[0.98]'
+              }`}
+            >
+              <Award className="w-4 h-4 text-[#E84C3D]" />
+              <span>Аттестации</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  activeTab === 'attestations'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-red-50 text-[#E84C3D] border border-red-200'
+                }`}
+              >
+                {attestationTests.length}
+              </span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('completed')}
@@ -416,7 +442,7 @@ export const TestCatalogPage = () => {
                     ) : test.is_assigned ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-[#FCECEB] text-[#E84C3D] border border-[#F8D3D0] shadow-2xs">
                         <CheckSquare className="w-3.5 h-3.5 text-[#E84C3D]" />
-                        Назначен вам
+                        {test.is_exam ? 'Аттестация назначена' : 'Назначен вам'}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#F5F5F7] text-[#495057] border border-[#EEEEEE]">
@@ -426,6 +452,11 @@ export const TestCatalogPage = () => {
                     )}
 
                     <div className="flex items-center gap-2">
+                      {test.is_exam && (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#E84C3D] bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                          Аттестация
+                        </span>
+                      )}
                       {test.max_attempts === 1 && (
                         <span className="text-[10px] text-[#777777] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#EEEEEE] font-medium">
                           1 попытка
@@ -650,6 +681,14 @@ export const TestCatalogPage = () => {
                     : 'Без ограничений'}
                 </span>
               </div>
+              {selectedTestModal.is_exam && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-start gap-2">
+                  <Award className="w-4 h-4 shrink-0 text-[#E84C3D] mt-0.5" />
+                  <span>
+                    Это <strong>квалификационная аттестация</strong>. По ее итогам будет автоматически определена или подтверждена ваша квалификационная категория (Уровни 1 — 4).
+                  </span>
+                </div>
+              )}
               {selectedTestModal.assignment_available_from && (
                 <div className="flex items-center justify-between pt-2 border-t border-[#EEEEEE] text-amber-800 font-semibold">
                   <span>Доступен с:</span>

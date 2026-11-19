@@ -58,13 +58,17 @@ async def get_tests(
 
     if current_user.role == "employee":
         # Сотруднику доступны:
-        # 1. Любые назначенные ему тесты (даже если черновик)
-        # 2. Опубликованные тесты общего доступа (is_assigned_only == False)
-        # Экзамены (is_exam == True) никогда не отображаются в общем каталоге тестов!
+        # 1. Любые персонально назначенные ему тесты ИЛИ аттестации (Test.id.in_(assigned_ids))
+        # 2. Опубликованные обычные тесты общего доступа (is_exam == False & is_published == True & is_assigned_only == False)
+        # Неназначенные аттестации никогда не отображаются в общем каталоге!
         if assigned_ids:
             stmt = stmt.where(
-                Test.is_exam.is_(False),
-                (Test.id.in_(assigned_ids)) | (Test.is_published.is_(True) & Test.is_assigned_only.is_(False)),
+                (Test.id.in_(assigned_ids))
+                | (
+                    Test.is_exam.is_(False)
+                    & Test.is_published.is_(True)
+                    & Test.is_assigned_only.is_(False)
+                )
             )
         else:
             stmt = stmt.where(
