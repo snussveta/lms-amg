@@ -10,10 +10,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Shield,
   Users,
   X,
-  ChevronDown,
   Zap,
   Settings,
 } from 'lucide-react';
@@ -27,14 +25,12 @@ export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [isJoinExamModalOpen, setIsJoinExamModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
-    setAdminDropdownOpen(false);
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -44,15 +40,10 @@ export const Navbar = () => {
 
   const isActive = (path) => {
     if (path === '/') {
-      return location.pathname === '/' || location.pathname.startsWith('/courses');
+      return location.pathname === '/' || location.pathname.startsWith('/courses') || location.pathname.startsWith('/admin/courses');
     }
     return location.pathname === path || location.pathname.startsWith(path);
   };
-
-  const isAdminSectionActive =
-    location.pathname.startsWith('/admin') ||
-    location.pathname.includes('constructor') ||
-    location.pathname.includes('question-bank');
 
   return (
     <>
@@ -82,13 +73,14 @@ export const Navbar = () => {
                 </div>
               </Link>
 
-              {/* Desktop Navigation Links */}
+              {/* Desktop Navigation Links - Flat layout across the top */}
               {user && (
-                <div className="hidden md:flex items-center gap-1 shrink-0">
+                <div className="hidden md:flex items-center gap-1 lg:gap-1.5 shrink-0">
+                  {/* Курсы */}
                   <Link
-                    to="/courses"
+                    to={isAdmin ? '/admin/courses' : '/courses'}
                     className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                      isActive('/courses') || location.pathname === '/'
+                      isActive('/courses') || isActive('/admin/courses') || location.pathname === '/'
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
@@ -97,6 +89,7 @@ export const Navbar = () => {
                     <span>Курсы</span>
                   </Link>
 
+                  {/* Тесты */}
                   <Link
                     to={isAdmin ? '/admin/tests' : '/tests'}
                     className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
@@ -109,47 +102,8 @@ export const Navbar = () => {
                     <span>Тесты</span>
                   </Link>
 
-                  {!isAdmin && (
-                    <Link
-                      to="/my-attempts"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                        isActive('/my-attempts')
-                          ? 'bg-[#242424] text-white font-semibold border border-white/10'
-                          : 'text-white/70 hover:text-white hover:bg-white/10'
-                      }`}
-                    >
-                      <History className="w-4 h-4 text-white/90 shrink-0" />
-                      <span>Мои результаты</span>
-                    </Link>
-                  )}
-
-                  <Link
-                    to="/knowledge-base"
-                    className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                      isActive('/knowledge-base')
-                        ? 'bg-[#242424] text-white font-semibold border border-white/10'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <FolderArchive className="w-4 h-4 text-white/90 shrink-0" />
-                    <span>База знаний</span>
-                  </Link>
-
+                  {/* Экзамены (для администраторов и начальников отделов) */}
                   {(isAdmin || isDepartmentHead) && (
-                    <Link
-                      to="/admin/users"
-                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                        isActive('/admin/users')
-                          ? 'bg-[#242424] text-white font-semibold border border-white/10'
-                          : 'text-white/70 hover:text-white hover:bg-white/10'
-                      }`}
-                    >
-                      <Users className="w-4 h-4 text-white/90 shrink-0" />
-                      <span>{isDepartmentHead ? 'Сотрудники' : 'Сотрудники'}</span>
-                    </Link>
-                  )}
-
-                  {isDepartmentHead && (
                     <Link
                       to="/admin/exam-stats"
                       className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
@@ -163,72 +117,62 @@ export const Navbar = () => {
                     </Link>
                   )}
 
+                  {/* Банк вопросов (только для администраторов) */}
                   {isAdmin && (
-                    <>
-                      <div className="w-px h-5 bg-white/20 mx-1 lg:mx-1.5 shrink-0" />
+                    <Link
+                      to="/admin/question-bank"
+                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        isActive('/admin/question-bank')
+                          ? 'bg-[#242424] text-white font-semibold border border-white/10'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4 text-white/90 shrink-0" />
+                      <span>Банк вопросов</span>
+                    </Link>
+                  )}
 
-                      {/* Admin Dropdown */}
-                      <div className="relative shrink-0">
-                        <button
-                          onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
-                          className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                            isAdminSectionActive
-                              ? 'bg-[#242424] text-white font-semibold border border-white/10'
-                              : 'text-white/70 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <Shield className="w-4 h-4 text-[#E84C3D] shrink-0" />
-                          <span>Управление</span>
-                          <ChevronDown className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                        </button>
+                  {/* Сотрудники (для администраторов и начальников отделов) */}
+                  {(isAdmin || isDepartmentHead) && (
+                    <Link
+                      to="/admin/users"
+                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        isActive('/admin/users')
+                          ? 'bg-[#242424] text-white font-semibold border border-white/10'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-white/90 shrink-0" />
+                      <span>Сотрудники</span>
+                    </Link>
+                  )}
 
-                        {adminDropdownOpen && (
-                          <div
-                            className="absolute left-0 mt-2 w-56 rounded-xl bg-white text-[#222222] shadow-xl border border-[#EEEEEE] py-1.5 z-50 animate-fade-in"
-                            onMouseLeave={() => setAdminDropdownOpen(false)}
-                          >
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-[#777777] uppercase tracking-wider border-b border-[#EEEEEE]">
-                              Администрирование AMG
-                            </div>
-                            <Link
-                              to="/admin/courses"
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
-                            >
-                              <GraduationCap className="w-4 h-4 text-[#E84C3D]" />
-                              Управление курсами
-                            </Link>
-                            <Link
-                              to="/admin/tests"
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
-                            >
-                              <LayoutDashboard className="w-4 h-4 text-[#E84C3D]" />
-                              Управление тестами
-                            </Link>
-                            <Link
-                              to="/admin/question-bank"
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
-                            >
-                              <BookOpen className="w-4 h-4 text-[#E84C3D]" />
-                              Банк вопросов
-                            </Link>
-                            <Link
-                              to="/admin/exam-stats"
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors"
-                            >
-                              <BarChart3 className="w-4 h-4 text-[#E84C3D]" />
-                              Прошедшие экзамены и проверка
-                            </Link>
-                            <Link
-                              to="/admin/users"
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-medium hover:bg-[#F5F5F7] hover:text-[#E84C3D] transition-colors border-t border-[#EEEEEE]"
-                            >
-                              <Users className="w-4 h-4 text-[#E84C3D]" />
-                              Сотрудники и роли
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    </>
+                  {/* База знаний */}
+                  <Link
+                    to="/knowledge-base"
+                    className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      isActive('/knowledge-base')
+                        ? 'bg-[#242424] text-white font-semibold border border-white/10'
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <FolderArchive className="w-4 h-4 text-white/90 shrink-0" />
+                    <span>База знаний</span>
+                  </Link>
+
+                  {/* Мои результаты (для сотрудников без руководящей роли) */}
+                  {!isAdmin && !isDepartmentHead && (
+                    <Link
+                      to="/my-attempts"
+                      className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        isActive('/my-attempts')
+                          ? 'bg-[#242424] text-white font-semibold border border-white/10'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <History className="w-4 h-4 text-white/90 shrink-0" />
+                      <span>Мои результаты</span>
+                    </Link>
                   )}
                 </div>
               )}
@@ -567,14 +511,14 @@ export const Navbar = () => {
       {user && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#EEEEEE] shadow-lg flex items-center justify-around px-1 py-1 safe-area-bottom select-none">
           <Link
-            to="/courses"
+            to={isAdmin ? '/admin/courses' : '/courses'}
             className={`flex flex-col items-center justify-center flex-1 py-1.5 min-h-[48px] rounded-lg text-center transition-colors ${
-              isActive('/courses') || location.pathname === '/'
+              isActive('/courses') || isActive('/admin/courses') || location.pathname === '/'
                 ? 'text-[#141414] font-bold'
                 : 'text-[#777777] hover:text-[#222222]'
             }`}
           >
-            <GraduationCap className={`w-5 h-5 ${isActive('/courses') || location.pathname === '/' ? 'text-[#E84C3D]' : 'currentColor'}`} />
+            <GraduationCap className={`w-5 h-5 ${isActive('/courses') || isActive('/admin/courses') || location.pathname === '/' ? 'text-[#E84C3D]' : 'currentColor'}`} />
             <span className="text-[10px] mt-0.5 leading-tight">Курсы</span>
           </Link>
 
