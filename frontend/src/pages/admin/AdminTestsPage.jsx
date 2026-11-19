@@ -157,11 +157,10 @@ export const AdminTestsPage = () => {
           <button
             type="button"
             onClick={() => setTabMode('tests')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
-              tabMode === 'tests'
-                ? 'bg-[#141414] text-white border-[#141414] shadow-sm'
-                : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7]'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border select-none ${tabMode === 'tests'
+              ? 'btn-dark-pill'
+              : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] hover:text-[#141414] active:scale-[0.98]'
+              }`}
           >
             <FileQuestion className="w-4 h-4" />
             <span>Обычные тесты ({regularTests.length})</span>
@@ -170,11 +169,10 @@ export const AdminTestsPage = () => {
           <button
             type="button"
             onClick={() => setTabMode('exams')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
-              tabMode === 'exams'
-                ? 'bg-purple-700 text-white border-purple-700 shadow-sm'
-                : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7]'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border select-none ${tabMode === 'exams'
+              ? 'bg-purple-700 hover:bg-purple-800 text-white border-purple-600 shadow-md shadow-purple-900/25 active:scale-[0.98]'
+              : 'bg-white text-[#777777] border-[#EEEEEE] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] hover:text-[#141414] active:scale-[0.98]'
+              }`}
           >
             <Zap className="w-4 h-4 fill-current text-amber-300" />
             <span>Экзамены ({examTests.length})</span>
@@ -189,7 +187,7 @@ export const AdminTestsPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EEEEEE] pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414]">
+            <div className="w-10 h-10 rounded-xl bg-[#141414]/10 border border-[#141414]/20 flex items-center justify-center text-[#141414] hover:scale-105 transition-transform">
               <FileQuestion className="w-5 h-5" />
             </div>
             <div>
@@ -207,7 +205,7 @@ export const AdminTestsPage = () => {
           <button
             type="button"
             onClick={() => setGoogleModalOpen(true)}
-            className="btn-secondary text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#7248B9]/30 text-[#7248B9] hover:bg-[#7248B9]/5 shadow-xs py-2 px-3.5 transition-all"
+            className="btn-secondary text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#7248B9]/30 text-[#7248B9] hover:bg-[#7248B9]/5 hover:border-[#7248B9]/60 shadow-xs py-2 px-3.5 transition-all"
           >
             <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
               <path d="M19.321 5.562l-3.883-3.883C14.939 1.18 14.28 1 13.6 1H6.4C4.522 1 3 2.522 3 4.4v15.2C3 21.478 4.522 23 6.4 23h11.2c1.878 0 3.4-1.522 3.4-3.4V7.4c0-.68-.18-1.339-.679-1.838zM14 3.414L18.586 8H14V3.414zM19 19.6c0 .772-.628 1.4-1.4 1.4H6.4c-.772 0-1.4-.628-1.4-1.4V4.4c0-.772.628-1.4 1.4-1.4h6.6v6c0 .552.448 1 1 1h6v9.6zM8 12h8v2H8zm0 4h5v2H8z" />
@@ -219,7 +217,7 @@ export const AdminTestsPage = () => {
             to="/admin/tests/new"
             className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Создать новый тест</span>
           </Link>
         </div>
@@ -377,7 +375,7 @@ export const AdminTestsPage = () => {
                           <>
                             <button
                               onClick={() => setExamTest(t)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-[11px] font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
+                              className="btn-dark-pill border-purple-500/40 hover:border-purple-400 bg-[#1E112A] hover:bg-[#281638] text-[11px] py-1.5 px-3 min-h-[34px] shadow-sm hover:shadow-purple-900/30"
                               title="Запустить синхронный экзамен по PIN-коду"
                             >
                               <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
@@ -398,7 +396,7 @@ export const AdminTestsPage = () => {
                           <>
                             <button
                               onClick={() => setExamTest(t)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#141414] hover:bg-[#2e2e2e] text-white text-[11px] font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
+                              className="btn-dark-pill text-[11px] py-1.5 px-3 min-h-[34px] border-[#E84C3D]/30 hover:border-[#E84C3D]/70 hover:shadow-[0_0_12px_rgba(232,76,61,0.25)]"
                               title="Запустить синхронный экзамен по PIN-коду"
                             >
                               <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D]" />

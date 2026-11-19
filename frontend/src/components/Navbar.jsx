@@ -240,10 +240,10 @@ export const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setIsJoinExamModalOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#E84C3D] to-[#D33829] hover:brightness-110 active:scale-95 transition-all shadow-sm shadow-[#E84C3D]/25 whitespace-nowrap shrink-0"
+                className="btn-dark-pill py-1.5 px-3 min-h-[36px] border-[#E84C3D]/60 hover:border-[#E84C3D] hover:shadow-[0_0_16px_rgba(232,76,61,0.35)] whitespace-nowrap shrink-0 group select-none"
                 title="Войти в очный экзамен по PIN-коду"
               >
-                <Zap className="w-3.5 h-3.5 fill-white text-white shrink-0" />
+                <Zap className="w-3.5 h-3.5 fill-[#E84C3D] text-[#E84C3D] group-hover:scale-110 transition-transform" />
                 <span className="hidden xl:inline">Войти в </span>
                 <span>Экзамен</span>
               </button>
@@ -330,9 +330,9 @@ export const Navbar = () => {
                 setMobileMenuOpen(false);
                 setIsJoinExamModalOpen(true);
               }}
-              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E84C3D] to-[#D33829] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
+              className="btn-dark-pill w-full py-2.5 px-3 border-[#E84C3D]/60 hover:border-[#E84C3D] hover:shadow-[0_0_16px_rgba(232,76,61,0.35)] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
             >
-              <Zap className="w-4 h-4 fill-white text-white" />
+              <Zap className="w-4 h-4 fill-[#E84C3D] text-[#E84C3D]" />
               <span>Войти в очный экзамен (PIN)</span>
             </button>
             {user ? (

@@ -159,15 +159,15 @@ export const TestCatalogPage = () => {
 
           {/* Быстрые показатели */}
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full lg:w-auto">
-            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center">
+            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center hover:border-[#CED4DA] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 cursor-default">
               <div className="text-xl sm:text-2xl font-black text-[#141414]">{assignedTests.length}</div>
               <div className="text-[11px] text-[#777777] font-medium mt-0.5">Назначено</div>
             </div>
-            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center">
+            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center hover:border-emerald-200 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 cursor-default">
               <div className="text-xl sm:text-2xl font-black text-emerald-600">{passedCount}</div>
               <div className="text-[11px] text-[#777777] font-medium mt-0.5">Сдано</div>
             </div>
-            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center">
+            <div className="bg-[#F5F5F7] border border-[#EEEEEE] rounded-xl p-3 sm:p-4 text-center hover:border-[#CED4DA] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 cursor-default">
               <div className="text-xl sm:text-2xl font-black text-[#222222]">{completedTests.length}</div>
               <div className="text-[11px] text-[#777777] font-medium mt-0.5">Попыток</div>
             </div>
@@ -177,9 +177,9 @@ export const TestCatalogPage = () => {
 
       {/* Напоминание об обязательном назначенном тесте, если есть дедлайн */}
       {pendingAssignedTests.some((t) => t.assignment_due_date && isDeadlineUrgent(t.assignment_due_date)) && (
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-scale-in">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 animate-breath" />
             <div>
               <div className="text-sm font-bold text-amber-800">
                 Внимание: приближается срок сдачи назначенного теста!
@@ -204,10 +204,10 @@ export const TestCatalogPage = () => {
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveTab('assigned')}
-            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] ${
+            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] select-none ${
               activeTab === 'assigned'
-                ? 'bg-[#141414] text-white shadow-sm'
-                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] border border-[#EEEEEE]'
+                ? 'btn-dark-pill'
+                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] border border-[#EEEEEE] active:scale-[0.98]'
             }`}
           >
             <CheckSquare className="w-4 h-4" />
@@ -225,10 +225,10 @@ export const TestCatalogPage = () => {
 
           <button
             onClick={() => setActiveTab('completed')}
-            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] ${
+            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] select-none ${
               activeTab === 'completed'
-                ? 'bg-[#141414] text-white shadow-sm'
-                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] border border-[#EEEEEE]'
+                ? 'btn-dark-pill'
+                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] border border-[#EEEEEE] active:scale-[0.98]'
             }`}
           >
             <Award className="w-4 h-4" />
@@ -247,10 +247,10 @@ export const TestCatalogPage = () => {
           {generalTests.length > 0 && (
             <button
               onClick={() => setActiveTab('general')}
-              className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] ${
+              className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] select-none ${
                 activeTab === 'general'
-                  ? 'bg-[#141414] text-white shadow-sm'
-                  : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] border border-[#EEEEEE]'
+                  ? 'btn-dark-pill'
+                  : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] border border-[#EEEEEE] active:scale-[0.98]'
               }`}
             >
               <Globe className="w-4 h-4" />
@@ -269,10 +269,10 @@ export const TestCatalogPage = () => {
 
           <button
             onClick={() => setActiveTab('all')}
-            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] ${
+            className={`flex items-center gap-2 px-3.5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap min-h-[40px] select-none ${
               activeTab === 'all'
-                ? 'bg-[#141414] text-white shadow-sm'
-                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] border border-[#EEEEEE]'
+                ? 'btn-dark-pill'
+                : 'bg-white text-[#777777] hover:text-[#222222] hover:bg-[#F5F5F7] hover:border-[#D4D4D4] border border-[#EEEEEE] active:scale-[0.98]'
             }`}
           >
             <FileQuestion className="w-4 h-4" />
@@ -382,7 +382,7 @@ export const TestCatalogPage = () => {
             return (
               <div
                 key={test.id}
-                className="bg-white border border-[#EEEEEE] rounded-2xl p-5 sm:p-6 flex flex-col justify-between hover:shadow-card-hover hover:border-[#CED4DA] transition-all duration-200 shadow-card hover:-translate-y-0.5 group"
+                className="interactive-card p-5 sm:p-6 flex flex-col justify-between group"
               >
                 <div>
                   {/* Статусная шапка карточки */}
@@ -545,9 +545,9 @@ export const TestCatalogPage = () => {
                   ) : isInProgress ? (
                     <button
                       onClick={() => setSelectedTestModal(test)}
-                      className="btn-accent w-full py-2.5 flex items-center justify-center gap-2"
+                      className="btn-dark-pill w-full py-2.5 flex items-center justify-center gap-2"
                     >
-                      <Play className="w-4 h-4" />
+                      <Play className="w-4 h-4 fill-white" />
                       <span>Продолжить попытку</span>
                     </button>
                   ) : (
@@ -555,7 +555,7 @@ export const TestCatalogPage = () => {
                       onClick={() => setSelectedTestModal(test)}
                       className="btn-primary w-full py-2.5 flex items-center justify-center gap-2"
                     >
-                      <Play className="w-4 h-4" />
+                      <Play className="w-4 h-4 fill-white" />
                       <span>Начать тест</span>
                     </button>
                   )}

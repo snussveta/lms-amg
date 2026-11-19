@@ -42,7 +42,7 @@
   .text-white, .text-white h1, .text-white h2, .text-white h3, .text-white h4,
   [class*="bg-[#141414]"] h1, [class*="bg-[#141414]"] h2, [class*="bg-[#141414]"] h3,
   [class*="bg-black"] h1, [class*="bg-black"] h2, [class*="bg-black"] h3,
-  .btn-primary, .btn-accent {
+  .btn-primary, .btn-accent, .btn-dark-pill {
     color: #FFFFFF !important;
   }
 
@@ -65,46 +65,70 @@
   }
   
   /* Interactive Cards (lift & hover) */
-  .glass-card {
+  .glass-card, .interactive-card {
     background-color: #FFFFFF;
     border: 1px solid #EEEEEE;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
     border-radius: 1rem;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
   }
 
-  .glass-card:hover {
+  .glass-card:hover, .interactive-card:hover {
     border-color: #D4D4D4;
     transform: translateY(-3px);
-    box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.03);
   }
 
-  .glass-card:active {
+  .glass-card:active, .interactive-card:active {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.06);
   }
 
+  /* ============================================================== */
+  /* BUTTON STYLES WITH LIGHT SHEEN & SPRING HOVER                  */
+  /* ============================================================== */
+
   /* Primary Accent Button (#E84C3D Coral-Red) */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
            bg-[#E84C3D] hover:bg-[#D33829] active:bg-[#BA2E20]
            transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
-    box-shadow: 0 1px 3px rgba(232, 76, 61, 0.25), 0 1px 2px rgba(0, 0, 0, 0.06);
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px] relative overflow-hidden;
+    box-shadow: 0 2px 6px rgba(232, 76, 61, 0.28), 0 1px 2px rgba(0, 0, 0, 0.06);
   }
   .btn-primary:hover {
-    box-shadow: 0 6px 20px -4px rgba(232, 76, 61, 0.35), 0 4px 8px -4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px -4px rgba(232, 76, 61, 0.42), 0 4px 12px -2px rgba(0, 0, 0, 0.12);
   }
   .btn-primary:active {
-    box-shadow: 0 1px 4px rgba(232, 76, 61, 0.2);
+    box-shadow: 0 2px 6px rgba(232, 76, 61, 0.25);
+  }
+
+  /* Exact AMG Dark Pill Button (from uploaded screenshot: [ 🚗 Выбрать авто ]) */
+  .btn-dark-pill {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
+           bg-[#141414] hover:bg-[#1F1F1F] active:bg-[#0A0A0A] border border-white/15 hover:border-white/35
+           transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] 
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px] relative overflow-hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .btn-dark-pill:hover {
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  .btn-dark-pill:active {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
   /* Secondary Button (Crisp White + Graphite Accent) */
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm text-[#222222] 
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm text-[#222222] 
            bg-white hover:bg-[#F5F5F7] border border-[#EEEEEE] hover:border-[#D4D4D4] hover:text-[#141414]
            transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.97] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px] relative overflow-hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  .btn-secondary:hover {
+    box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.08);
   }
   .btn-secondary:active {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -112,27 +136,55 @@
 
   /* Dark Charcoal Accent Button (#141414) */
   .btn-accent {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
-           bg-[#141414] hover:bg-[#222222] active:bg-[#000000]
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white 
+           bg-[#141414] hover:bg-[#222222] active:bg-[#000000] border border-transparent hover:border-white/20
            transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] 
-           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px];
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
+           disabled:opacity-50 disabled:pointer-events-none select-none min-h-[42px] sm:min-h-[40px] relative overflow-hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
   .btn-accent:hover {
-    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.25), 0 4px 8px -4px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35), 0 0 14px rgba(255, 255, 255, 0.06);
   }
 
   /* Danger / Soft Coral Action Button (#FCECEB) */
   .btn-danger {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-[#E84C3D] 
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-[#E84C3D] 
            bg-[#FCECEB] hover:bg-[#FAD8D5] border border-[#F8D3D0]
            active:scale-[0.97] transition-all duration-200 ease-out hover:-translate-y-0.5 min-h-[42px] sm:min-h-[40px];
+  }
+
+  /* Light Sheen Sweep Effect on Hover */
+  .btn-primary::after,
+  .btn-dark-pill::after,
+  .btn-accent::after,
+  .btn-sheen::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -70%;
+    width: 35%;
+    height: 200%;
+    background: linear-gradient(
+      60deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.24) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(25deg);
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .btn-primary:hover::after,
+  .btn-dark-pill:hover::after,
+  .btn-accent:hover::after,
+  .btn-sheen:hover::after {
+    transform: translateX(500%) rotate(25deg);
   }
 
   /* Touch-friendly Form Inputs (44px min height on touch devices) */
   .input-field {
     @apply w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#E5E7EB] 
-           text-[#222222] placeholder-[#888888] text-sm focus:outline-none focus:ring-2 focus:ring-[#E84C3D]/20 focus:border-[#E84C3D] 
+           text-[#222222] placeholder-[#888888] text-sm focus:outline-none focus:ring-4 focus:ring-[#E84C3D]/10 focus:border-[#E84C3D] 
            transition-all duration-200 min-h-[44px];
   }
   .input-field:hover:not(:focus):not(:disabled) {
@@ -162,7 +214,7 @@
 }
 
 /* ============================================= */
-/* ANIMATIONS & MICRO-INTERACTIONS               */
+/* ANIMATIONS & LIGHT EFFECTS                    */
 /* ============================================= */
 
 /* Fade In (default entrance) */
@@ -184,7 +236,7 @@
 @keyframes scaleIn {
   0% {
     opacity: 0;
-    transform: scale(0.95) translateY(8px);
+    transform: scale(0.96) translateY(6px);
   }
   100% {
     opacity: 1;
@@ -240,6 +292,21 @@
   animation: pulseGlow 2s ease-in-out infinite;
 }
 
+/* Soft Breathing Dot */
+@keyframes breathGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
+}
+.animate-breath {
+  animation: breathGlow 2.5s ease-in-out infinite;
+}
+
 /* Shimmer / skeleton loading */
 @keyframes shimmer {
   0% {
@@ -250,7 +317,7 @@
   }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, #F5F5F7 25%, #E8E8EC 50%, #F5F5F7 75%);
+  background: linear-gradient(90deg, #F5F5F7 25%, #EBEBF0 50%, #F5F5F7 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s ease-in-out infinite;
 }
@@ -277,15 +344,6 @@
   animation: bounceIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Spin (loading spinners — overrides default if needed) */
-@keyframes spinSmooth {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-.animate-spin-smooth {
-  animation: spinSmooth 0.8s linear infinite;
-}
-
 /* ============================================= */
 /* INTERACTIVE TABLE ROWS                        */
 /* ============================================= */
@@ -293,7 +351,7 @@ table tbody tr {
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 table tbody tr:hover {
-  background-color: #FAFAFA;
+  background-color: #FAFAFB;
 }
 table tbody tr:active {
   background-color: #F5F5F7;
@@ -322,8 +380,8 @@ input[type="radio"]:active {
   @apply p-2 rounded-xl border transition-all duration-200 ease-out flex items-center justify-center;
 }
 .icon-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px -3px rgba(0, 0, 0, 0.12);
 }
 .icon-btn:active {
   transform: translateY(0) scale(0.95);
@@ -403,12 +461,12 @@ input[type="radio"]:active {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
-.stagger-children > *:nth-child(9) { animation-delay: 400ms; }
-.stagger-children > *:nth-child(10) { animation-delay: 450ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(9) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(10) { animation-delay: 360ms; }

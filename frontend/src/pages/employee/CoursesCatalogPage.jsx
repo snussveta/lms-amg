@@ -266,7 +266,7 @@ export const CoursesCatalogPage = () => {
             return (
               <div
                 key={course.id}
-                className="bg-white border border-[#EEEEEE] rounded-xl overflow-hidden shadow-card hover:shadow-card-hover hover:border-[#CED4DA] transition-all duration-200 flex flex-col justify-between group hover:-translate-y-0.5"
+                className="interactive-card rounded-2xl overflow-hidden flex flex-col justify-between group"
               >
                 {/* Banner */}
                 <div className="h-40 relative overflow-hidden bg-[#141414] border-b border-[#EEEEEE]">
@@ -358,9 +358,11 @@ export const CoursesCatalogPage = () => {
                 <div className="p-4 bg-[#F5F5F7] border-t border-[#EEEEEE] space-y-2">
                   <Link
                     to={`/courses/${course.id}/learn`}
-                    className="btn-primary w-full text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2"
+                    className={`${
+                      isInProgress ? 'btn-dark-pill' : 'btn-primary'
+                    } w-full text-xs sm:text-sm py-2.5 flex items-center justify-center gap-2`}
                   >
-                    <Play className="w-3.5 h-3.5" />
+                    <Play className="w-3.5 h-3.5 fill-white" />
                     <span>
                       {isCompleted ? 'Повторить материал' : isInProgress ? 'Продолжить курс' : 'Начать обучение'}
                     </span>
