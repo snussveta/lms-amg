@@ -898,9 +898,6 @@ export const CourseConstructorPage = () => {
               <h1 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
                 {isEditing ? 'Конструктор курса' : 'Новый обучающий курс'}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#141414]/10 border border-[#141414]/20 text-[#141414] uppercase tracking-wider">
-                iSpring Module
-              </span>
             </div>
             <p className="text-xs text-[#777777] mt-0.5">
               Настройка разделов, лонгридов, видео 5+ часов, презентаций и тестов
