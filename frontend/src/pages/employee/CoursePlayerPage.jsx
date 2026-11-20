@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   AlertCircle,
@@ -62,6 +63,31 @@ export const CoursePlayerPage = () => {
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [quizTimeLeft, setQuizTimeLeft] = useState(null);
+  const [isCourseFinishedModalOpen, setIsCourseFinishedModalOpen] = useState(false);
+
+  // Flattened sequential lessons across all course modules
+  const allLessons = useMemo(() => {
+    const list = [];
+    (courseData?.modules || []).forEach((m) => {
+      (m?.lessons || []).forEach((l) => list.push(l));
+    });
+    return list;
+  }, [courseData]);
+
+  const currentLessonIdx = allLessons.findIndex((l) => String(l.id) === String(activeLesson?.id));
+  const isLastLesson = currentLessonIdx !== -1 && currentLessonIdx === allLessons.length - 1;
+  const nextLesson = (currentLessonIdx !== -1 && currentLessonIdx + 1 < allLessons.length) ? allLessons[currentLessonIdx + 1] : null;
+
+  // Normalized Quiz Score & Percentage
+  const scorePercent = quizResult
+    ? Math.round(
+        quizResult.percentage ??
+        quizResult.score_percent ??
+        (quizResult.max_score > 0 ? (quizResult.score / quizResult.max_score) * 100 : 0)
+      )
+    : 0;
+
+  const passingScore = quizResult?.passing_score ?? quizResult?.test?.passing_score ?? activeLesson?.quiz_passing_score ?? 70;
 
   const toggleModuleCollapse = (moduleId) => {
     setCollapsedModules((prev) => ({
@@ -163,6 +189,25 @@ export const CoursePlayerPage = () => {
     await handleMarkStepCompleted();
   };
 
+  const handleFinishCourse = async () => {
+    try {
+      if (activeLesson) {
+        try {
+          await api.post(`/v1/courses/${id}/lessons/${activeLesson.id}/complete`);
+        } catch {
+          try {
+            await api.post(`/courses/${id}/lessons/${activeLesson.id}/complete`);
+          } catch {
+            // ignore
+          }
+        }
+      }
+    } finally {
+      confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
+      setIsCourseFinishedModalOpen(true);
+    }
+  };
+
   const handleMarkStepCompleted = async () => {
     if (!activeLesson) return;
     try {
@@ -190,20 +235,27 @@ export const CoursePlayerPage = () => {
       const updatedData = res.data;
       setCourseData(updatedData);
 
-      const allLessons = [];
+      const updatedLessons = [];
       (updatedData?.modules || []).forEach((m) => {
-        (m?.lessons || []).forEach((l) => allLessons.push(l));
+        (m?.lessons || []).forEach((l) => updatedLessons.push(l));
       });
 
-      const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
-      if (currentIdx !== -1 && currentIdx + 1 < allLessons.length) {
-        const nextLesson = allLessons[currentIdx + 1];
-        setActiveLesson(nextLesson);
-      } else if (currentIdx === allLessons.length - 1) {
+      const currentIdx = updatedLessons.findIndex((l) => String(l.id) === String(activeLesson.id));
+      if (currentIdx !== -1 && currentIdx + 1 < updatedLessons.length) {
+        const next = updatedLessons[currentIdx + 1];
+        setActiveLesson(next);
+      } else {
+        // Last step completed!
         confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
+        setIsCourseFinishedModalOpen(true);
       }
     } catch (err) {
-      alert(getErrorMessage(err, 'Ошибка при фиксации шага.'));
+      console.error('Ошибка при фиксации шага:', err);
+      if (isLastLesson) {
+        setIsCourseFinishedModalOpen(true);
+      } else {
+        alert(getErrorMessage(err, 'Ошибка при фиксации шага.'));
+      }
     }
   };
 
@@ -218,12 +270,34 @@ export const CoursePlayerPage = () => {
     }
   }, [activeLesson?.id]);
 
-  const initQuizAttempt = async (testId) => {
+  const initQuizAttempt = async (testId, forceRetake = false) => {
     try {
       setQuizLoading(true);
       setQuizResult(null);
       setQuizAnswers({});
       setQuizTimeLeft(null);
+
+      // If the lesson is already marked completed or passed, load latest result
+      if (!forceRetake && (activeLesson?.status === 'completed' || activeLesson?.quiz_has_passed)) {
+        try {
+          const myRes = await api.get('/attempts/my');
+          const myAttempts = myRes.data || [];
+          const passedAttempt = myAttempts.find(
+            (a) => a.test_id === testId && (a.status === 'submitted' || a.status === 'completed')
+          );
+          if (passedAttempt) {
+            setQuizResult({
+              ...passedAttempt,
+              is_passed: passedAttempt.is_passed ?? true,
+              percentage: passedAttempt.percentage ?? passedAttempt.score_percent,
+            });
+            setQuizLoading(false);
+            return;
+          }
+        } catch {
+          // fallback to starting attempt
+        }
+      }
 
       let res;
       try {
@@ -242,6 +316,19 @@ export const CoursePlayerPage = () => {
       }
     } catch (err) {
       console.error('Ошибка инициализации теста:', err);
+      if (activeLesson?.status === 'completed' || activeLesson?.quiz_has_passed) {
+        try {
+          const myRes = await api.get('/attempts/my');
+          const myAttempts = myRes.data || [];
+          const prevAttempt = myAttempts.find((a) => a.test_id === testId);
+          if (prevAttempt) {
+            setQuizResult(prevAttempt);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+      }
     } finally {
       setQuizLoading(false);
     }
@@ -442,11 +529,6 @@ export const CoursePlayerPage = () => {
       </div>
     );
   }
-
-  const allLessons = [];
-  (courseData.modules || []).forEach((m) => {
-    (m.lessons || []).forEach((l) => allLessons.push(l));
-  });
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex flex-col bg-[#F5F5F7] text-[#222222]">
@@ -732,11 +814,11 @@ export const CoursePlayerPage = () => {
                   {/* Bottom Action: Finish Article */}
                   <div className="pt-6 border-t border-[#EEEEEE] flex justify-end">
                     <button
-                      onClick={handleMarkStepCompleted}
+                      onClick={isLastLesson ? handleFinishCourse : handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Материал изучен → Следующий шаг</span>
+                      {isLastLesson ? <Trophy className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      <span>{isLastLesson ? 'Завершить курс →' : 'Материал изучен → Следующий шаг'}</span>
                     </button>
                   </div>
                 </div>
@@ -809,11 +891,11 @@ export const CoursePlayerPage = () => {
 
                   <div className="pt-4 border-t border-[#EEEEEE] flex justify-end">
                     <button
-                      onClick={handleMarkStepCompleted}
+                      onClick={isLastLesson ? handleFinishCourse : handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Урок просмотрен → Следующий шаг</span>
+                      {isLastLesson ? <Trophy className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      <span>{isLastLesson ? 'Завершить курс →' : 'Урок просмотрен → Следующий шаг'}</span>
                     </button>
                   </div>
                 </div>
@@ -839,11 +921,11 @@ export const CoursePlayerPage = () => {
 
                   <div className="pt-4 border-t border-[#EEEEEE] flex justify-end">
                     <button
-                      onClick={handleMarkStepCompleted}
+                      onClick={isLastLesson ? handleFinishCourse : handleMarkStepCompleted}
                       className="btn-primary text-xs sm:text-sm py-2.5 px-6 flex items-center gap-2"
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Презентация изучена → Далее</span>
+                      {isLastLesson ? <Trophy className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      <span>{isLastLesson ? 'Завершить курс →' : 'Презентация изучена → Далее'}</span>
                     </button>
                   </div>
                 </div>
@@ -864,18 +946,28 @@ export const CoursePlayerPage = () => {
                           <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
                           <h3 className="text-xl font-extrabold text-[#222222]">Тестирование успешно сдано!</h3>
                           <div className="text-sm text-emerald-700 font-bold">
-                            Результат: {quizResult.score_percent}%
+                            Результат: {scorePercent}% {quizResult.max_score > 0 ? `(${quizResult.score} из ${quizResult.max_score} баллов)` : ''}
                           </div>
                           <p className="text-xs text-[#777777] max-w-sm mx-auto">
                             Вы подтвердили квалификацию по этому разделу. Урок отмечен как пройденный!
                           </p>
-                          <div className="pt-4">
-                            <button
-                              onClick={handleMarkStepCompleted}
-                              className="btn-primary text-xs sm:text-sm py-2.5 px-6 inline-flex items-center gap-2"
-                            >
-                              <span>Перейти к следующему шагу →</span>
-                            </button>
+                          <div className="pt-4 flex items-center justify-center gap-3">
+                            {isLastLesson ? (
+                              <button
+                                onClick={handleFinishCourse}
+                                className="btn-primary text-xs sm:text-sm py-2.5 px-6 inline-flex items-center gap-2 shadow-accent-glow"
+                              >
+                                <Trophy className="w-4 h-4" />
+                                <span>Завершить курс и вернуться в каталог →</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={handleMarkStepCompleted}
+                                className="btn-primary text-xs sm:text-sm py-2.5 px-6 inline-flex items-center gap-2"
+                              >
+                                <span>Перейти к следующему шагу →</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -883,13 +975,13 @@ export const CoursePlayerPage = () => {
                           <AlertTriangle className="w-14 h-14 text-[#E84C3D] mx-auto" />
                           <h3 className="text-xl font-extrabold text-[#222222]">Тест не сдан</h3>
                           <div className="text-sm text-[#E84C3D] font-bold">
-                            Ваш результат: {quizResult.score_percent}% (требуется {quizResult.test?.passing_score || 70}%)
+                            Ваш результат: {scorePercent}% {quizResult.max_score > 0 ? `(${quizResult.score} из ${quizResult.max_score} баллов)` : ''} (требуется {passingScore}%)
                           </div>
                           <p className="text-xs text-[#777777] max-w-sm mx-auto">
                             Повторите теоретический материал и попробуйте пройти тестирование снова.
                           </p>
                           <button
-                            onClick={() => initQuizAttempt(activeLesson.quiz_id)}
+                            onClick={() => initQuizAttempt(activeLesson.quiz_id, true)}
                             className="btn-secondary text-xs sm:text-sm py-2 px-4 inline-flex items-center gap-1.5"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -1011,6 +1103,50 @@ export const CoursePlayerPage = () => {
           )}
         </div>
       </div>
+
+      {/* Course Completed Celebration Modal */}
+      {isCourseFinishedModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+          onClick={() => navigate('/courses')}
+        >
+          <div
+            className="bg-white rounded-3xl border border-[#EEEEEE] shadow-2xl max-w-md w-full p-6 sm:p-8 text-center space-y-5 transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-20 h-20 rounded-3xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto shadow-sm">
+              <Trophy className="w-10 h-10 text-emerald-600" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-xl sm:text-2xl font-black text-[#222222] tracking-tight">
+                Курс успешно завершен!
+              </h3>
+              <p className="text-xs sm:text-sm text-[#777777] max-w-sm mx-auto leading-relaxed">
+                Поздравляем! Вы изучили все материалы и сдали контрольные задания курса «{courseData?.title}».
+              </p>
+            </div>
+            <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#EEEEEE] flex items-center justify-between text-xs font-bold">
+              <span className="text-[#777777]">Прогресс обучения</span>
+              <span className="text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-lg">100% пройдено</span>
+            </div>
+            <div className="pt-2 space-y-2.5">
+              <button
+                onClick={() => navigate('/courses')}
+                className="w-full btn-primary py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-accent-glow"
+              >
+                <span>Вернуться в каталог курсов</span>
+              </button>
+              <button
+                onClick={() => navigate('/my-attempts')}
+                className="w-full py-2.5 rounded-xl border border-[#D5D5D5] bg-white hover:bg-[#F5F5F7] text-xs font-semibold text-[#222222] transition-colors"
+              >
+                Посмотреть мои результаты
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
