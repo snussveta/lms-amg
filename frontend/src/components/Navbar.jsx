@@ -48,11 +48,11 @@ export const Navbar = () => {
     <>
       {/* Top Main Navigation Bar */}
       <nav className="sticky top-0 z-40 w-full bg-[#141414] text-white border-b border-[#242424] shadow-sm select-none">
-        <div className="w-full max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16 gap-2 lg:gap-4">
+        <div className="w-full max-w-[1720px] mx-auto px-3 sm:px-4 lg:px-4 xl:px-6 2xl:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2 lg:gap-3 xl:gap-4">
             {/* Brand AMG LMS */}
-            <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 flex-1">
-              <Link to="/" className="flex items-center gap-2.5 group focus:outline-none shrink-0">
+            <div className="flex items-center gap-2 lg:gap-2.5 xl:gap-3 2xl:gap-5 min-w-0 flex-1">
+              <Link to="/" className="flex items-center gap-2 group focus:outline-none shrink-0">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center text-white group-hover:bg-[#2e2e2e] transition-all relative shadow-sm shrink-0">
                   <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   <span className="w-2 h-2 rounded-full bg-[#E84C3D] absolute -top-0.5 -right-0.5 ring-2 ring-[#141414]" />
@@ -66,7 +66,7 @@ export const Navbar = () => {
                       LMS
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#888888] font-medium tracking-wider uppercase mt-0.5 hidden xl:inline-block whitespace-nowrap">
+                  <span className="text-[10px] text-[#888888] font-medium tracking-wider uppercase mt-0.5 hidden 2xl:inline-block whitespace-nowrap">
                     Корпоративное обучение
                   </span>
                 </div>
@@ -74,30 +74,30 @@ export const Navbar = () => {
 
               {/* Desktop Navigation Links - Flat layout across the top */}
               {user && (
-                <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0 py-1">
+                <div className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 shrink-0 py-1">
                   {/* Курсы */}
                   <Link
                     to={isAdmin ? '/admin/courses' : '/courses'}
-                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/courses') || isActive('/admin/courses') || location.pathname === '/'
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    <GraduationCap className="w-4 h-4 text-white/90 shrink-0" />
+                    <GraduationCap className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                     <span>Курсы</span>
                   </Link>
 
                   {/* Тесты */}
                   <Link
                     to={isAdmin ? '/admin/tests' : '/tests'}
-                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/tests') || (isActive('/admin/tests') && !location.search.includes('tab=attestations'))
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    <FileQuestion className="w-4 h-4 text-white/90 shrink-0" />
+                    <FileQuestion className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                     <span>Тесты</span>
                   </Link>
 
@@ -105,13 +105,13 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/tests?tab=attestations"
-                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         location.pathname === '/admin/tests' && location.search.includes('tab=attestations')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <ShieldCheck className="w-4 h-4 text-[#E84C3D] shrink-0" />
+                      <ShieldCheck className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-[#E84C3D] shrink-0" />
                       <span>Аттестации</span>
                     </Link>
                   )}
@@ -120,13 +120,13 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/question-bank"
-                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/question-bank')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <BookOpen className="w-4 h-4 text-white/90 shrink-0" />
+                      <BookOpen className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                       <span>Банк вопросов</span>
                     </Link>
                   )}
@@ -135,13 +135,13 @@ export const Navbar = () => {
                   {(isAdmin || isDepartmentHead) && (
                     <Link
                       to="/admin/users"
-                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/users')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <Users className="w-4 h-4 text-white/90 shrink-0" />
+                      <Users className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                       <span>Сотрудники</span>
                     </Link>
                   )}
@@ -149,13 +149,13 @@ export const Navbar = () => {
                   {/* База знаний */}
                   <Link
                     to="/knowledge-base"
-                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/knowledge-base')
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    <FolderArchive className="w-4 h-4 text-white/90 shrink-0" />
+                    <FolderArchive className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                     <span>База знаний</span>
                   </Link>
 
@@ -163,13 +163,13 @@ export const Navbar = () => {
                   {!isAdmin && !isDepartmentHead && (
                     <Link
                       to="/my-attempts"
-                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all flex items-center gap-1 xl:gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/my-attempts')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <History className="w-4 h-4 text-white/90 shrink-0" />
+                      <History className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-white/90 shrink-0" />
                       <span>Мои результаты</span>
                     </Link>
                   )}
@@ -178,16 +178,16 @@ export const Navbar = () => {
             </div>
 
             {/* Desktop User Profile & Actions */}
-            <div className="hidden lg:flex items-center gap-1.5 xl:gap-3 shrink-0">
+            <div className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 2xl:gap-3 shrink-0">
               {user ? (
-                <div className="flex items-center gap-1.5 xl:gap-3 shrink-0">
+                <div className="flex items-center gap-1.5 xl:gap-2 2xl:gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsProfileModalOpen(true)}
-                    className="flex items-center gap-2 pr-1.5 xl:pr-2 py-1 px-1.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/5 transition-all text-left shrink-0 group cursor-pointer focus:outline-none"
+                    className="flex items-center gap-1.5 xl:gap-2 pr-1 xl:pr-1.5 py-1 px-1.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/5 transition-all text-left shrink-0 group cursor-pointer focus:outline-none"
                     title="Настройки профиля и уведомлений"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#242424] border border-[#3D3D3D] group-hover:border-[#E84C3D] flex items-center justify-center font-bold text-xs text-white shrink-0 relative transition-colors">
+                    <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-[#242424] border border-[#3D3D3D] group-hover:border-[#E84C3D] flex items-center justify-center font-bold text-xs text-white shrink-0 relative transition-colors">
                       {user.full_name?.charAt(0).toUpperCase() || 'U'}
                       {user.telegram_connected && (
                         <span
@@ -198,10 +198,10 @@ export const Navbar = () => {
                     </div>
                     <div className="flex flex-col text-left shrink-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[85px] xl:max-w-[130px] 2xl:max-w-[170px] group-hover:text-white">
+                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[85px] xl:max-w-[110px] 2xl:max-w-[170px] group-hover:text-white">
                           {user.full_name}
                         </span>
-                        <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left hidden xl:inline-flex" />
+                        <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left hidden 2xl:inline-flex" />
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E84C3D]/20 text-[#E84C3D] border border-[#E84C3D]/30 whitespace-nowrap">
                           Кат. {user.category || 1}
                         </span>
@@ -210,10 +210,10 @@ export const Navbar = () => {
                         {user.email}
                       </span>
                     </div>
-                    <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors ml-1 hidden xl:block" />
+                    <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors ml-0.5 hidden 2xl:block" />
                   </button>
 
-                  <div className="w-px h-5 bg-white/15 shrink-0" />
+                  <div className="w-px h-4 xl:h-5 bg-white/15 shrink-0" />
 
                   <button
                     onClick={handleLogout}
