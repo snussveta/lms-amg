@@ -48,10 +48,10 @@ export const Navbar = () => {
     <>
       {/* Top Main Navigation Bar */}
       <nav className="sticky top-0 z-40 w-full bg-[#141414] text-white border-b border-[#242424] shadow-sm select-none">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2 lg:gap-4">
             {/* Brand AMG LMS */}
-            <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 flex-1 overflow-hidden">
+            <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 flex-1">
               <Link to="/" className="flex items-center gap-2.5 group focus:outline-none shrink-0">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center text-white group-hover:bg-[#2e2e2e] transition-all relative shadow-sm shrink-0">
                   <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -74,11 +74,11 @@ export const Navbar = () => {
 
               {/* Desktop Navigation Links - Flat layout across the top */}
               {user && (
-                <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 min-w-0 overflow-x-auto scrollbar-none py-1">
+                <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0 py-1">
                   {/* Курсы */}
                   <Link
                     to={isAdmin ? '/admin/courses' : '/courses'}
-                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/courses') || isActive('/admin/courses') || location.pathname === '/'
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -91,7 +91,7 @@ export const Navbar = () => {
                   {/* Тесты */}
                   <Link
                     to={isAdmin ? '/admin/tests' : '/tests'}
-                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/tests') || (isActive('/admin/tests') && !location.search.includes('tab=attestations'))
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -105,7 +105,7 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/tests?tab=attestations"
-                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         location.pathname === '/admin/tests' && location.search.includes('tab=attestations')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -120,7 +120,7 @@ export const Navbar = () => {
                   {isAdmin && (
                     <Link
                       to="/admin/question-bank"
-                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/question-bank')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -135,7 +135,7 @@ export const Navbar = () => {
                   {(isAdmin || isDepartmentHead) && (
                     <Link
                       to="/admin/users"
-                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/admin/users')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -149,7 +149,7 @@ export const Navbar = () => {
                   {/* База знаний */}
                   <Link
                     to="/knowledge-base"
-                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                    className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                       isActive('/knowledge-base')
                         ? 'bg-[#242424] text-white font-semibold border border-white/10'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -163,7 +163,7 @@ export const Navbar = () => {
                   {!isAdmin && !isDepartmentHead && (
                     <Link
                       to="/my-attempts"
-                      className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                         isActive('/my-attempts')
                           ? 'bg-[#242424] text-white font-semibold border border-white/10'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -198,7 +198,7 @@ export const Navbar = () => {
                     </div>
                     <div className="flex flex-col text-left shrink-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[75px] xl:max-w-[130px] group-hover:text-white">
+                        <span className="text-xs font-semibold text-white leading-tight whitespace-nowrap truncate max-w-[85px] xl:max-w-[130px] 2xl:max-w-[170px] group-hover:text-white">
                           {user.full_name}
                         </span>
                         <RoleBadge role={user.role} className="whitespace-nowrap shrink-0 scale-90 origin-left hidden xl:inline-flex" />

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import {
   AlertCircle,
@@ -256,9 +257,15 @@ export const EmployeeImportModal = ({ isOpen, onClose, existingUsers = [], onSuc
   const updateCount = parsedRows.filter((r) => r.isValid && r.statusType === 'update').length;
   const errorCount = parsedRows.filter((r) => !r.isValid).length;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-[#141414]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-      <div className="bg-white max-w-3xl w-full rounded-2xl border border-[#EEEEEE] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[9999] w-screen h-screen bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-backdrop select-none"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white max-w-3xl w-full rounded-2xl border border-[#EEEEEE] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#EEEEEE] p-5 shrink-0 bg-white">
           <div className="flex items-center gap-2.5">
@@ -614,4 +621,6 @@ export const EmployeeImportModal = ({ isOpen, onClose, existingUsers = [], onSuc
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

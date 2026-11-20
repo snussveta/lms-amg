@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertCircle,
   Award,
@@ -1045,9 +1046,15 @@ export const UserManagementPage = () => {
       {/* ============================================================== */}
       {/* MODAL 1: REGISTER EMPLOYEE */}
       {/* ============================================================== */}
-      {isRegisterModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+      {isRegisterModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+          onClick={() => setIsRegisterModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-white" />
@@ -1262,15 +1269,22 @@ export const UserManagementPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ============================================================== */}
       {/* MODAL 2: EDIT EMPLOYEE & RESET PASSWORD */}
       {/* ============================================================== */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+      {editingUser && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+          onClick={() => setEditingUser(null)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-white" />
@@ -1449,15 +1463,22 @@ export const UserManagementPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ============================================================== */}
       {/* MODAL 3: CREATE / EDIT DEPARTMENT */}
       {/* ============================================================== */}
-      {isDeptModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+      {isDeptModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+          onClick={() => setIsDeptModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-white" />
@@ -1546,15 +1567,22 @@ export const UserManagementPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ============================================================== */}
       {/* MODAL 4: ASSIGN / CHANGE DEPARTMENT HEAD */}
       {/* ============================================================== */}
-      {headModalDept && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#EEEEEE] flex flex-col max-h-[90vh]">
+      {headModalDept && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+          onClick={() => setHeadModalDept(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#EEEEEE] flex flex-col max-h-[90vh] transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
@@ -1723,13 +1751,20 @@ export const UserManagementPage = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Test Email Modal */}
-      {isTestEmailModalOpen && (
-        <div className="fixed inset-0 z-50 bg-[#141414]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+      {isTestEmailModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] w-screen h-screen bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-backdrop select-none"
+          onClick={() => setIsTestEmailModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-4 bg-[#141414] text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-white" />
@@ -1790,7 +1825,8 @@ export const UserManagementPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Custom Confirmation Modal */}

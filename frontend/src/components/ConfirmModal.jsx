@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, X, RefreshCw } from 'lucide-react';
 
 export const ConfirmModal = ({
@@ -17,8 +18,11 @@ export const ConfirmModal = ({
 
   const isDanger = variant === 'danger';
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in select-none">
+  const modalNode = (
+    <div
+      className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+      onClick={onClose}
+    >
       <div
         className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-[#EEEEEE] transform transition-all animate-scale-in"
         onClick={(e) => e.stopPropagation()}
@@ -97,5 +101,7 @@ export const ConfirmModal = ({
       </div>
     </div>
   );
+
+  return createPortal(modalNode, document.body);
 };
 

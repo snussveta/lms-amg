@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Mail,
@@ -169,8 +170,11 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+  const modalNode = (
+    <div
+      className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-[#EEEEEE] overflow-hidden flex flex-col max-h-[92vh] animate-scale-in"
         onClick={(e) => e.stopPropagation()}
@@ -492,4 +496,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalNode, document.body);
 };

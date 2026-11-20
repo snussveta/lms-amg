@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calendar,
   Check,
@@ -212,9 +213,15 @@ export const TestAssignmentModal = ({ test, onClose }) => {
     .filter((d) => selectedDeptIds.includes(d.id))
     .reduce((sum, d) => sum + (d.users_count || 0), 0);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141414]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl border border-[#EEEEEE] shadow-2xl max-w-2xl w-full flex flex-col max-h-[92vh] overflow-hidden transform transition-all animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#EEEEEE] flex items-center justify-between bg-white">
           <div className="min-w-0 pr-3">
@@ -596,4 +603,6 @@ export const TestAssignmentModal = ({ test, onClose }) => {
       )}
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

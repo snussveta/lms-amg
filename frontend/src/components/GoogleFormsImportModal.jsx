@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   X,
@@ -231,9 +232,15 @@ export const GoogleFormsImportModal = ({ isOpen, onClose, onTestImported }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white rounded-3xl border border-[#EEEEEE] shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+  const modalNode = (
+    <div
+      className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-backdrop select-none"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl border border-[#EEEEEE] shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh] transform transition-all animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="p-6 border-b border-[#EEEEEE] flex items-center justify-between bg-linear-to-r from-[#7248B9]/5 via-white to-white">
           <div className="flex items-center gap-3">
@@ -597,4 +604,6 @@ export const GoogleFormsImportModal = ({ isOpen, onClose, onTestImported }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalNode, document.body);
 };

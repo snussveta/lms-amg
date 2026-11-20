@@ -230,6 +230,25 @@
 /* ANIMATIONS & LIGHT EFFECTS                    */
 /* ============================================= */
 
+/* Pure Opacity Fade (for modal backdrops without vertical translation) */
+@keyframes backdropFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.animate-backdrop {
+  animation: backdropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fallback for backdrop-blur-xs */
+.backdrop-blur-xs {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 /* Fade In (default entrance) */
 @keyframes fadeIn {
   0% {
